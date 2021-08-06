@@ -1,0 +1,21 @@
+{
+  "include": ["$(MODDABLE)/examples/manifest_mod.json"],
+  "modules": {
+    "*": ["./mod", "./pubsub", "./bus", "../mods/*"]
+  },
+  "resources": {
+    "*": ["../assets/*"]
+  },
+  "platforms": {
+    "esp32": {
+      "config": {
+        "led": {
+          "pin": "2"
+        },
+        "button": {
+          "pin": "0"
+        }
+      }
+    }
+  }
+}
