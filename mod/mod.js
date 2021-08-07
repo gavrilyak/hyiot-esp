@@ -35,7 +35,7 @@ bus.on("*", (topic, payload) =>
   trace(`BUS ${topic} = ${JSON.stringify(payload)}\n`)
 );
 
-const MQTT_NS = "moddable/mqtt/example";
+const MQTT_NS = "device1"; //moddable/mqtt/example";
 
 bus.emit("wifista_start");
 bus.on("wifista_started", () => {

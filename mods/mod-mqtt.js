@@ -4,15 +4,49 @@ import Net from "net";
 import Resource from "Resource";
 import bus from "bus";
 
+import X509 from "x509";
+import Ber from "ber";
+function getSubjectCommonName(cert) {
+  const { subject } = X509.decodeTBS(X509.decode(new Uint8Array(cert)).tbs);
+  let ber = new Ber(subject);
+  ber.getTag();
+  ber.getLength();
+  let b;
+  while ((b = ber.next()).length) {
+    let set = new Ber(b);
+    set.getTag();
+    set.getLength();
+    let seq = new Ber(set.next());
+    seq.getTag();
+    seq.getLength();
+    const oid = new Ber(seq.next()).getObjectIdentifier().toString();
+    if (oid === "2,5,4,3") {
+      const s = new Ber(seq.next());
+      s.getTag();
+      s.getLength();
+      const from = s.next();
+      const cn = String.fromArrayBuffer(
+        from.buffer.slice(from.byteOffset, from.byteOffset + from.length)
+      );
+      return cn;
+    }
+  }
+}
+
 function connectToMQTT(message = {}) {
   const {
     host = "a23tqp4io1iber-ats.iot.us-east-2.amazonaws.com",
     port = 443,
     certificate = new Resource("aws.iot.der"),
-    clientCertificate = new Resource("smartgate1.der"),
-    clientKey = new Resource("smartgate1.pk8"),
-    id = "moddable_" + Net.get("MAC"),
+    clientCertificate = new Resource("device.der"),
+    rootCertificate = new Resource("rootCA.der"),
+    clientKey = new Resource("device.pk8"),
+    id = getSubjectCommonName(clientCertificate),
   } = message;
+  const tbs = X509.decodeTBS(
+    X509.decode(new Uint8Array(clientCertificate)).tbs
+  );
+  trace("validity", tbs.validity, "\n");
 
   const client = new Client({
     host,
@@ -23,7 +57,7 @@ function connectToMQTT(message = {}) {
       protocolVersion: 0x0303,
       certificate,
       clientKey,
-      clientCertificates: [clientCertificate],
+      clientCertificates: [clientCertificate, rootCertificate],
       applicationLayerProtocolNegotiation: ["x-amzn-mqtt-ca"],
       //trace: true,
     },
