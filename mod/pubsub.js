@@ -1,4 +1,3 @@
-import Timer from "timer";
 export default function PubSub() {
   let listenersByTopic = {};
   return {
@@ -7,12 +6,11 @@ export default function PubSub() {
       listeners.push(listener);
     },
     off: function (topic, listener) {
-      trace("off", topic, listener);
       const listeners = listenersByTopic[topic];
       if (!listeners) return;
       if (listener) {
         const index = listeners.indexOf(listener);
-        listeners.splice(index >>> 0, 1);
+        if (index >= 0) listeners.splice(index, 1);
       } else {
         delete listeners[topic];
       }
@@ -27,7 +25,6 @@ export default function PubSub() {
         if (listeners)
           for (let listener of listeners)
             Promise.resolve().then(() => listener(topic, payload));
-        //Timer.set(() => listener(topic, payload));
       }
     },
   };

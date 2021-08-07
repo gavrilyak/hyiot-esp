@@ -21,21 +21,15 @@ trace(`ARCHIVE MODULES: ${Modules.archive}\n`);
 
 print("MOD");
 
-const plugins = [
-  "wifimanager",
-  "mqttmanager",
-  "button",
-  "led",
-  "button_reboot",
-  "telnetmod",
-];
-
 let mods = {};
-plugins.forEach((plugin) => {
-  let mod = Modules.importNow(plugin);
-  mods[plugin] = mod;
-  trace(`${plugin} is ${typeof mod}\n`);
-});
+Modules.host
+  .concat(Modules.archive)
+  .filter((x) => x.startsWith("mod-"))
+  .forEach((plugin) => {
+    let mod = Modules.importNow(plugin);
+    mods[plugin] = mod;
+    trace(`${plugin} is ${typeof mod}\n`);
+  });
 
 bus.on("*", (topic, payload) =>
   trace(`BUS ${topic} = ${JSON.stringify(payload)}\n`)
@@ -46,7 +40,6 @@ const MQTT_NS = "moddable/mqtt/example";
 bus.emit("wifista_start");
 bus.on("wifista_started", () => {
   bus.emit("mqtt_start");
-  mods.telnetmod();
 });
 
 bus.on("mqtt_started", () => {

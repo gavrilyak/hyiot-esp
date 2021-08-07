@@ -29,7 +29,6 @@
       "$(MODULES)/base/modules/*",
       "$(MODULES)/network/http/*",
       "$(MODULES)/network/sntp/*",
-      "$(MODULES)/network/websocket/*",
       "$(MODULES)/data/base64/*",
       "$(MODULES)/data/logical/*",
       "$(MODULES)/crypt/digest/*",

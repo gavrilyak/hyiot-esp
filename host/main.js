@@ -13,7 +13,6 @@
  */
 
 import Modules from "modules";
-
 /*
 let serial = new device.io.Serial({
   ...device.Serial.default,
@@ -25,7 +24,6 @@ let serial = new device.io.Serial({
   },
 });
 */
-
 export function print(msg) {
   trace(msg)
   //serial.write(ArrayBuffer.fromString(msg));
