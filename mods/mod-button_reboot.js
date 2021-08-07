@@ -9,7 +9,8 @@ bus.on("button_changed", ({ payload }) => {
     timer = Timer.set(() => {
       timer = null;
       trace(`REBOOT\n`);
-      restart();
+      //restart();
+      bus.emit("mqtt_start");
     }, 3000);
   } else if (timer) {
     Timer.clear(timer);

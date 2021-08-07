@@ -9,6 +9,7 @@
     "$(MODDABLE)/examples/manifest_net.json",
     "$(MODDABLE)/modules/network/mdns/manifest.json",
     "$(MODDABLE)/modules/network/mqtt/manifest.json",
+    "$(MODDABLE)/modules/files/preference/manifest.json",
     "$(MODDABLE)/modules/io/manifest.json",
     "$(MODDABLE)/modules/crypt/tls.json"
   ],
@@ -26,6 +27,7 @@
     "*": [
       "./main",
       "./modem/*",
+      "./fctry/*",
       "$(MODULES)/base/modules/*",
       "$(MODULES)/network/http/*",
       "$(MODULES)/network/sntp/*",

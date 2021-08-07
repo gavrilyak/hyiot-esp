@@ -9,16 +9,14 @@ import Ber from "ber";
 function getSubjectCommonName(cert) {
   const { subject } = X509.decodeTBS(X509.decode(new Uint8Array(cert)).tbs);
   let ber = new Ber(subject);
-  ber.getTag();
-  ber.getLength();
+  ber.getTag(), ber.getLength();
   let b;
   while ((b = ber.next()).length) {
     let set = new Ber(b);
-    set.getTag();
-    set.getLength();
+    set.getTag(), set.getLength();
+
     let seq = new Ber(set.next());
-    seq.getTag();
-    seq.getLength();
+    seq.getTag(), seq.getLength();
     const oid = new Ber(seq.next()).getObjectIdentifier().toString();
     if (oid === "2,5,4,3") {
       const s = new Ber(seq.next());
@@ -31,9 +29,43 @@ function getSubjectCommonName(cert) {
       return cn;
     }
   }
+  return null;
 }
 
-function connectToMQTT(message = {}) {
+let client = null;
+
+const sub = ({ topic }) => client?.subscribe(topic);
+const unsub = ({ topic }) => client?.unsubscribe(topic);
+const pub = ({ topic, payload }) => client?.publish(topic, payload);
+
+function on() {
+  bus.on("mqtt_pub", pub);
+  bus.on("mqtt_sub", sub);
+  bus.on("mqtt_unsub", unsub);
+  bus.on("mqtt_stop", stop);
+  bus.emit("mqtt_started");
+}
+
+function off() {
+  bus.off("mqtt_pub", pub);
+  bus.off("mqtt_sub", sub);
+  bus.off("mqtt_unsub", unsub);
+  bus.off("mqtt_stop", stop);
+  bus.emit("mqtt_stopped");
+}
+
+function onMessage(topic, body) {
+  const payload = String.fromArrayBuffer(body);
+  bus.emit("mqtt_message", { topic, payload });
+}
+
+const stop = () => {
+  off();
+  client?.close();
+  client = null;
+};
+
+function connect(message = {}) {
   const {
     host = "a23tqp4io1iber-ats.iot.us-east-2.amazonaws.com",
     port = 443,
@@ -43,12 +75,10 @@ function connectToMQTT(message = {}) {
     clientKey = new Resource("device.pk8"),
     id = getSubjectCommonName(clientCertificate),
   } = message;
-  const tbs = X509.decodeTBS(
-    X509.decode(new Uint8Array(clientCertificate)).tbs
-  );
-  trace("validity", tbs.validity, "\n");
 
-  const client = new Client({
+  stop();
+
+  client = new Client({
     host,
     id,
     port,
@@ -59,45 +89,17 @@ function connectToMQTT(message = {}) {
       clientKey,
       clientCertificates: [clientCertificate, rootCertificate],
       applicationLayerProtocolNegotiation: ["x-amzn-mqtt-ca"],
-      //trace: true,
+      trace: false,
     },
   });
-
-  const sub = ({ topic }) => client.subscribe(topic);
-  const unsub = ({ topic }) => client.unsubscribe(topic);
-  const pub = ({ topic, payload }) => client.publish(topic, payload);
-
-  function on() {
-    bus.on("mqtt_pub", pub);
-    bus.on("mqtt_sub", sub);
-    bus.on("mqtt_unsub", unsub);
-    bus.on("mqtt_stop", stop);
-    bus.emit("mqtt_started", { ...message });
-  }
-
-  function off() {
-    bus.off("mqtt_pub", pub);
-    bus.off("mqtt_sub", sub);
-    bus.off("mqtt_unsub", unsub);
-    bus.off("mqtt_stop", stop);
-    bus.emit("mqtt_stopped");
-  }
-
-  const stop = () => {
-    off();
-    client.close();
-  };
 
   Object.assign(client, {
     onReady: on,
     onClose: off,
-    onMessage(topic, body) {
-      const payload = String.fromArrayBuffer(body);
-      bus.emit("mqtt_message", { ...message, topic, payload });
-    },
+    onMessage,
   });
   return client;
 }
 
-bus.on("mqtt_start", connectToMQTT);
+bus.on("mqtt_start", connect);
 //export default connectToMQTT;
