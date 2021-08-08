@@ -1,6 +1,7 @@
 import Timer from "timer";
 import bus from "bus";
 import { restart } from "main";
+import WiFi from "wifi";
 
 let timer;
 
@@ -10,8 +11,9 @@ bus.on("button_changed", ({ payload }) => {
       timer = null;
       trace(`REBOOT\n`);
       //restart();
-      bus.emit("mqtt_start");
-    }, 3000);
+      WiFi.disconnect();
+      //bus.emit("mqtt_start");
+    }, 2000);
   } else if (timer) {
     Timer.clear(timer);
     timer = null;

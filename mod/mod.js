@@ -13,33 +13,78 @@
  */
 import Modules from "modules";
 import bus from "bus";
+import hostConfig from "mc/config";
+import modConfig from "mod/config";
 import { print, getBuildString } from "main";
 
+print("MOD");
 trace(`BOOTING, build: ${getBuildString()}\n`);
 trace(`HOST MODULES: ${Modules.host}\n`);
 trace(`ARCHIVE MODULES: ${Modules.archive}\n`);
-
-print("MOD");
+trace(`MOD CONFIG: ${JSON.stringify(modConfig.mods)}\n`);
 
 let mods = {};
+const MOD_PREFIX = "mod-";
+
+class PrefixedBus {
+  #prefix;
+  constructor(prefix) {
+    this.#prefix = prefix;
+  }
+  on(topic, handler) {
+    bus.on(`${this.#prefix}_${topic}`, handler);
+  }
+  off(topic, handler) {
+    bus.off(`${this.#prefix}_${topic}`, handler);
+  }
+  emit(topic, ...payload) {
+    bus.emit(`${this.#prefix}_${topic}`, ...payload);
+  }
+}
+
 Modules.host
   .concat(Modules.archive)
-  .filter((x) => x.startsWith("mod-"))
-  .forEach((plugin) => {
-    let mod = Modules.importNow(plugin);
-    mods[plugin] = mod;
-    trace(`${plugin} is ${typeof mod}\n`);
+  .filter((x) => x.startsWith(MOD_PREFIX))
+  .forEach((fullName) => {
+    trace(`loading ${fullName}\n`);
+    let mod = Modules.importNow(fullName);
+    let name = fullName.slice(MOD_PREFIX.length);
+    if (typeof mod === "function") {
+      let bus = new PrefixedBus(name);
+      mod = mod({ name, ...(modConfig.mods[name] || {}), bus });
+    }
+    mods[name] = mod;
   });
 
 bus.on("*", (topic, payload) =>
-  trace(`BUS ${topic} = ${JSON.stringify(payload)}\n`)
+  trace(
+    `BUS ${new Date().toISOString()} ${topic} ${
+      payload ? JSON.stringify(payload) : ""
+    }\n`
+  )
 );
 
 const MQTT_NS = "device1"; //moddable/mqtt/example";
 
 bus.emit("wifista_start");
 bus.on("wifista_started", () => {
+  bus.emit("network_started");
+});
+
+bus.on("wifista_disconnected", () => {
+  bus.emit("network_stopped");
+});
+
+bus.on("network_started", () => {
   bus.emit("mqtt_start");
+  mods["telnet"].start();
+  //bus.emit("telnet_start");
+});
+
+bus.on("network_stopped", () => {
+  bus.emit("mqtt_stop");
+  mods["telnet"].stop();
+  //bus.emit("telnet_start");
 });
 
 bus.on("mqtt_started", () => {

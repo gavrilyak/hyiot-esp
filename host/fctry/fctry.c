@@ -108,3 +108,11 @@ void xs_fctry_keys(xsMachine *the)
         it = nvs_entry_next(it);
 	}
 }
+
+void xs_fctry_reset(xsMachine *the)
+{
+	nvs_flash_deinit();
+	nvs_flash_erase();
+	nvs_flash_init();
+	xsmcSetUndefined(xsResult);	// not an error if not found, just undefined
+} 

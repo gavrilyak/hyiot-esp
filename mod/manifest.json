@@ -1,20 +1,24 @@
 {
   "include": ["$(MODDABLE)/examples/manifest_mod.json"],
   "modules": {
-    "*": ["./mod", "./pubsub", "./bus", "../mods/*"]
+    "*": ["../lib/*", "../mods/*", "./mod"]
   },
   "resources": {
     "*": ["../certs/*"]
   },
-  "platforms": {
-    "esp32": {
-      "config": {
-        "led": {
-          "pin": "2"
-        },
-        "button": {
-          "pin": "0"
-        }
+  "config": {
+    "mods": {
+      "telnet": {
+        "port": 23
+      },
+      "led": {
+        "pin": "2"
+      },
+      "button": {
+        "pin": "0"
+      },
+      "mqtt": {
+        "trace": false
       }
     }
   }

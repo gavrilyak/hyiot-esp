@@ -17,7 +17,7 @@
     "stack": 512,
     "static": 65536,
     "keys": {
-      "available": 96
+      "available": 128
     }
   },
   "defines": {

@@ -1,16 +1,12 @@
+import globalBus from "bus";
 import Telnet from "telnet";
 import CLI from "cli";
 
-import bus from "bus";
-
 CLI.install(function (command, params) {
   switch (command) {
-    case "example":
-      this.line(`example with ${params.length} parameters`);
-      break;
     case "pub":
       if (params.length == 1) this.line(`publising ${params[0]}`);
-      bus.emit(params[0]);
+      globalBus.emit(params[0]);
       break;
     case "help":
       this.line(`example [params] - display number of parameters`);
@@ -22,7 +18,29 @@ CLI.install(function (command, params) {
   return true;
 });
 
-export default function () {
-  new Telnet({ port: 2300 });
-  trace("telnet ready on port 2300\n");
+export default function ({ name, bus, port = 2300 } = {}) {
+  let server = null;
+
+  function start() {
+    if (server) {
+      trace(`${name} already started\n`);
+      return;
+    }
+    server = new Telnet({ port });
+    bus.emit("started");
+    trace(`${name} ready on port ${port}\n`);
+  }
+
+  function stop() {
+    trace(`${name} stopping\n`);
+    server.close();
+    server = null;
+    bus.emit("stopped");
+  }
+
+  return Object.freeze({
+    start,
+    stop,
+    depends: ["network"],
+  });
 }

@@ -19,8 +19,9 @@
  */
 
 class Fctry {
-	static get(domain, name) @ "xs_fctry_get";
-	static keys(domain) @ "xs_fctry_keys";
+  static get(domain, name) @ "xs_fctry_get";
+  static keys(domain) @ "xs_fctry_keys";
+  static reset() @ "xs_fctry_reset";
 }
 Object.freeze(Fctry.prototype);
 
