@@ -27,7 +27,7 @@ export default function ({ name, bus, port = 2300 } = {}) {
       return;
     }
     server = new Telnet({ port });
-    bus.emit("started");
+    bus.emit("started", { port });
     trace(`${name} ready on port ${port}\n`);
   }
 

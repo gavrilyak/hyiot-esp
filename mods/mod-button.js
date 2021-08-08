@@ -14,4 +14,4 @@ const button = new Digital({
   },
 });
 
-//bus.emit("button_started", { payload: button.read() });
+bus.emit("button_started", { payload: button.read() });

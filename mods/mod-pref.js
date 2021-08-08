@@ -1,4 +1,4 @@
-import Preference from "preference";
+import pref from "preference";
 
 import CLI from "cli";
 
@@ -9,12 +9,12 @@ CLI.install(function (command, opts) {
       switch (subcommand) {
         case "ls":
           if (opts.length == 1) {
-            this.line(Preference.keys(...opts).join(" "));
+            this.line(pref.keys(...opts).join(" "));
           }
           break;
         case "get":
           if (opts.length == 2) {
-            let val = Preference.get(...opts);
+            let val = pref.get(...opts);
             let type = typeof val;
             this.line(`Type is ${type}`);
             switch (type) {
@@ -35,12 +35,12 @@ CLI.install(function (command, opts) {
           break;
         case "set":
           if (opts.length == 3) {
-            Preference.set(...opts);
+            pref.set(...opts);
           }
           break;
         case "rm":
           if (opts.length == 2) {
-            Preference.delete(...opts);
+            pref.delete(...opts);
           }
           break;
 
@@ -59,11 +59,8 @@ CLI.install(function (command, opts) {
   }
   return true;
 });
-
-/*
-		xsmcSetBoolean(xsResult, b);
-		xsmcSetInteger(xsResult, integer);
-		xsResult = xsStringBuffer(NULL, integer);
-		xsmcSetArrayBuffer(xsResult, NULL, integer);
-		xsmcSetUndefined(xsResult);	// not an error if not found, just undefined
-		*/
+pref.set(
+  "mods",
+  "wifista",
+  JSON.stringify({ ssid: "home", password: "Ochen'DlinniyParol'" })
+);

@@ -15,13 +15,18 @@ import Modules from "modules";
 import bus from "bus";
 import hostConfig from "mc/config";
 import modConfig from "mod/config";
+import pref from "preference";
+import Resource from "Resource";
+
 import { print, getBuildString } from "main";
+//import { ResourceIterator } from "ResourceIterator";
 
 print("MOD");
 trace(`BOOTING, build: ${getBuildString()}\n`);
 trace(`HOST MODULES: ${Modules.host}\n`);
 trace(`ARCHIVE MODULES: ${Modules.archive}\n`);
 trace(`MOD CONFIG: ${JSON.stringify(modConfig.mods)}\n`);
+trace(`RESOURCES: ${[...Resource]}\n`);
 
 let mods = {};
 const MOD_PREFIX = "mod-";
@@ -51,7 +56,14 @@ Modules.host
     let name = fullName.slice(MOD_PREFIX.length);
     if (typeof mod === "function") {
       let bus = new PrefixedBus(name);
-      mod = mod({ name, ...(modConfig.mods[name] || {}), bus });
+      const hostOpts = {}; // TODO : hostConfig.mods[name] || {};
+      const modOpts = modConfig.mods[name] || {};
+      const modPrefsStr = pref.get("mods", name);
+      trace("modPrefs", modPrefsStr);
+      const modPrefs = modPrefsStr ? JSON.parse(modPrefsStr) : {};
+      const allPrefs = { ...hostOpts, ...modOpts, ...modPrefs };
+
+      mod = mod({ name, ...allPrefs, bus });
     }
     mods[name] = mod;
   });
@@ -78,12 +90,14 @@ bus.on("wifista_disconnected", () => {
 bus.on("network_started", () => {
   bus.emit("mqtt_start");
   mods["telnet"].start();
+  mods["httpserver"].start();
   //bus.emit("telnet_start");
 });
 
 bus.on("network_stopped", () => {
   bus.emit("mqtt_stop");
   mods["telnet"].stop();
+  mods["httpserver"].stop();
   //bus.emit("telnet_start");
 });
 

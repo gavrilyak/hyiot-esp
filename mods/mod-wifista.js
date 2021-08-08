@@ -5,7 +5,13 @@ import Net from "net";
 
 export default function modWiFi({ name, bus, ...opts }) {
   function connectToWiFi() {
-    const { ssid = "home", password = "Ochen'DlinniyParol'" } = opts;
+    const { ssid, password } = opts;
+
+    if (!ssid) {
+      bus.emit("nossid");
+      return;
+    }
+
     const wifi = new WiFi({ ssid, password }, function (msg, code) {
       switch (msg) {
         case WiFi.connected:
