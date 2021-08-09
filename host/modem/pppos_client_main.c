@@ -16,108 +16,13 @@
 #include "esp_log.h"
 #include "sim800.h"
 #include "bg96.h"
-#define CONFIG_EXAMPLE_MODEM_UART_TX_PIN  25
-#define CONFIG_EXAMPLE_MODEM_UART_RX_PIN  26
-#define CONFIG_EXAMPLE_MODEM_UART_RTS_PIN  27
-#define CONFIG_EXAMPLE_MODEM_UART_CTS_PIN  23
-#define CONFIG_EXAMPLE_MODEM_UART_EVENT_TASK_STACK_SIZE  3072
-#define CONFIG_EXAMPLE_MODEM_UART_EVENT_TASK_PRIORITY  5
-#define CONFIG_EXAMPLE_MODEM_UART_EVENT_QUEUE_SIZE  30
-#define CONFIG_EXAMPLE_MODEM_UART_PATTERN_QUEUE_SIZE  20
-#define CONFIG_EXAMPLE_MODEM_UART_TX_BUFFER_SIZE  512
-#define CONFIG_EXAMPLE_MODEM_UART_RX_BUFFER_SIZE  1024
-#define CONFIG_EXAMPLE_MODEM_PPP_AUTH_USERNAME "user"
-#define CONFIG_EXAMPLE_MODEM_PPP_AUTH_PASSWORD "pass"
-#define CONFIG_EXAMPLE_MODEM_DEVICE_SIM800 1
-
+#include "mc.defines.h"
 
 static const char *TAG = "pppos_example";
 static EventGroupHandle_t event_group = NULL;
 static const int CONNECT_BIT = BIT0;
 static const int STOP_BIT = BIT1;
 static const int GOT_DATA_BIT = BIT2;
-
-#if CONFIG_EXAMPLE_SEND_MSG
-/**
- * @brief This example will also show how to send short message using the infrastructure provided by esp modem library.
- * @note Not all modem support SMG.
- *
- */
-static esp_err_t example_default_handle(modem_dce_t *dce, const char *line)
-{
-    esp_err_t err = ESP_FAIL;
-    if (strstr(line, MODEM_RESULT_CODE_SUCCESS)) {
-        err = esp_modem_process_command_done(dce, MODEM_STATE_SUCCESS);
-    } else if (strstr(line, MODEM_RESULT_CODE_ERROR)) {
-        err = esp_modem_process_command_done(dce, MODEM_STATE_FAIL);
-    }
-    return err;
-}
-
-static esp_err_t example_handle_cmgs(modem_dce_t *dce, const char *line)
-{
-    esp_err_t err = ESP_FAIL;
-    if (strstr(line, MODEM_RESULT_CODE_SUCCESS)) {
-        err = esp_modem_process_command_done(dce, MODEM_STATE_SUCCESS);
-    } else if (strstr(line, MODEM_RESULT_CODE_ERROR)) {
-        err = esp_modem_process_command_done(dce, MODEM_STATE_FAIL);
-    } else if (!strncmp(line, "+CMGS", strlen("+CMGS"))) {
-        err = ESP_OK;
-    }
-    return err;
-}
-
-#define MODEM_SMS_MAX_LENGTH (128)
-#define MODEM_COMMAND_TIMEOUT_SMS_MS (120000)
-#define MODEM_PROMPT_TIMEOUT_MS (10)
-
-static esp_err_t example_send_message_text(modem_dce_t *dce, const char *phone_num, const char *text)
-{
-    modem_dte_t *dte = dce->dte;
-    dce->handle_line = example_default_handle;
-    /* Set text mode */
-    if (dte->send_cmd(dte, "AT+CMGF=1\r", MODEM_COMMAND_TIMEOUT_DEFAULT) != ESP_OK) {
-        ESP_LOGE(TAG, "send command failed");
-        goto err;
-    }
-    if (dce->state != MODEM_STATE_SUCCESS) {
-        ESP_LOGE(TAG, "set message format failed");
-        goto err;
-    }
-    ESP_LOGD(TAG, "set message format ok");
-    /* Specify character set */
-    dce->handle_line = example_default_handle;
-    if (dte->send_cmd(dte, "AT+CSCS=\"GSM\"\r", MODEM_COMMAND_TIMEOUT_DEFAULT) != ESP_OK) {
-        ESP_LOGE(TAG, "send command failed");
-        goto err;
-    }
-    if (dce->state != MODEM_STATE_SUCCESS) {
-        ESP_LOGE(TAG, "set character set failed");
-        goto err;
-    }
-    ESP_LOGD(TAG, "set character set ok");
-    /* send message */
-    char command[MODEM_SMS_MAX_LENGTH] = {0};
-    int length = snprintf(command, MODEM_SMS_MAX_LENGTH, "AT+CMGS=\"%s\"\r", phone_num);
-    /* set phone number and wait for "> " */
-    dte->send_wait(dte, command, length, "\r\n> ", MODEM_PROMPT_TIMEOUT_MS);
-    /* end with CTRL+Z */
-    snprintf(command, MODEM_SMS_MAX_LENGTH, "%s\x1A", text);
-    dce->handle_line = example_handle_cmgs;
-    if (dte->send_cmd(dte, command, MODEM_COMMAND_TIMEOUT_SMS_MS) != ESP_OK) {
-        ESP_LOGE(TAG, "send command failed");
-        goto err;
-    }
-    if (dce->state != MODEM_STATE_SUCCESS) {
-        ESP_LOGE(TAG, "send message failed");
-        goto err;
-    }
-    ESP_LOGD(TAG, "send message ok");
-    return ESP_OK;
-err:
-    return ESP_FAIL;
-}
-#endif
 
 static void modem_event_handler(void *event_handler_arg, esp_event_base_t event_base, int32_t event_id, void *event_data)
 {
@@ -189,7 +94,7 @@ void pppos_client_main(void)
     esp_netif_auth_type_t auth_type = NETIF_PPP_AUTHTYPE_PAP;
 #elif CONFIG_LWIP_PPP_CHAP_SUPPORT
     esp_netif_auth_type_t auth_type = NETIF_PPP_AUTHTYPE_CHAP;
-#elif !defined(CONFIG_EXAMPLE_MODEM_PPP_AUTH_NONE)
+#elif !defined(MODDEF_MODEM_PPP_AUTH_NONE)
 #error "Unsupported AUTH Negotiation"
 #endif
     ESP_ERROR_CHECK(esp_netif_init());
@@ -207,24 +112,24 @@ void pppos_client_main(void)
     /* create dte object */
     esp_modem_dte_config_t config = ESP_MODEM_DTE_DEFAULT_CONFIG();
     /* setup UART specific configuration based on kconfig options */
-    config.tx_io_num = CONFIG_EXAMPLE_MODEM_UART_TX_PIN;
-    config.rx_io_num = CONFIG_EXAMPLE_MODEM_UART_RX_PIN;
-    config.rts_io_num = CONFIG_EXAMPLE_MODEM_UART_RTS_PIN;
-    config.cts_io_num = CONFIG_EXAMPLE_MODEM_UART_CTS_PIN;
-    config.rx_buffer_size = CONFIG_EXAMPLE_MODEM_UART_RX_BUFFER_SIZE;
-    config.tx_buffer_size = CONFIG_EXAMPLE_MODEM_UART_TX_BUFFER_SIZE;
-    config.pattern_queue_size = CONFIG_EXAMPLE_MODEM_UART_PATTERN_QUEUE_SIZE;
-    config.event_queue_size = CONFIG_EXAMPLE_MODEM_UART_EVENT_QUEUE_SIZE;
-    config.event_task_stack_size = CONFIG_EXAMPLE_MODEM_UART_EVENT_TASK_STACK_SIZE;
-    config.event_task_priority = CONFIG_EXAMPLE_MODEM_UART_EVENT_TASK_PRIORITY;
-    config.line_buffer_size = CONFIG_EXAMPLE_MODEM_UART_RX_BUFFER_SIZE/2;
+    config.tx_io_num = MODDEF_MODEM_UART_TX_PIN;
+    config.rx_io_num = MODDEF_MODEM_UART_RX_PIN;
+    config.rts_io_num = MODDEF_MODEM_UART_RTS_PIN;
+    config.cts_io_num = MODDEF_MODEM_UART_CTS_PIN;
+    config.rx_buffer_size = MODDEF_MODEM_UART_RX_BUFFER_SIZE;
+    config.tx_buffer_size = MODDEF_MODEM_UART_TX_BUFFER_SIZE;
+    config.pattern_queue_size = MODDEF_MODEM_UART_PATTERN_QUEUE_SIZE;
+    config.event_queue_size = MODDEF_MODEM_UART_EVENT_QUEUE_SIZE;
+    config.event_task_stack_size = MODDEF_MODEM_UART_EVENT_TASK_STACK_SIZE;
+    config.event_task_priority = MODDEF_MODEM_UART_EVENT_TASK_PRIORITY;
+    config.line_buffer_size = MODDEF_MODEM_UART_RX_BUFFER_SIZE/2;
     modem_dte_t *dte = esp_modem_dte_init(&config);
     /* Register event handler */
     ESP_ERROR_CHECK(esp_modem_set_event_handler(dte, modem_event_handler, ESP_EVENT_ANY_ID, NULL));
     /* create dce object */
-#if CONFIG_EXAMPLE_MODEM_DEVICE_SIM800
+#if MODDEF_MODEM_DEVICE_SIM800
     modem_dce_t *dce = sim800_init(dte);
-#elif CONFIG_EXAMPLE_MODEM_DEVICE_BG96
+#elif MODDEF_MODEM_DEVICE_BG96
     modem_dce_t *dce = bg96_init(dte);
 #else
 #error "Unsupported DCE"
@@ -246,8 +151,8 @@ void pppos_client_main(void)
     ESP_ERROR_CHECK(dce->get_battery_status(dce, &bcs, &bcl, &voltage));
     ESP_LOGI(TAG, "Battery voltage: %d mV", voltage);
     /* setup PPPoS network parameters */
-#if !defined(CONFIG_EXAMPLE_MODEM_PPP_AUTH_NONE) && (defined(CONFIG_LWIP_PPP_PAP_SUPPORT) || defined(CONFIG_LWIP_PPP_CHAP_SUPPORT))
-    esp_netif_ppp_set_auth(esp_netif, auth_type, CONFIG_EXAMPLE_MODEM_PPP_AUTH_USERNAME, CONFIG_EXAMPLE_MODEM_PPP_AUTH_PASSWORD);
+#if !defined(MODDEF_MODEM_PPP_AUTH_NONE) && (defined(CONFIG_LWIP_PPP_PAP_SUPPORT) || defined(CONFIG_LWIP_PPP_CHAP_SUPPORT))
+    esp_netif_ppp_set_auth(esp_netif, auth_type, MODDEF_MODEM_PPP_AUTH_USERNAME, MODDEF_MODEM_PPP_AUTH_PASSWORD);
 #endif
     void *modem_netif_adapter = esp_modem_netif_setup(dte);
     esp_modem_netif_set_default_handlers(modem_netif_adapter, esp_netif);
@@ -256,7 +161,8 @@ void pppos_client_main(void)
     /* Wait for IP address */
     xEventGroupWaitBits(event_group, CONNECT_BIT, pdTRUE, pdTRUE, portMAX_DELAY);
 
-  /* Config MQTT */
+    /* Config MQTT */
+
     /* Exit PPP mode */
     ESP_ERROR_CHECK(esp_modem_stop_ppp(dte));
     /* Unregister events, destroy the netif adapter and destroy its esp-netif instance */
@@ -264,11 +170,6 @@ void pppos_client_main(void)
     esp_modem_netif_teardown(modem_netif_adapter);
     esp_netif_destroy(esp_netif);
     xEventGroupWaitBits(event_group, STOP_BIT, pdTRUE, pdTRUE, portMAX_DELAY);
-#if CONFIG_EXAMPLE_SEND_MSG
-    const char *message = "Welcome to ESP32!";
-    ESP_ERROR_CHECK(example_send_message_text(dce, CONFIG_EXAMPLE_SEND_MSG_PEER_PHONE_NUMBER, message));
-    ESP_LOGI(TAG, "Send send message [%s] ok", message);
-#endif
     /* Power down module */
     ESP_ERROR_CHECK(dce->power_down(dce));
     ESP_LOGI(TAG, "Power down");

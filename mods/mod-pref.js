@@ -59,8 +59,11 @@ CLI.install(function (command, opts) {
   }
   return true;
 });
+
+/*
 pref.set(
   "mods",
   "wifista",
   JSON.stringify({ ssid: "home", password: "Ochen'DlinniyParol'" })
 );
+*/

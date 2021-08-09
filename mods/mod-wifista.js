@@ -8,7 +8,7 @@ export default function modWiFi({ name, bus, ...opts }) {
     const { ssid, password } = opts;
 
     if (!ssid) {
-      bus.emit("nossid");
+      bus.emit("unfconfigured");
       return;
     }
 

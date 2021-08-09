@@ -18,7 +18,7 @@
     "stack": 512,
     "static": 65536,
     "keys": {
-      "available": 128
+      "available": 256
     }
   },
   "defines": {
@@ -93,6 +93,21 @@
       },
       "preload": ["pins/*"],
       "defines": {
+        "modem": {
+          "uart_tx_pin": 25,
+          "uart_rx_pin": 26,
+          "uart_rts_pin": 27,
+          "uart_cts_pin": 23,
+          "uart_event_task_stack_size": 3072,
+          "uart_event_task_priority": 5,
+          "uart_event_queue_size": 30,
+          "uart_pattern_queue_size": 20,
+          "uart_tx_buffer_size": 512,
+          "uart_rx_buffer_size": 1024,
+          "ppp_auth_username": "#user",
+          "ppp_auth_password": "#pass",
+          "device_sim800": 1
+        },
         "serial": {
           "interface": { "UART": 2 },
           "baud": 115200,

@@ -87,6 +87,15 @@ bus.on("wifista_disconnected", () => {
   bus.emit("network_stopped");
 });
 
+bus.on("wifiap_started", () => {
+  mods["telnet"].start();
+  mods["httpserver"].start();
+});
+
+bus.on("wifista_unfconfigured", () => {
+  bus.emit("wifiap_start");
+});
+
 bus.on("network_started", () => {
   bus.emit("mqtt_start");
   mods["telnet"].start();

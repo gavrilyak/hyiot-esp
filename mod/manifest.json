@@ -1,10 +1,14 @@
 {
+  "build": {
+    "NAME": "hydrolec-mod"
+  },
   "include": ["$(MODDABLE)/examples/manifest_mod.json"],
   "modules": {
-    "*": ["../lib/*", "./mods/*", "./mod"]
+    "mod": ["./main"],
+    "*": ["../lib/*", "./mods/*"]
   },
-  "resources": {
-    "*": ["../certs/*"],
+  "data": {
+    "certs/*": ["../certs/*"],
     "web/*": ["../web/*"]
   },
   "config": {
