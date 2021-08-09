@@ -168,7 +168,7 @@ export default function ({ name, bus, port = 8080 } = {}) {
                 const mayBeContentType = CONTENT_TYPES[this.path];
                 if (mayBeContentType) {
                   //we have this file, serve it from resource
-                  this.data = new Resource(`web${this.path}.gz`);
+                  this.data = new Resource(`web${this.path}`);
                   this.position = 0;
                   return {
                     headers: [
@@ -176,8 +176,8 @@ export default function ({ name, bus, port = 8080 } = {}) {
                       mayBeContentType,
                       "Content-length",
                       this.data.byteLength,
-                      "Content-encoding",
-                      "gzip",
+                      //"Content-encoding",
+                      //"gzip",
                     ],
                     body: true,
                   };
