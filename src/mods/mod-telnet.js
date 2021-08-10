@@ -18,7 +18,7 @@ CLI.install(function (command, params) {
   return true;
 });
 
-export default function ({ name, bus, port = 2300 } = {}) {
+export default function ({ name = "telnet", bus, port = 2300 } = {}) {
   let server = null;
 
   function start() {

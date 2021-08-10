@@ -33,7 +33,7 @@ function getSubjectCommonName(cert) {
 }
 
 export default function (config = {}) {
-  trace(Object.entries(config) + "\n");
+  //trace(Object.entries(config) + "\n");
   const {
     host = "a23tqp4io1iber-ats.iot.us-east-2.amazonaws.com",
     port = 443,
@@ -55,18 +55,10 @@ export default function (config = {}) {
   const unsub = ({ topic }) => client?.unsubscribe(topic);
 
   function onReady() {
-    bus.on("pub", pub);
-    bus.on("sub", sub);
-    bus.on("unsub", unsub);
-    bus.on("stop", stop);
     bus.emit("started");
   }
 
   function onClose() {
-    bus.off("pub", pub);
-    bus.off("sub", sub);
-    bus.off("unsub", unsub);
-    bus.off("stop", stop);
     if (client) bus.emit("stopped");
     client = null;
   }

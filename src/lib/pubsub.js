@@ -1,10 +1,25 @@
+/**
+ * @callback listenerCallback
+ * @param {any} payload
+ */
 export default function PubSub() {
   let channels = {};
   return {
+    /**
+     * @param {string} topic
+     * @param {listenerCallback} listener
+     * @returns {void}
+     * */
     on: function (topic, listener) {
       let listeners = (channels[topic] = channels[topic] || []);
       listeners.push(listener);
     },
+
+    /**
+     * @param {string} topic
+     * @param {listenerCallback} listener
+     * @returns {void}
+     * */
     off: function (topic, listener) {
       const listeners = channels[topic];
       if (!listeners) return;
@@ -15,6 +30,12 @@ export default function PubSub() {
         delete listeners[topic];
       }
     },
+
+    /*
+     * @param {string} topic
+     * @param {string[]} payload
+     * @returns {void}
+     * */
     emit: function (topic, ...payload) {
       {
         let listeners = channels[topic];

@@ -1,0 +1,15 @@
+env:
+  browser: true
+  commonjs: false
+  es6: true
+  jest: false
+  node: false
+globals:
+  trace: true
+  device: true
+extends: "eslint:recommended"
+parserOptions:
+  ecmaVersion: 2020
+  sourceType: module
+rules:
+  no-unused-vars: ["error", { "argsIgnorePattern": "^_" , "ignoreRestSiblings": true }]

@@ -1,7 +1,7 @@
 {
   "build": {
-    "SDKCONFIGPATH": "$(HYDROELEC_IOT)/hyiot-esp/host/sdkconfig",
-    "PARTITIONS_FILE": "$(HYDROELEC_IOT)/hyiot-esp/host/sdkconfig/partitions.csv",
+    "SDKCONFIGPATH": "./sdkconfig",
+    "PARTITIONS_FILE": "./sdkconfig/partitions.csv",
     "NAME": "hydrolec-host"
   },
   "include": [

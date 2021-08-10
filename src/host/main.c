@@ -2,6 +2,7 @@
 #include "xsHost.h"
 #include "buildinfo.h"
 
+
 void xs_getbuildstring(xsMachine *the)
 {
 	int len;
@@ -19,6 +20,13 @@ void xs_getbuildstring(xsMachine *the)
 	c_strcat(str, " ");
 	c_strcat(str, _BuildInfo.env_version);
 	xsmcSetString(xsResult, str);
+}
+
+#include <esp_wifi.h>
+void xs_getmac(xsMachine *the)
+{
+  xsmcSetArrayBuffer(xsResult, NULL, 6);
+  esp_wifi_get_mac(xsmcToInteger(xsArgc) > 0? WIFI_IF_AP : WIFI_IF_STA, xsmcToArrayBuffer(xsResult));
 }
 
 void do_restart(xsMachine *the)

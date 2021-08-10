@@ -65,7 +65,7 @@ const handlers = {
           return {
             status: val ? 200 : 204,
             headers: [CONTENT_TYPE, TEXT_PLAIN],
-            ...(val ? { body: val } : {}),
+            body: val || "",
           };
         }
         case "PUT":
@@ -81,13 +81,14 @@ const handlers = {
   },
 };
 
-export default function ({ name, bus, port = 8080 } = {}) {
+export default function ({ name = "httpserver", bus, port = 8080 } = {}) {
   let server = null;
 
   function start() {
     server = new Server({
       port,
     });
+    //@ts-ignore there are some problems with upstream definition
     server.callback = function (message, value, method) {
       switch (message) {
         case Server.status:
@@ -99,6 +100,7 @@ export default function ({ name, bus, port = 8080 } = {}) {
 
         case Server.header: //one header received
           this.requestHeaders.push(value, method);
+          break;
 
         case Server.headersComplete:
           return String; //receive body as string
@@ -107,15 +109,17 @@ export default function ({ name, bus, port = 8080 } = {}) {
           this.requestBody = value;
           break;
 
-        case Server.prepareResponse:
-          const handlerKey = Object.keys(handlers).find((k) =>
-            this.path.startsWith(k)
-          );
-          if (handlerKey) {
-            const handler = handlers[handlerKey];
-            const path = this.path.slice(handlerKey.length);
-            const handlerResult = handler.call(this, path);
-            if (handlerResult) return handlerResult;
+        case Server.prepareResponse: {
+          {
+            const handlerKey = Object.keys(handlers).find((k) =>
+              this.path.startsWith(k)
+            );
+            if (handlerKey) {
+              const handler = handlers[handlerKey];
+              const path = this.path.slice(handlerKey.length);
+              const handlerResult = handler.call(this, path);
+              if (handlerResult) return handlerResult;
+            }
           }
           switch (this.path) {
             case "/api/status":
@@ -165,21 +169,29 @@ export default function ({ name, bus, port = 8080 } = {}) {
 
             default:
               if (this.method === "GET") {
-                const mayBeContentType = CONTENT_TYPES[this.path];
-                if (mayBeContentType) {
+                const resourcePath = `web${this.path}`;
+                const resourcePathGZ = `${resourcePath}.gz`;
+                const exists = Resource.exists(resourcePathGZ)
+                  ? 2
+                  : Resource.exists(resourcePath)
+                  ? 1
+                  : 0;
+                if (exists) {
                   //we have this file, serve it from resource
-                  this.data = new Resource(`web${this.path}`);
+                  this.data = new Resource(
+                    exists === 2 ? resourcePathGZ : resourcePath
+                  );
                   this.position = 0;
+                  const headers = [
+                    CONTENT_TYPE,
+                    CONTENT_TYPES[this.path] ?? TEXT_PLAIN,
+                    "Content-length",
+                    this.data.byteLength,
+                  ];
+                  if (exists === 2) headers.push("Content-encoding", "gzip");
                   return {
-                    headers: [
-                      CONTENT_TYPE,
-                      mayBeContentType,
-                      "Content-length",
-                      this.data.byteLength,
-                      //"Content-encoding",
-                      //"gzip",
-                    ],
-                    body: true,
+                    headers,
+                    body: true, //we will stream body
                   };
                 }
               }
@@ -189,13 +201,15 @@ export default function ({ name, bus, port = 8080 } = {}) {
             headers: [CONTENT_TYPE, "text/plain"],
             body: "Not found",
           };
+        }
 
-        case Server.responseFragment:
+        case Server.responseFragment: {
           if (this.position >= this.data.byteLength) return;
 
           const chunk = this.data.slice(this.position, this.position + value);
           this.position += chunk.byteLength;
           return chunk;
+        }
       }
     };
 

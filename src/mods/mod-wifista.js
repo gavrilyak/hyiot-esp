@@ -15,8 +15,10 @@ export default function modWiFi({ name, bus, ...opts }) {
     const wifi = new WiFi({ ssid, password }, function (msg, code) {
       switch (msg) {
         case WiFi.connected:
-          const ssid = Net.get("SSID");
-          bus.emit("connected", { ssid });
+          {
+            const ssid = Net.get("SSID");
+            bus.emit("connected", { ssid });
+          }
           break;
 
         case WiFi.disconnected:
@@ -27,8 +29,11 @@ export default function modWiFi({ name, bus, ...opts }) {
           break;
 
         case WiFi.gotIP:
-          const ip = Net.get("IP");
-          bus.emit("started", { ip });
+          {
+            const ip = Net.get("IP");
+            const mac = Net.get("MAC");
+            bus.emit("started", { ip, mac });
+          }
           break;
       }
     });
