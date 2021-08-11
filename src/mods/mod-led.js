@@ -1,9 +1,27 @@
-import bus from "bus";
-const Digital = device.io.Digital;
-const led = new Digital({
-  pin: 2, //device.pins.led,
-  mode: Digital.Output,
-});
+import Digital from "embedded:io/digital";
+let digital = null;
 
-led.write(0); // off
-bus.on("led_set", ({ payload }) => led.write(payload));
+export default function LED({ pin, mode = Digital.Output }) {
+  function start() {
+    if (digital) stop();
+    digital = new Digital({ pin, mode });
+    digital.write(0);
+  }
+
+  function stop() {
+    digital?.close();
+    digital = null;
+  }
+
+  const set = ({ payload }) => digital?.write(payload);
+  const on = () => set({ payload: true });
+  const off = () => set({ payload: false });
+
+  return {
+    start,
+    stop,
+    on,
+    off,
+    set,
+  };
+}

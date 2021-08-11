@@ -22,6 +22,7 @@ declare module "cli" {
     static install(
       callback: (this: CLI, command: string, params: string[]) => void
     ): void;
+    [key: string]: any
   }
   export {CLI as default};
 }

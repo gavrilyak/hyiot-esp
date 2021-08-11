@@ -49,37 +49,78 @@ trace(`ARCHIVE MODULES: ${Modules.archive}\n`);
 trace(`MOD CONFIG: ${JSON.stringify(modConfig.mods)}\n`);
 trace(`RESOURCES: ${[...Resource]}\n`);
 
+const initialConfig = {
+  telnet: {
+    port: 23,
+  },
+  led: {
+    pin: 2,
+  },
+  light: {
+    pin: 10,
+    mod: "mod-led",
+    autostart: true,
+  },
+  button: {
+    pin: 0,
+    autostart: true,
+  },
+  wifista: {
+    autostart: true,
+  },
+  mqtt: {
+    trace: false,
+  },
+  httpserver: {
+    port: 80,
+  },
+};
+
 let mods = {};
 const MOD_PREFIX = "mod-";
 
-for (const fullName of [...Modules.host, ...Modules.archive]) {
-  if (!fullName.startsWith(MOD_PREFIX)) continue;
+for (let [name, initialSettings] of Object.entries(initialConfig)) {
+  const { module, settings } = loadMod(name, initialSettings);
+  mods[name] = instantiateMod(module, settings);
+}
 
-  trace(`loading ${fullName}\n`);
-  let mod = Modules.importNow(fullName);
-  let name = fullName.slice(MOD_PREFIX.length);
-  if (typeof mod != "function") {
-    trace(`${fullName} not a module, skipping...\n`);
-    continue;
-  }
-  trace(`instantiating ${fullName}\n`);
-  //let bus = new PrefixedBus(name);
-  let bus = makePrefixedBus(name);
-  const hostOpts = "mods" in hostConfig ? hostConfig.mods[name] : {};
+function loadMod(name, settings = {}) {
+  const moduleName = settings.mod ?? MOD_PREFIX + name;
+  //trace(`imporing ${moduleName}\n`);
+  const module = Modules.importNow(moduleName);
   const modOpts = modConfig.mods[name] || {};
   const modPrefsStr = pref.get("mods", name);
-  //trace("modPrefs:", typeof modPrefsStr, String(modPrefsStr), "\n");
   const modPrefs = tryJSON(modPrefsStr) ?? {};
-  const allPrefs = { ...hostOpts, ...modOpts, ...modPrefs };
-  const modInstance = mod({ name, ...allPrefs, bus });
+  const hostOpts = "mods" in hostConfig ? hostConfig.mods[name] : {};
+  const allPrefs = { name, ...settings, ...hostOpts, ...modOpts, ...modPrefs };
+  return { module, settings: allPrefs };
+}
+
+function instantiateMod(mod, settings = {}) {
+  const { name } = settings;
+  if (typeof mod != "function") {
+    trace(`${name} not a module, skipping...\n`);
+    return;
+  }
+
+  trace(`instantiating ${name} ${JSON.stringify(settings)}\n`);
+  let bus = makePrefixedBus(name);
+  const modInstance = mod({ ...settings, bus });
   if (typeof modInstance == "object" && modInstance) {
     for (const [handlerName, f] of Object.entries(modInstance)) {
       if (typeof f !== "function") continue;
-      //trace(`installing hander for ${handlerName} of mod ${name}`);
+      trace(`installing hander for ${handlerName} of mod ${name}\n`);
       bus.on(handlerName, f);
     }
   }
-  mods[name] = modInstance;
+  return modInstance;
+}
+
+function unloadMod(name) {
+  bus.on(`${name}_stopped`, () => {
+    trace(`${name} stopped`);
+  });
+  bus.emit(`${name}_stop`, name);
 }
 
 bus.on("*", (topic, payload) =>
@@ -93,6 +134,9 @@ bus.on("*", (topic, payload) =>
 const MQTT_NS = "device1"; //moddable/mqtt/example";
 
 bus.emit("wifista_start");
+//bus.emit("button_start");
+//bus.emit("led_start");
+
 bus.on("wifista_started", () => {
   bus.emit("network_started");
 });
