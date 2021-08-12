@@ -11,7 +11,6 @@
     "$(MODDABLE)/modules/network/mqtt/manifest.json",
     "$(MODDABLE)/modules/files/preference/manifest.json",
     "$(MODDABLE)/modules/files/resourceiterator/manifest.json",
-    "$(MODDABLE)/modules/io/manifest.json",
     "$(MODDABLE)/modules/crypt/tls.json"
   ],
   "creation": {
@@ -27,8 +26,6 @@
   "modules": {
     "*": [
       "./main",
-      "./modem/*",
-      "./fctry/*",
       "$(MODULES)/base/modules/*",
       "$(MODULES)/network/http/*",
       "$(MODULES)/network/sntp/*",
@@ -75,12 +72,18 @@
   "platforms": {
     "esp32": {
       "include": [
+        "$(MODDABLE)/modules/io/manifest.json",
         "$(MODDABLE)/modules/files/file/manifest.json",
         "$(MODULES)/pins/digital/manifest.json",
         "$(MODDABLE)/modules/pins/i2c/manifest.json"
       ],
       "modules": {
-        "~": ["$(BUILD)/devices/esp32/setup/network"],
+        "~": [
+          "./native/*",
+          "./modem/*",
+          "./fctry/*",
+          "$(BUILD)/devices/esp32/setup/network"
+        ],
         "flash": ["$(MODULES)/files/flash/*", "$(MODULES)/files/flash/esp32/*"],
         "pins/digital": "$(MODULES)/pins/digital/digital",
         "pins/smbus": "$(MODULES)/pins/smbus/smbus",

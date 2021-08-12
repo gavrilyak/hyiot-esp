@@ -1,58 +1,28 @@
 import Client from "mqtt";
 import SecureSocket from "securesocket";
-import Resource from "Resource";
-//import bus from "bus";
-
-import X509 from "x509";
-import Ber from "ber";
-
-function getSubjectCommonName(cert) {
-  const { subject } = X509.decodeTBS(X509.decode(new Uint8Array(cert)).tbs);
-  let ber = new Ber(subject);
-  ber.getTag(), ber.getLength();
-  let b;
-  while ((b = ber.next()).length) {
-    let set = new Ber(b);
-    set.getTag(), set.getLength();
-
-    let seq = new Ber(set.next());
-    seq.getTag(), seq.getLength();
-    const oid = new Ber(seq.next()).getObjectIdentifier().toString();
-    if (oid === "2,5,4,3") {
-      const s = new Ber(seq.next());
-      s.getTag();
-      s.getLength();
-      const from = s.next();
-      const cn = String.fromArrayBuffer(
-        from.buffer.slice(from.byteOffset, from.byteOffset + from.length)
-      );
-      return cn;
-    }
-  }
-  return null;
-}
-
 export default function (config = {}) {
   //trace(Object.entries(config) + "\n");
-  const {
-    host = "a23tqp4io1iber-ats.iot.us-east-2.amazonaws.com",
-    port = 443,
-    applicationLayerProtocolNegotiation = ["x-amzn-mqtt-ca"],
-    certificate = new Resource("certs/aws.iot.der"),
-    clientKey = new Resource("certs/device.pk8"),
-    clientCertificates = [
-      new Resource("certs/device.der"),
-      new Resource("certs/rootCA.der"),
-    ],
-    id = getSubjectCommonName(clientCertificates[0]),
-    bus,
-  } = config;
+  const { protocol, host, port, id, bus } = config;
 
   let client = null;
 
-  const pub = ({ topic, payload }) => client?.publish(topic, payload);
-  const sub = ({ topic }) => client?.subscribe(topic);
-  const unsub = ({ topic }) => client?.unsubscribe(topic);
+  const isConnected = (client) => {
+    if (!client) return false;
+    if (client.state != 2) return false;
+    return true;
+  };
+
+  const pub = ({ topic, payload }) => {
+    if (isConnected(client)) client.publish(topic, payload);
+  };
+
+  const sub = ({ topic }) => {
+    if (isConnected(client)) client.subscribe(topic);
+  };
+  const unsub = ({ topic }) => {
+    if (isConnected(client)) client.unsubscribe(topic);
+    client.unsubscribe(topic);
+  };
 
   function onReady() {
     bus.emit("started");
@@ -80,15 +50,20 @@ export default function (config = {}) {
       host,
       id,
       port,
-      Socket: SecureSocket,
-      secure: {
-        protocolVersion: 0x0303,
-        certificate,
-        clientKey,
-        clientCertificates,
-        applicationLayerProtocolNegotiation,
-        trace: Boolean(config.trace),
-      },
+      ...(protocol === "mqtts"
+        ? {
+            Socket: SecureSocket,
+            secure: {
+              protocolVersion: 0x0303,
+              certificate: config.certificate,
+              clientKey: config.clientKey,
+              clientCertificates: config.clientCertificates,
+              applicationLayerProtocolNegotiation:
+                config.applicationLayerProtocolNegotiation,
+              trace: Boolean(config.traceSSL),
+            },
+          }
+        : {}),
     });
 
     Object.assign(client, {
@@ -98,8 +73,6 @@ export default function (config = {}) {
     });
     return client;
   }
-
-  bus.on("start", start);
 
   return {
     start,

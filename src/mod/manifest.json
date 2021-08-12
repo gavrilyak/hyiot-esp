@@ -12,21 +12,14 @@
   },
   "config": {
     "mods": {
-      "telnet": {
-        "port": 23
+      "telnet": {},
+      "led": {},
+      "button": {},
+      "wifista": {
+        "ssid": "home"
       },
-      "led": {
-        "pin": "2"
-      },
-      "button": {
-        "pin": "0"
-      },
-      "mqtt": {
-        "trace": false
-      },
-      "httpserver": {
-        "port": 80
-      }
+      "mqtt": {},
+      "httpserver": {}
     }
   }
 }

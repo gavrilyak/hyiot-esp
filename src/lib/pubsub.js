@@ -42,7 +42,13 @@ export default function PubSub() {
         if (listeners)
           for (let listener of listeners) {
             //listener(...payload);
-            Promise.resolve().then(() => listener(...payload));
+            Promise.resolve().then(() => {
+              try {
+                listener(...payload);
+              } catch (e) {
+                trace(`ERR in topic ${topic}: ${e}`);
+              }
+            });
           }
       }
       {

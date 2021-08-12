@@ -21,6 +21,18 @@ const METHOD_NOT_ALLOWED = {
   body: "Method not allowed",
 };
 
+const INVALID_REQUEST = {
+  status: 400,
+  headers: [CONTENT_TYPE, TEXT_PLAIN],
+  body: "Invalid request",
+};
+
+const INTERNAL_ERROR = {
+  status: 500,
+  headers: [CONTENT_TYPE, TEXT_PLAIN],
+  body: "Interal error",
+};
+
 const JSON_OK = {
   status: 200,
   headers: [CONTENT_TYPE, APPLICATION_JSON],
@@ -29,11 +41,21 @@ const JSON_OK = {
 
 const handlers = {
   "/api/prefs": function prefs(path) {
-    const ns = "mods";
-    if (path === "" || path == "/") {
+    const [, ns, key] = path.split("/");
+    trace(`NS ${ns}, KEY ${key}\n`);
+    if (!ns) {
       switch (this.method) {
         case "GET": {
-          const keys = pref.keys(ns);
+          //TODO - get it from modules list
+          const keys = [
+            "wifista",
+            "wifiap",
+            "mqtt",
+            "led",
+            "button",
+            "telnet",
+            "httpserver",
+          ];
           return {
             status: 200,
             headers: [CONTENT_TYPE, TEXT_PLAIN],
@@ -43,8 +65,40 @@ const handlers = {
         default:
           return METHOD_NOT_ALLOWED;
       }
+    }
+    if (!key) {
+      switch (this.method) {
+        case "GET": {
+          let result = {};
+          for (const key of pref.keys(ns)) result[key] = pref.get(ns, key);
+          return {
+            status: 200,
+            headers: [CONTENT_TYPE, TEXT_PLAIN],
+            body: JSON.stringify(result),
+          };
+        }
+        case "PUT": {
+          try {
+            const dict = JSON.parse(this.requestBody);
+            for (const [k, v] of Object.entries(dict)) {
+              pref.set(ns, k, String(v));
+            }
+            return JSON_OK;
+          } catch (e) {
+            return INVALID_REQUEST;
+          }
+        }
+        case "DELETE": {
+          const keys = pref.keys(ns);
+          for (const key of keys) {
+            pref.delete(ns, key);
+          }
+          return JSON_OK;
+        }
+        default:
+          return METHOD_NOT_ALLOWED;
+      }
     } else {
-      const key = path.slice(1);
       switch (this.method) {
         case "GET": {
           const val = pref.get(ns, key);
@@ -101,10 +155,17 @@ export default function ({ name = "httpserver", bus, port = 8080 } = {}) {
               this.path.startsWith(k)
             );
             if (handlerKey) {
-              const handler = handlers[handlerKey];
-              const path = this.path.slice(handlerKey.length);
-              const handlerResult = handler.call(this, path);
-              if (handlerResult) return handlerResult;
+              try {
+                const handler = handlers[handlerKey];
+                const path = this.path.slice(handlerKey.length);
+                const handlerResult = handler.call(this, path);
+                if (handlerResult) return handlerResult;
+              } catch (e) {
+                trace(
+                  `Error handling request ${this.method} ${this.path} ${e}\n`
+                );
+                return INTERNAL_ERROR;
+              }
             }
           }
           switch (this.path) {

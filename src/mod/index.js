@@ -23,35 +23,13 @@ import tryJSON from "tryJSON";
 import Timer from "timer";
 //import WiFi from "wifi";
 
-function makePrefixedBus(prefix) {
-  return {
-    on(topic, handler) {
-      bus.on(`${prefix}_${topic}`, handler);
-    },
-    off(topic, handler) {
-      bus.off(`${prefix}_${topic}`, handler);
-    },
-    emit(topic, ...payload) {
-      bus.emit(`${prefix}_${topic}`, ...payload);
-    },
-  };
-}
-import { print, getBuildString, getMAC } from "main";
-
-print("MOD");
-trace(`BOOTING, build: ${getBuildString()}\n`);
-trace(`MAC NET, ${Net.get("MAC")}\n`);
-trace(`MAC STA, ${getMAC("sta")}\n`);
-trace(`MAC AP, ${getMAC("ap")}\n`);
-
-trace(`HOST MODULES: ${Modules.host}\n`);
-trace(`ARCHIVE MODULES: ${Modules.archive}\n`);
-trace(`MOD CONFIG: ${JSON.stringify(modConfig.mods)}\n`);
-trace(`RESOURCES: ${[...Resource]}\n`);
-
 const initialConfig = {
+  pref: {},
   telnet: {
-    port: 23,
+    port: 8023,
+  },
+  httpserver: {
+    port: 8080,
   },
   led: {
     pin: 2,
@@ -69,28 +47,75 @@ const initialConfig = {
     autostart: true,
   },
   mqtt: {
-    trace: false,
-  },
-  httpserver: {
-    port: 80,
+    id: "device1",
+    host: "a23tqp4io1iber-ats.iot.us-east-2.amazonaws.com",
+    protocol: "mqtts",
+    port: 443,
+    certificate: new Resource("certs/aws.iot.der"),
+    clientKey: new Resource("certs/device.pk8"),
+    clientCertificates: [
+      new Resource("certs/device.der"),
+      new Resource("certs/rootCA.der"),
+    ],
+    applicationLayerProtocolNegotiation: ["x-amzn-mqtt-ca"],
+    traceSSL: true,
   },
 };
 
+function makePrefixedBus(prefix) {
+  return {
+    on(topic, handler) {
+      bus.on(`${prefix}_${topic}`, handler);
+    },
+    off(topic, handler) {
+      bus.off(`${prefix}_${topic}`, handler);
+    },
+    emit(topic, ...payload) {
+      bus.emit(`${prefix}_${topic}`, ...payload);
+    },
+  };
+}
+
+//import { getBuildString, getMAC } from "native";
+
+//trace(`BOOTING, build: ${getBuildString()}\n`);
+trace(`MAC NET, ${Net.get("MAC")}\n`);
+trace(`IP NET, ${Net.get("IP")}\n`);
+//trace(`MAC STA, ${getMAC("sta")}\n`);
+//trace(`MAC AP, ${getMAC("ap")}\n`);
+
+trace(`HOST MODULES: ${Modules.host}\n`);
+trace(`ARCHIVE MODULES: ${Modules.archive}\n`);
+trace(`MOD CONFIG: ${JSON.stringify(modConfig.mods)}\n`);
+trace(`RESOURCES: ${[...Resource]}\n`);
+
 let mods = {};
-const MOD_PREFIX = "mod-";
 
 for (let [name, initialSettings] of Object.entries(initialConfig)) {
-  const { module, settings } = loadMod(name, initialSettings);
-  mods[name] = instantiateMod(module, settings);
+  try {
+    const { module, settings } = loadMod(name, initialSettings);
+    mods[name] = instantiateMod(module, settings);
+  } catch (e) {
+    trace(`Module ${name} not loaded, error: ${e}\n`);
+  }
+}
+
+function getModPrefs(name) {
+  const keys = pref.keys(name);
+  let result = {};
+  for (const key of keys) {
+    result[key] = tryJSON(pref.get(name, key));
+  }
+  return result;
 }
 
 function loadMod(name, settings = {}) {
+  const MOD_PREFIX = "mod-";
   const moduleName = settings.mod ?? MOD_PREFIX + name;
-  //trace(`imporing ${moduleName}\n`);
+  trace(`imporing ${moduleName}\n`);
   const module = Modules.importNow(moduleName);
   const modOpts = modConfig.mods[name] || {};
-  const modPrefsStr = pref.get("mods", name);
-  const modPrefs = tryJSON(modPrefsStr) ?? {};
+  const modPrefs = getModPrefs(name);
   const hostOpts = "mods" in hostConfig ? hostConfig.mods[name] : {};
   const allPrefs = { name, ...settings, ...hostOpts, ...modOpts, ...modPrefs };
   return { module, settings: allPrefs };
@@ -134,8 +159,8 @@ bus.on("*", (topic, payload) =>
 const MQTT_NS = "device1"; //moddable/mqtt/example";
 
 bus.emit("wifista_start");
-//bus.emit("button_start");
-//bus.emit("led_start");
+bus.emit("button_start");
+bus.emit("led_start");
 
 bus.on("wifista_started", () => {
   bus.emit("network_started");
@@ -182,6 +207,14 @@ bus.on("mqtt_message", ({ topic, payload }) => {
   if (topic === `${MQTT_NS}/led`) {
     bus.emit("led_set", { payload: JSON.parse(payload) });
   }
+});
+
+bus.on("button_pressed", () => {
+  trace.left("on");
+});
+
+bus.on("button_released", () => {
+  trace.right("off");
 });
 
 bus.on("button_changed", ({ payload }) => {
