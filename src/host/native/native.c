@@ -29,9 +29,7 @@ void xs_getmac(xsMachine *the)
   esp_wifi_get_mac(xsmcToInteger(xsArgc) > 0? WIFI_IF_AP : WIFI_IF_STA, xsmcToArrayBuffer(xsResult));
 }
 
-void do_restart(xsMachine *the)
+void xs_do_restart(xsMachine *the)
 {
 	esp_restart();
 }
-
-void modem(xsMachine *the) { pppos_client_main(); }

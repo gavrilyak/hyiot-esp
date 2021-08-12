@@ -4,15 +4,16 @@ import WiFi from "wificonnection";
 import Net from "net";
 
 export default function modWiFi({ name, bus, ...opts }) {
-  function connectToWiFi() {
-    const { ssid, password } = opts;
+  let wifi;
 
+  function start() {
+    const { ssid, password } = opts;
     if (!ssid) {
       bus.emit("unfconfigured");
       return;
     }
 
-    const wifi = new WiFi({ ssid, password }, function (msg, code) {
+    wifi = new WiFi({ ssid, password }, function (msg, code) {
       switch (msg) {
         case WiFi.connected:
           {
@@ -25,7 +26,10 @@ export default function modWiFi({ name, bus, ...opts }) {
           trace(
             code === -1 ? "Wi-Fi password rejected\n" : "Wi-Fi disconnected\n"
           );
-          bus.emit("disconnected");
+          if (code === -1) {
+            stop();
+            bus.emit("unfconfigured");
+          } else bus.emit("disconnected");
           break;
 
         case WiFi.gotIP:
@@ -41,5 +45,14 @@ export default function modWiFi({ name, bus, ...opts }) {
     return wifi;
   }
 
-  bus.on("start", connectToWiFi);
+  function stop() {
+    if (wifi) {
+      wifi.close();
+    }
+    bus.emit("stopped");
+  }
+  return {
+    start,
+    stop,
+  };
 }

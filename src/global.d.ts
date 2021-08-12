@@ -70,3 +70,12 @@ declare module "mod/config" {
   var Config: Record<string, any>;
   export {Config as default};
 }
+
+declare module "native" {
+  function restart():void;
+  function getMAC(staOrAP:string):string;
+  export {
+    restart,
+    getMAC
+  }
+}

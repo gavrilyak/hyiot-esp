@@ -109,7 +109,7 @@ const handlers = {
           };
         }
         case "PUT":
-          pref.set(ns, key, this.requestBody);
+          pref.set(ns, key, String(this.requestBody));
           return JSON_OK;
         case "DELETE":
           pref.delete(ns, key);

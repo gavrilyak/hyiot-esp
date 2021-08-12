@@ -1,6 +1,7 @@
 import Net from "net";
 import WiFi from "wifi";
-import { getMAC } from "main";
+import { getMAC } from "native";
+
 export default function ({ bus }) {
   const ssid = "PROV_" + String(getMAC("sta")).slice(-8).replaceAll(":", "");
   function start() {

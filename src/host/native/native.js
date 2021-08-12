@@ -1,7 +1,5 @@
-export function restart() @ "do_restart";
+export function restart() @ "xs_do_restart";
 export function getBuildString	() @ "xs_getbuildstring";
-export function modem	() @ "modem";
-
 function getMacBin() @ "xs_getmac";
 
 export function getMAC(staOrApString = "sta") {

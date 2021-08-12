@@ -55,9 +55,11 @@ export default function ({ name = "telnet", bus, port = 2300 } = {}) {
 
   function stop() {
     trace(`${name} stopping\n`);
-    server.close();
-    server = null;
-    bus.emit("stopped");
+    if (server) {
+      server.close();
+      server = null;
+      bus.emit("stopped");
+    }
   }
 
   return Object.freeze({

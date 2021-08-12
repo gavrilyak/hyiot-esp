@@ -17,6 +17,10 @@
 #include "sim800.h"
 #include "bg96.h"
 #include "mc.defines.h"
+#include "xs.h"
+#include "xsmc.h"
+#include "xsHost.h"
+
 
 static const char *TAG = "pppos_example";
 static EventGroupHandle_t event_group = NULL;
@@ -176,3 +180,10 @@ void pppos_client_main(void)
     ESP_ERROR_CHECK(dce->deinit(dce));
     ESP_ERROR_CHECK(dte->deinit(dte));
 }
+
+void xs_modem(xsMachine *the){
+  pppos_client_main();
+}
+
+
+

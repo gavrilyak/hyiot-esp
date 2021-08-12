@@ -21,7 +21,7 @@ import Resource from "Resource";
 import Net from "net";
 import tryJSON from "tryJSON";
 import Timer from "timer";
-//import WiFi from "wifi";
+import WiFi from "wifi";
 
 const initialConfig = {
   pref: {},
@@ -46,6 +46,7 @@ const initialConfig = {
   wifista: {
     autostart: true,
   },
+  wifiap: {},
   mqtt: {
     id: "device1",
     host: "a23tqp4io1iber-ats.iot.us-east-2.amazonaws.com",
@@ -78,6 +79,7 @@ function makePrefixedBus(prefix) {
 
 //import { getBuildString, getMAC } from "native";
 
+//WiFi.mode = 1;
 //trace(`BOOTING, build: ${getBuildString()}\n`);
 trace(`MAC NET, ${Net.get("MAC")}\n`);
 trace(`IP NET, ${Net.get("IP")}\n`);
