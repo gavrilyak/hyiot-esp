@@ -1,0 +1,24 @@
+{
+  "modules": {
+    "commodetto/Bitmap": "$(COMMODETTO)/commodettoBitmap",
+    "commodetto/Poco": "$(COMMODETTO)/commodettoPoco",
+    "commodetto/*": "$(COMMODETTO)/commodettoPocoBlit",
+    "commodetto/cfe": "$(COMMODETTO)/cfeBMF",
+    "commodetto/parseBMP": "$(COMMODETTO)/commodettoParseBMP",
+    "commodetto/parseRLE": "$(COMMODETTO)/commodettoParseRLE",
+    "piu/*": "$(PIU)/All/piu*",
+    "piu/CombTransition": "$(PIU)/MC/piuCombTransition",
+    "piu/MC": "$(PIU)/MC/piuMC",
+    "piu/WipeTransition": "$(PIU)/MC/piuWipeTransition",
+    "*": [
+      "$(PIU)/MC/piuDie",
+      "$(PIU)/MC/piuFont",
+      "$(PIU)/MC/piuImage",
+      "$(PIU)/MC/piuRegion",
+      "$(PIU)/MC/piuTexture",
+      "$(PIU)/MC/piuView"
+    ]
+  },
+  "preload": ["commodetto/*", "piu/*"],
+  "platforms": {}
+}

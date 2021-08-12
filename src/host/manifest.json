@@ -5,6 +5,7 @@
     "NAME": "hydrolec-host"
   },
   "include": [
+    "./manifest_piu.json",
     "$(MODDABLE)/examples/manifest_base.json",
     "$(MODDABLE)/examples/manifest_net.json",
     "$(MODDABLE)/modules/network/mdns/manifest.json",
@@ -39,6 +40,12 @@
     "cli": "$(MODULES)/base/cli/cli",
     "dns/server": "$(MODULES)/network/dns/dnsserver"
   },
+  "resources": {
+    "*-alpha": [
+      "../../assets/OpenSans-Regular-24",
+      "../../assets/OpenSans-Semibold-16"
+    ]
+  },
   "preload": [
     "http",
     "sntp",
@@ -72,10 +79,11 @@
   "platforms": {
     "esp32": {
       "include": [
-        "$(MODDABLE)/modules/io/manifest.json",
-        "$(MODDABLE)/modules/files/file/manifest.json",
+        "$(MODULES)/io/manifest.json",
+        "$(MODULES)/files/file/manifest.json",
         "$(MODULES)/pins/digital/manifest.json",
-        "$(MODDABLE)/modules/pins/i2c/manifest.json"
+        "$(MODULES)/pins/i2c/manifest.json",
+        "$(MODULES)/drivers/ili9341/manifest.json"
       ],
       "modules": {
         "~": ["$(BUILD)/devices/esp32/setup/network"],

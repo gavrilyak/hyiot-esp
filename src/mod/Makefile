@@ -1,4 +1,6 @@
-all:
+all: mod
+
+mod:
 	mcrun -d -m -p esp32
 
 sim:

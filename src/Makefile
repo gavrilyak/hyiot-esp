@@ -1,11 +1,8 @@
 
-SUBDIRS := src/host src/mod
+SUBDIRS := host mod
 all: $(SUBDIRS)
 
 sim: $(SUBDIRS)
-
-mod:
-	$(MAKE) -C src/mod
 
 $(SUBDIRS):
 	$(MAKE) -C $@ $(MAKECMDGOALS)

@@ -61,6 +61,7 @@ const initialConfig = {
     applicationLayerProtocolNegotiation: ["x-amzn-mqtt-ca"],
     traceSSL: true,
   },
+  gui: {},
 };
 
 function makePrefixedBus(prefix) {
@@ -106,7 +107,7 @@ function getModPrefs(name) {
   const keys = pref.keys(name);
   let result = {};
   for (const key of keys) {
-    result[key] = tryJSON(pref.get(name, key));
+    result[key] = pref.get(name, key);
   }
   return result;
 }
@@ -163,6 +164,7 @@ const MQTT_NS = "device1"; //moddable/mqtt/example";
 bus.emit("wifista_start");
 bus.emit("button_start");
 bus.emit("led_start");
+bus.emit("gui_start");
 
 bus.on("wifista_started", () => {
   bus.emit("network_started");
@@ -208,6 +210,9 @@ bus.on("mqtt_started", () => {
 bus.on("mqtt_message", ({ topic, payload }) => {
   if (topic === `${MQTT_NS}/led`) {
     bus.emit("led_set", { payload: JSON.parse(payload) });
+  }
+  if (topic === `${MQTT_NS}/kb`) {
+    bus.emit("gui_kb", payload);
   }
 });
 

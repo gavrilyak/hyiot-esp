@@ -15,7 +15,7 @@
     "noImplicitAny": false,
     "strict": true,
     "strictBindCallApply": true,
-    "lib": ["ES2020"],
+    "lib": ["ES2021"],
     "moduleResolution": "classic",
     "paths": {
       "embedded:io/digital": ["./moddable/modules/io/digital/digital"],

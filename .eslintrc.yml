@@ -5,8 +5,26 @@ env:
   jest: false
   node: false
 globals:
+  globalThis: true
   trace: true
   device: true
+  Skin: true
+  Texture: true
+  Style: true
+  Behavior: true
+  Content: true
+  Container: true
+  Application: true
+  Scroller: true
+  Row: true
+  Column: true
+  Layout: true
+  Die: true
+  Port: true
+  Label: true
+  Transition: true
+  Text: true
+  Timeline: true
 extends: "eslint:recommended"
 parserOptions:
   ecmaVersion: 2020
