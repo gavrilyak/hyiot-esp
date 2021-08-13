@@ -6,7 +6,6 @@ const kbMap = {
   "\u001b[C": "right",
   "\u001b[D": "left",
 };
-
 const textStyle = new Style({
   font: "OpenSans-Semibold-16",
   color: "black",
@@ -28,11 +27,8 @@ class AppBehavior extends Behavior {
 }
 
 export default function ({ bus }) {
+  //if (globalThis.screen == null) throw Error("No screen");
   function start() {
-    if (!globalThis.pixelsOut) {
-      bus.emit("no_screen");
-      return;
-    }
     new Application(null, {
       displayListLength: 5632,
       commandListLength: 3072,

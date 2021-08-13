@@ -6,16 +6,20 @@ CLI.install(function (command, opts) {
   switch (command) {
     case "pref":
       {
-        const subcommand = opts.shift();
+        const [subcommand, ns, key, val] = opts;
         switch (subcommand) {
           case "ls":
-            if (opts.length == 1) {
-              this.line(pref.keys(...opts).join(" "));
+            if (opts.length == 2) {
+              this.line(pref.keys(ns).join(" "));
             }
             break;
           case "get":
-            if (opts.length == 2) {
-              let val = pref.get(...opts);
+            if (!key) {
+              let res = {};
+              for (const k of pref.keys(ns)) res[k] = pref.get(ns, k);
+              this.line(JSON.stringify(res, null, 2));
+            } else {
+              let val = pref.get(ns, key);
               let type = typeof val;
               this.line(`Type is ${type}`);
               switch (type) {
@@ -23,7 +27,7 @@ CLI.install(function (command, opts) {
                 case "number":
                 case "string":
                 case "object": //buffer
-                  this.line(val);
+                  this.line(String(val));
                   break;
                 case "undefined":
                   //nothing
@@ -35,13 +39,13 @@ CLI.install(function (command, opts) {
             }
             break;
           case "set":
-            if (opts.length == 3) {
-              pref.set(...opts);
+            if (opts.length == 4) {
+              pref.set(ns, key, val);
             }
             break;
           case "rm":
-            if (opts.length == 2) {
-              pref.delete(...opts);
+            if (opts.length == 3) {
+              pref.delete(ns, key);
             }
             break;
 

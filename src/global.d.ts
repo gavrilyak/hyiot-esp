@@ -1,7 +1,7 @@
 /**
  * moddable added
  */
-declare function trace(...args: string[]): void; 
+declare function trace(...args: any[]): void; 
 interface StringConstructor {
   /**
    * moddable added
@@ -71,11 +71,18 @@ declare module "mod/config" {
   export {Config as default};
 }
 
-declare module "native" {
-  function restart():void;
-  function getMAC(staOrAP:string):string;
-  export {
-    restart,
-    getMAC
+declare module "esp32" {
+  export function restart():void;
+  export function getBuildString():string;
+  export function getMAC(staOrAP:string):string;
+}
+
+declare module "esp32/ota" {
+  class OTA {
+    constructor();
+    write(data: ArrayBuffer):void;
+    cancel():void;
+    complete():void;
   }
+  export {OTA as default}
 }

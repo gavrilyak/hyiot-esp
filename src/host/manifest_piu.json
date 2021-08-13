@@ -20,5 +20,12 @@
     ]
   },
   "preload": ["commodetto/*", "piu/*"],
-  "platforms": {}
+  "platforms": {
+    "esp32": {
+      "modules": {
+        "setup/piu": "$(BUILD)/devices/esp32/setup/piu"
+      },
+      "preload": "setup/piu"
+    }
+  }
 }

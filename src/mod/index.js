@@ -19,11 +19,12 @@ import modConfig from "mod/config";
 import pref from "preference";
 import Resource from "Resource";
 import Net from "net";
-import tryJSON from "tryJSON";
 import Timer from "timer";
+import { getBuildString, restart } from "esp32";
 import WiFi from "wifi";
 
 const initialConfig = {
+  measure: {},
   pref: {},
   telnet: {
     port: 8023,
@@ -47,6 +48,7 @@ const initialConfig = {
     autostart: true,
   },
   wifiap: {},
+  sntp: {},
   mqtt: {
     id: "device1",
     host: "a23tqp4io1iber-ats.iot.us-east-2.amazonaws.com",
@@ -59,9 +61,12 @@ const initialConfig = {
       new Resource("certs/rootCA.der"),
     ],
     applicationLayerProtocolNegotiation: ["x-amzn-mqtt-ca"],
-    traceSSL: true,
+    //traceSSL: true,
   },
-  gui: {},
+  ota: {
+    url: "http://192.168.0.116:5000/hydrolec-host/xs_esp32.bin",
+  },
+  //gui: {},
 };
 
 function makePrefixedBus(prefix) {
@@ -81,7 +86,8 @@ function makePrefixedBus(prefix) {
 //import { getBuildString, getMAC } from "native";
 
 //WiFi.mode = 1;
-//trace(`BOOTING, build: ${getBuildString()}\n`);
+trace("BOOTING, build: ", getBuildString(), "\n");
+trace("FW_VERSION:", globalThis.FW_VERSION, "\n");
 trace(`MAC NET, ${Net.get("MAC")}\n`);
 trace(`IP NET, ${Net.get("IP")}\n`);
 //trace(`MAC STA, ${getMAC("sta")}\n`);
@@ -124,20 +130,19 @@ function loadMod(name, settings = {}) {
   return { module, settings: allPrefs };
 }
 
-function instantiateMod(mod, settings = {}) {
+function instantiateMod(Mod, settings = {}) {
   const { name } = settings;
-  if (typeof mod != "function") {
+  if (typeof Mod != "function") {
     trace(`${name} not a module, skipping...\n`);
     return;
   }
 
   trace(`instantiating ${name} ${JSON.stringify(settings)}\n`);
   let bus = makePrefixedBus(name);
-  const modInstance = mod({ ...settings, bus });
+  const modInstance = new Mod({ ...settings, bus });
   if (typeof modInstance == "object" && modInstance) {
     for (const [handlerName, f] of Object.entries(modInstance)) {
       if (typeof f !== "function") continue;
-      trace(`installing hander for ${handlerName} of mod ${name}\n`);
       bus.on(handlerName, f);
     }
   }
@@ -151,20 +156,21 @@ function unloadMod(name) {
   bus.emit(`${name}_stop`, name);
 }
 
-bus.on("*", (topic, payload) =>
+bus.on("*", (topic, payload) => {
   trace(
     `BUS ${new Date().toISOString()} ${topic} ${
       payload ? JSON.stringify(payload) : ""
     }\n`
-  )
-);
+  );
+});
 
 const MQTT_NS = "device1"; //moddable/mqtt/example";
 
-bus.emit("wifista_start");
-bus.emit("button_start");
-bus.emit("led_start");
-bus.emit("gui_start");
+Timer.set(() => {
+  bus.emit("wifista_start");
+  //bus.emit("button_start");
+  //bus.emit("led_start");
+});
 
 bus.on("wifista_started", () => {
   bus.emit("network_started");
@@ -175,8 +181,8 @@ bus.on("wifista_disconnected", () => {
 });
 
 bus.on("wifiap_started", () => {
-  mods["telnet"].start();
-  mods["httpserver"].start();
+  bus.emit("telnet_start");
+  bus.emit("httpserver_start");
 });
 
 bus.on("wifista_unfconfigured", () => {
@@ -184,11 +190,15 @@ bus.on("wifista_unfconfigured", () => {
 });
 
 bus.on("network_started", () => {
-  bus.emit("mqtt_start");
-  //Net.resolve("www.google.com", (m, v) => trace("RESOLVED", m, v, "\n"));
-  //mods["telnet"].start();
-  bus.emit("telnet_start");
-  bus.emit("httpserver_start");
+  bus.emit("sntp_start");
+  bus.on("sntp_started", () => {
+    bus.emit("mqtt_start");
+    bus.emit("telnet_start");
+    bus.emit("httpserver_start");
+  });
+  bus.on("sntp_error", () => {
+    //TODO: restart wifi?
+  });
 });
 
 bus.on("network_stopped", () => {
@@ -198,13 +208,24 @@ bus.on("network_stopped", () => {
 });
 
 bus.on("mqtt_started", () => {
-  bus.emit("mqtt_sub", { topic: `${MQTT_NS}/#` });
+  bus.emit("mqtt_sub", { topic: `${MQTT_NS}/hello` });
+  bus.emit("mqtt_sub", { topic: `${MQTT_NS}/led` });
+  bus.emit("mqtt_sub", { topic: `${MQTT_NS}/kb` });
+  //bus.emit("mqtt_sub", { topic: `${MQTT_NS}/bus` });
   Timer.set(() => {
     bus.emit("mqtt_pub", {
       topic: `${MQTT_NS}/hello`,
       payload: "world",
     });
   }, 100);
+
+  // bus.on("*", (topic, payload) => {
+  //   if (topic.startsWith("mqtt_")) return;
+  //   mods["mqtt"].pub({
+  //     topic: `${MQTT_NS}/bus`,
+  //     payload: JSON.stringify({ topic, payload }),
+  //   });
+  // });
 });
 
 bus.on("mqtt_message", ({ topic, payload }) => {
@@ -230,4 +251,9 @@ bus.on("button_changed", ({ payload }) => {
     payload: String(payload),
   });
   bus.emit("led_set", { payload: !payload });
+});
+
+bus.on("ota_finished", () => {
+  trace("Restarting with new version\n");
+  restart();
 });

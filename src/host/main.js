@@ -13,6 +13,11 @@
  */
 
 import Modules from "modules";
+import bus from "bus";
+
+const FW_VERSION = "0.0.5";
+globalThis.FW_VERSION = FW_VERSION;
+
 //import WiFi from "wifi";
 //WiFi.mode = 0;
 /*
@@ -26,19 +31,14 @@ let serial = new device.io.Serial({
   },
 });
 */
-export function print(msg) {
-  trace(msg);
-  //serial.write(ArrayBuffer.fromString(msg));
-}
-
 export default function () {
-  print("HOST\n");
+  trace("HOST: ver.", FW_VERSION, "\n");
   if (!Modules.has("check") || !Modules.has("mod")) {
-    print("WAITING FOR MOD\r\n");
+    trace("WAITING FOR MOD\r\n");
     trace("Host installed. Ready for mods.\n");
     return;
   }
-  print("IMPORTING MOD\r\n");
+  trace("IMPORTING MOD\r\n");
   Modules.importNow("check")();
   Modules.importNow("mod");
   //Promise.resolve().then(()=> Modules.importNow("mod"));
