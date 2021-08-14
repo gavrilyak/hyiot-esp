@@ -22,7 +22,7 @@ import Net from "net";
 import Timer from "timer";
 import { getBuildString, restart } from "esp32";
 import WiFi from "wifi";
-
+import Flash from "flash";
 const initialConfig = {
   measure: {},
   pref: {},
@@ -32,6 +32,7 @@ const initialConfig = {
   httpserver: {
     port: 8080,
   },
+  otaserver: {},
   led: {
     pin: 2,
   },
@@ -84,6 +85,14 @@ function makePrefixedBus(prefix) {
 }
 
 //import { getBuildString, getMAC } from "native";
+
+import getFileFromArchive from "getFileFromArchive";
+
+let fctryPartition = new Flash("fctry");
+//let buff = new Resource("web/hello.arr");
+let buff = fctryPartition.map();
+
+trace(getFileFromArchive(new Uint8Array(buff), "hello.js"), "\n");
 
 //WiFi.mode = 1;
 trace("BOOTING, build: ", getBuildString(), "\n");
@@ -183,6 +192,7 @@ bus.on("wifista_disconnected", () => {
 bus.on("wifiap_started", () => {
   bus.emit("telnet_start");
   bus.emit("httpserver_start");
+  bus.emit("otaserver_start");
 });
 
 bus.on("wifista_unfconfigured", () => {
@@ -191,10 +201,12 @@ bus.on("wifista_unfconfigured", () => {
 
 bus.on("network_started", () => {
   bus.emit("sntp_start");
+  bus.emit("otaserver_start");
+  bus.emit("telnet_start");
+  bus.emit("httpserver_start");
+
   bus.on("sntp_started", () => {
     bus.emit("mqtt_start");
-    bus.emit("telnet_start");
-    bus.emit("httpserver_start");
   });
   bus.on("sntp_error", () => {
     //TODO: restart wifi?
@@ -205,6 +217,7 @@ bus.on("network_stopped", () => {
   bus.emit("mqtt_stop");
   bus.emit("telnet_stop");
   bus.emit("httpserver_stop");
+  bus.emit("otaserver_stop");
 });
 
 bus.on("mqtt_started", () => {

@@ -1,10 +1,15 @@
 PLATFORM?=esp32
-build:
-	mcconfig -d -m -p $(PLATFORM) -t build
-host:
-	mcconfig -d -m -p $(PLATFORM)
 
 all: host
+
+host:  build deploy
+
+build:
+	mcconfig -d -m -p $(PLATFORM) -t build
+
+deploy: 
+	mcconfig -d -m -p $(PLATFORM) -t deploy
+
 
 
 sim:
@@ -13,4 +18,6 @@ sim:
 
 clean:
 	mcconfig -d -m -p $(PLATFORM) -t clean
+
+.PHONY: build deploy host all sim clean
 

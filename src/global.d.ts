@@ -16,6 +16,16 @@ interface ArrayBufferConstructor {
     fromString(str: String): ArrayBuffer;
 }
 
+
+interface ObjectConstructor {
+  /**
+   * Moddable added
+   */
+    freeze<T>(a: T[], deep: boolean): readonly T[];
+    freeze<T extends Function>(f: T, deep: boolean): T;
+    freeze<T>(o: T, deep: boolean): Readonly<T>;
+}
+
 declare module "cli" {
   class CLI {
     line(str: string): void;
