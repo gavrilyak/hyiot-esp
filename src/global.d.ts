@@ -81,6 +81,15 @@ declare module "mod/config" {
   export {Config as default};
 }
 
+declare module "modules" {
+  class Modules {
+    static host: string[];
+    static archive: string[];
+    static importNow(name:string):any;
+  }
+  export {Modules as default}
+}
+
 declare module "esp32" {
   export function restart():void;
   export function getBuildString():string;

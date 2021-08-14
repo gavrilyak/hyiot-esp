@@ -87,7 +87,6 @@
         "~": ["$(BUILD)/devices/esp32/setup/network"],
         "esp32": ["./native/*"],
         "modem": ["./modem/*"],
-        "fctry": ["./fctry/*"],
         "flash": ["$(MODULES)/files/flash/*", "$(MODULES)/files/flash/esp32/*"],
         "pins/digital": "$(MODULES)/pins/digital/digital",
         "pins/smbus": "$(MODULES)/pins/smbus/smbus",

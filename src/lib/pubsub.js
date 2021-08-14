@@ -4,7 +4,8 @@ import Timer from "timer";
  * @param {any} payload
  */
 class PubSub {
-  constructor() {
+  constructor(prefix) {
+    this.prefix = prefix;
     this.channels = new Map();
   }
   /**

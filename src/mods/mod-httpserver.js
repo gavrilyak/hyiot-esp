@@ -5,15 +5,13 @@ import otaHandler from "http-api-ota";
 import prefsHandler from "http-api-prefs";
 import staticHandler from "http-static";
 
-const HANDLERS = [
-  prefsHandler("/api/prefs"),
-  otaHandler("/api/ota"),
-  staticHandler(),
-];
-
 export default function ({ name = "httpserver", bus, port = 8080 } = {}) {
   let server = null;
-
+  const HANDLERS = [
+    prefsHandler("/api/prefs"),
+    otaHandler("/api/ota"),
+    staticHandler(),
+  ];
   function start() {
     server = new Server({
       port,
@@ -23,6 +21,7 @@ export default function ({ name = "httpserver", bus, port = 8080 } = {}) {
       if (this.thisHandler) return this.thisHandler(message, path, method);
       if (message === Server.status) {
         bus.emit("log", { method, path });
+        //try to find a real handler, it will return true
         for (const handler of HANDLERS) {
           let res = handler.call(this, message, path, method);
           if (res) {
