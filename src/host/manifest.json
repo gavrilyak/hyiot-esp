@@ -12,13 +12,14 @@
     "$(MODDABLE)/modules/files/preference/manifest.json",
     "$(MODDABLE)/modules/files/resourceiterator/manifest.json",
     "$(MODDABLE)/modules/crypt/tls.json",
+    "./manifest_piu.json",
     "$(MODDABLE)/modules/base/instrumentation/manifest.json"
   ],
   "creation": {
     "stack": 512,
     "static": 131072,
     "keys": {
-      "available": 256
+      "available": 300
     }
   },
   "defines": {
@@ -27,7 +28,6 @@
   "modules": {
     "*": [
       "./main",
-      "../lib/*",
       "$(MODULES)/base/modules/*",
       "$(MODULES)/network/http/*",
       "$(MODULES)/network/sntp/*",
@@ -40,7 +40,6 @@
       "$(MODULES)/base/debug/*"
     ],
     "cli": "$(MODULES)/base/cli/cli",
-    "esp32/ota": "$(BUILD)/devices/esp32/modules/ota/*",
     "dns/server": "$(MODULES)/network/dns/dnsserver"
   },
   "resources": {
@@ -76,6 +75,11 @@
     }
   },
   "platforms": {
+    "lin": {
+      "data": {
+        "*": ["../../certs/*"]
+      }
+    },
     "esp32": {
       "include": [
         "$(MODULES)/io/manifest.json",
@@ -86,6 +90,7 @@
       "modules": {
         "~": ["$(BUILD)/devices/esp32/setup/network"],
         "esp32": ["./native/*"],
+        "esp32/ota": "$(BUILD)/devices/esp32/modules/ota/*",
         "modem": ["./modem/*"],
         "flash": ["$(MODULES)/files/flash/*", "$(MODULES)/files/flash/esp32/*"],
         "pins/digital": "$(MODULES)/pins/digital/digital",

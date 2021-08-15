@@ -1,17 +1,16 @@
 import { Server } from "http";
 import Net from "net";
-
-import otaHandler from "http-api-ota";
-import prefsHandler from "http-api-prefs";
-import staticHandler from "http-static";
+import Modules from "modules";
 
 export default function ({ name = "httpserver", bus, port = 8080 } = {}) {
   let server = null;
   const HANDLERS = [
-    prefsHandler("/api/prefs"),
-    otaHandler("/api/ota"),
-    staticHandler(),
-  ];
+    Modules.importNow("http-api-prefs")("/api/prefs"),
+    Modules.has("esp32/ota")
+      ? Modules.importNow("http-api-ota")("/api/ota")
+      : null,
+    Modules.importNow("http-static")("/"),
+  ].filter(Boolean);
   function start() {
     server = new Server({
       port,

@@ -18,7 +18,7 @@ import Resource from "Resource";
 import Fctry from "Factory";
 import Net from "net";
 import Timer from "timer";
-import { getBuildString, restart } from "esp32";
+//import { getBuildString, restart } from "esp32";
 import { loadAndInstantiate } from "modLoader";
 import { measure } from "profiler";
 import getCertSubject from "getCertSubject";
@@ -66,13 +66,11 @@ const initialConfig = {
   ota: {
     url: "http://192.168.0.116:5000/hydrolec-host/xs_esp32.bin",
   },
-  //gui: {},
+  gui: {},
 };
 
-//import { getBuildString, getMAC } from "native";
-
 //WiFi.mode = 1;
-trace("BOOTING, build: ", getBuildString(), "\n");
+//trace("BOOTING, build: ", getBuildString(), "\n");
 trace("FW_VERSION:", globalThis.FW_VERSION, "\n");
 trace(`MAC NET, ${Net.get("MAC")}\n`);
 trace(`IP NET, ${Net.get("IP")}\n`);
@@ -82,6 +80,14 @@ trace(`IP NET, ${Net.get("IP")}\n`);
 trace(`HOST MODULES: ${Modules.host}\n`);
 trace(`ARCHIVE MODULES: ${Modules.archive}\n`);
 trace(`RESOURCES: ${[...Resource]}\n`);
+
+bus.on("*", (topic, payload) => {
+  trace(
+    `BUS ${new Date().toISOString()} ${topic} ${
+      payload ? JSON.stringify(payload) : ""
+    }\n`
+  );
+});
 
 let mods = {};
 
@@ -93,20 +99,13 @@ for (let [name, initialSettings] of Object.entries(initialConfig)) {
   }
 }
 
-bus.on("*", (topic, payload) => {
-  trace(
-    `BUS ${new Date().toISOString()} ${topic} ${
-      payload ? JSON.stringify(payload) : ""
-    }\n`
-  );
-});
-
 const MQTT_NS = deviceId;
 
 Timer.set(() => {
   bus.emit("button/start");
   bus.emit("led/start");
   bus.emit("wifista/start");
+  bus.emit("gui/start");
 });
 
 bus.on("wifista/started", () => {

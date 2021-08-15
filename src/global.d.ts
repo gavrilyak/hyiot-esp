@@ -83,6 +83,7 @@ declare module "mod/config" {
 
 declare module "modules" {
   class Modules {
+    static has(name: string): boolean;
     static host: string[];
     static archive: string[];
     static importNow(name:string):any;

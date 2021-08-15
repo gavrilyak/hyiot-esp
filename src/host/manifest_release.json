@@ -1,0 +1,10 @@
+{
+  "include": ["./manifest.json"],
+  "modules": {
+    "mod": ["./../mod/index"],
+    "*": ["../mods/*", "../lib/*"]
+  },
+  "data": {
+    "*": ["../../web/*"]
+  }
+}

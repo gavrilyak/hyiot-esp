@@ -14,7 +14,7 @@ const CONTENT_TYPES = {
   "/favicon.ico": "image/vnd.microsoft.icon",
 };
 
-export default function () {
+export default function (PREFIX = "/") {
   /**
    * @type import("http").HTTPServerCallback
    */
@@ -36,8 +36,8 @@ export default function () {
         break;
 
       case Server.prepareResponse:
-        if (this.method === "GET") {
-          const resourcePath = `web${this.path}`;
+        if (this.method === "GET" && this.path in CONTENT_TYPES) {
+          const resourcePath = this.path.slice(1);
           const resourcePathGZ = `${resourcePath}.gz`;
           const exists = Resource.exists(resourcePathGZ)
             ? 2
