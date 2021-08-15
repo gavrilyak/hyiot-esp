@@ -18,7 +18,7 @@ import Resource from "Resource";
 import Fctry from "Factory";
 import Net from "net";
 import Timer from "timer";
-import { getBuildString, restart } from "esp32";
+//import { getBuildString, restart } from "esp32";
 import { loadAndInstantiate } from "modLoader";
 import { measure } from "profiler";
 import getCertSubject from "getCertSubject";
@@ -69,10 +69,8 @@ const initialConfig = {
   //gui: {},
 };
 
-//import { getBuildString, getMAC } from "native";
-
 //WiFi.mode = 1;
-trace("BOOTING, build: ", getBuildString(), "\n");
+//trace("BOOTING, build: ", getBuildString(), "\n");
 trace("FW_VERSION:", globalThis.FW_VERSION, "\n");
 trace(`MAC NET, ${Net.get("MAC")}\n`);
 trace(`IP NET, ${Net.get("IP")}\n`);

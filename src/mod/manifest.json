@@ -7,19 +7,13 @@
     "*": ["../mods/*", "../lib/*"]
   },
   "data": {
-    "*": ["../../certs/*"],
-    "web/*": ["../../web/*"]
+    "*": ["../../web/*"]
   },
   "config": {
     "mods": {
-      "telnet": {},
-      "led": {},
-      "button": {},
       "wifista": {
         "ssid": "home"
-      },
-      "mqtt": {},
-      "httpserver": {}
+      }
     }
   }
 }

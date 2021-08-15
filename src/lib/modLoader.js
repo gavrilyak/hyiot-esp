@@ -1,9 +1,18 @@
 import bus from "bus";
 import hostConfig from "mc/config";
 import pref from "preference";
-import modConfig from "mod/config";
 import Modules from "modules";
 import { measure } from "profiler";
+
+let modConfig = {
+  mods: {},
+};
+try {
+  let modConfigLoaded = Modules.importNow("mod/config");
+  modConfig = modConfigLoaded;
+} catch (e) {
+  //silence for release build
+}
 
 import PubSub from "pubsub";
 function makePrefixedBus1(prefix) {
@@ -19,6 +28,7 @@ function makePrefixedBus1(prefix) {
     },
   };
 }
+
 function makePrefixedBus(prefix) {
   return new PubSub(prefix);
 }

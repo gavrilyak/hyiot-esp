@@ -10,7 +10,11 @@ build:
 deploy: 
 	mcconfig -d -m -p $(PLATFORM) -t deploy
 
+instrumented:
+	mcconfig -i -m -p esp32  manifest_release.json 
 
+release:
+	mcconfig -m -p esp32  manifest_release.json 
 
 sim:
 	-killall simulator
@@ -18,6 +22,8 @@ sim:
 
 clean:
 	mcconfig -d -m -p $(PLATFORM) -t clean
+
+
 
 .PHONY: build deploy host all sim clean
 

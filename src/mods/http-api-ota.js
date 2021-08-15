@@ -1,16 +1,17 @@
-import OTA from "esp32/ota";
 import Net from "net";
 import { INVALID_REQUEST, JSON_OK } from "httpConsts";
 import { Server } from "http";
-import * as esp32 from "esp32";
 import Timer from "timer";
 import Time from "time";
+
+import OTA from "esp32/ota";
+import * as esp32 from "esp32";
 
 export default function (PREFIX = "/api/ota") {
   /**
    * @type import("http").HTTPServerCallback
    */
-  return function (message, value, method) {
+  return function handler(message, value, method) {
     switch (message) {
       case Server.status:
         if (!value.startsWith(PREFIX)) return false;

@@ -13,8 +13,6 @@
  */
 
 import Modules from "modules";
-import bus from "bus";
-
 const FW_VERSION = "0.0.5";
 globalThis.FW_VERSION = FW_VERSION;
 
@@ -33,13 +31,13 @@ let serial = new device.io.Serial({
 */
 export default function () {
   trace("HOST: ver.", FW_VERSION, "\n");
-  if (!Modules.has("check") || !Modules.has("mod")) {
+  if (!Modules.has("mod")) {
     trace("WAITING FOR MOD\r\n");
     trace("Host installed. Ready for mods.\n");
     return;
   }
   trace("IMPORTING MOD\r\n");
-  Modules.importNow("check")();
+  //Modules.importNow("check")();
   Modules.importNow("mod");
   //Promise.resolve().then(()=> Modules.importNow("mod"));
 }
