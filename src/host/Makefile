@@ -5,7 +5,7 @@ all: host
 host:  build deploy
 
 build:
-	mcconfig -d -m -p $(PLATFORM) -t build
+	mcconfig -d -m -p $(PLATFORM) -t build -f gray256
 
 deploy: 
 	mcconfig -d -m -p $(PLATFORM) -t deploy
