@@ -27,7 +27,7 @@ import getBlob from "getBlob";
 let deviceId = "sim";
 
 try {
-  deviceId = getCertSubject(getBlob("fctry://l/device.der")).CN;
+  deviceId = getCertSubject(getBlob("fctry://l/device.der"))?.CN;
 } catch (e) {
   trace("No certificate found, using default deviceId");
 }
@@ -39,7 +39,7 @@ const initialConfig = {
     port: 8023,
   },
   httpserver: {
-    port: 8080,
+    port: 80,
   },
   led: {
     pin: 2,
@@ -74,7 +74,6 @@ const initialConfig = {
   gui: {},
 };
 
-//WiFi.mode = 1;
 //trace("BOOTING, build: ", getBuildString(), "\n");
 trace("FW_VERSION:", globalThis.FW_VERSION, "\n");
 trace(`MAC NET, ${Net.get("MAC")}\n`);

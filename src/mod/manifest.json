@@ -11,9 +11,9 @@
   },
   "config": {
     "mods": {
-      "wifista": {
-        "ssid": "home"
-      }
+	    "wifista": {
+	    }
+ 
     }
   }
 }
