@@ -22,9 +22,15 @@ import Timer from "timer";
 import { loadAndInstantiate } from "modLoader";
 import { measure } from "profiler";
 import getCertSubject from "getCertSubject";
+import getBlob from "getBlob";
 
-const deviceCert = Fctry("device.der");
-const deviceId = getCertSubject(deviceCert).CN;
+let deviceId = "sim";
+
+try {
+  deviceId = getCertSubject(getBlob("fctry://l/device.der")).CN;
+} catch (e) {
+  trace("No certificate found, using default deviceId");
+}
 
 const initialConfig = {
   measure: {},
@@ -57,11 +63,10 @@ const initialConfig = {
     host: "a23tqp4io1iber-ats.iot.us-east-2.amazonaws.com",
     protocol: "mqtts",
     port: 443,
-    certificate: Fctry("server.der"),
-    clientKey: Fctry("device.pk8"),
-    clientCertificates: [deviceCert, Fctry("ca.der")],
+    certificate: "fctry://l/server.der",
+    clientKey: "fctry://l/device.pk8",
+    clientCertificates: ["fctry://l/device.der", "fctry://l/ca.der"],
     applicationLayerProtocolNegotiation: ["x-amzn-mqtt-ca"],
-    //traceSSL: true,
   },
   ota: {
     url: "http://192.168.0.116:5000/hydrolec-host/xs_esp32.bin",

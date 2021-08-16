@@ -24,11 +24,14 @@ const KEYS = 16;
 function performMeasures() {
   // let proxyTarget = {}, proxyObject = {};
   let buffer = new ArrayBuffer(4);
-  // function* idMaker() {
-  //     let index = 0;
-  //     while (true)
-  //         yield index++;
-  // }
+  function* idMaker() {
+    let index = 0;
+    while (true) yield index++;
+  }
+
+  async function af() {
+    return Promise.resolve("hello");
+  }
 
   measure("Boolean", () => true);
   measure("Number", () => 1);
@@ -71,7 +74,8 @@ function performMeasures() {
       return a + b + c;
     };
   });
-  //measure("Generator",  () => idMaker());
+  measure("Generator", () => idMaker());
+  measure("Async function", () => af());
   measure("Error", () => new Error());
   measure("SyntaxError", () => new SyntaxError());
   measure("Array []", () => []);
@@ -174,6 +178,7 @@ function performMeasures() {
   }
 }
 
+performMeasures();
 CLI.install(function (command, _opts) {
   switch (command) {
     case "measure":

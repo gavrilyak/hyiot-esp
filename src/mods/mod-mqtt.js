@@ -1,3 +1,4 @@
+import getBlob from "getBlob";
 import Client from "mqtt";
 import SecureSocket from "securesocket";
 export default function (config = {}) {
@@ -55,9 +56,9 @@ export default function (config = {}) {
             Socket: SecureSocket,
             secure: {
               protocolVersion: 0x0303,
-              certificate: config.certificate,
-              clientKey: config.clientKey,
-              clientCertificates: config.clientCertificates,
+              certificate: getBlob(config.certificate),
+              clientKey: getBlob(config.clientKey),
+              clientCertificates: config.clientCertificates?.map(getBlob),
               applicationLayerProtocolNegotiation:
                 config.applicationLayerProtocolNegotiation,
               trace: Boolean(config.traceSSL),

@@ -12,7 +12,6 @@
     "$(MODDABLE)/modules/files/preference/manifest.json",
     "$(MODDABLE)/modules/files/resourceiterator/manifest.json",
     "$(MODDABLE)/modules/crypt/tls.json",
-    "./manifest_piu.json",
     "$(MODDABLE)/modules/base/instrumentation/manifest.json"
   ],
   "creation": {
@@ -60,10 +59,8 @@
     "Atomics",
     "eval",
     "Function",
-    "Generator",
     "Proxy",
     "Reflect",
-    "RegExp",
     "SharedArrayBuffer",
     "WeakMap",
     "WeakSet"
@@ -76,6 +73,7 @@
   },
   "platforms": {
     "lin": {
+      "include": ["./manifest_piu.json"],
       "data": {
         "*": ["../../certs/*"]
       }
