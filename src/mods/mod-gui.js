@@ -147,7 +147,7 @@ const logoIcon = new Content(null, {
     width: 16,
     height: 16,
   }),
-  top: 0,
+  top: 1,
   left: 1,
 });
 
