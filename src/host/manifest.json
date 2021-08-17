@@ -46,7 +46,9 @@
       "../../assets/OpenSans-Semibold-16",
       "../../assets/wifi-strip",
       "../../assets/battery",
-      "../../assets/signal"
+      "../../assets/signal",
+      "../../assets/bluetooth",
+      "../../assets/logo"
     ]
   },
   "preload": [

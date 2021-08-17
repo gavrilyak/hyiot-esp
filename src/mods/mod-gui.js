@@ -54,7 +54,7 @@ const wifiIcon = new Content(null, {
   variant: 0,
   Behavior: WifiIconBehavior,
   top: 1,
-  right: 1,
+  right: 16 + 1,
 });
 
 const batteryTexture = new Texture({
@@ -90,7 +90,7 @@ const batteryIcon = new Content(null, {
   variant: 0,
   Behavior: BatteryIconBehavior,
   top: 0,
-  right: 16,
+  right: 0,
 });
 
 const signalTexture = new Texture({
@@ -129,12 +129,36 @@ const signalIcon = new Content(null, {
   right: 32,
 });
 
+const bluetoothIcon = new Content(null, {
+  skin: new Skin({
+    color: "white",
+    texture: new Texture({ path: "bluetooth.png" }),
+    width: 16,
+    height: 16,
+  }),
+  top: 0,
+  right: 48,
+});
+
+const logoIcon = new Content(null, {
+  skin: new Skin({
+    color: "white",
+    texture: new Texture({ path: "logo.png" }),
+    width: 16,
+    height: 16,
+  }),
+  top: 0,
+  left: 1,
+});
+
 class AppBehavior extends Behavior {
   onCreate(app) {
+    app.add(logoIcon);
+    app.add(bluetoothIcon);
     app.add(wifiIcon);
-    app.add(readyText);
-    app.add(batteryIcon);
     app.add(signalIcon);
+    app.add(batteryIcon);
+    app.add(readyText);
   }
 }
 
