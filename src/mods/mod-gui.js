@@ -17,6 +17,12 @@ const readyText = new Label(null, {
   string: "Hello, world!",
 });
 
+const secondText = new Label(null, {
+  top: 32,
+  style: textStyle,
+  string: "Second line - 002",
+});
+
 const wifiIcon = new Content(null, {
   top: 1,
   right: 16 + 1,
@@ -147,6 +153,7 @@ class AppBehavior extends Behavior {
     app.add(signalIcon);
     app.add(batteryIcon);
     app.add(readyText);
+    app.add(secondText);
   }
 }
 
