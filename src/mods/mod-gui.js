@@ -17,7 +17,7 @@ const readyText = new Label(null, {
   left: 20,
   right: 20,
   style: textStyle,
-  string: "Hello world",
+  string: "Hello, world!",
 });
 
 const wifiIcon = new Content(null, {
