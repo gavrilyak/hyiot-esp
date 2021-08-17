@@ -72,7 +72,7 @@ const batterySkin = new Skin({
 
 class BatteryIconBehavior extends Behavior {
   onDisplaying(content) {
-    content.interval = 1000;
+    content.interval = 1300;
     content.start();
   }
   onTimeChanged(content) {
@@ -108,7 +108,7 @@ const signalSkin = new Skin({
 
 class SignalIconBehavior extends Behavior {
   onDisplaying(content) {
-    content.interval = 1000;
+    content.interval = 1500;
     content.start();
   }
   onTimeChanged(content) {
