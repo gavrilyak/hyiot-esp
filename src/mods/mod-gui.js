@@ -20,41 +20,35 @@ const readyText = new Label(null, {
   string: "Hello world",
 });
 
-const wifiTexture = new Texture({
-  path: "wifi-strip.png",
-});
-
-const wifiSkin = new Skin({
-  color: "white",
-  texture: wifiTexture,
-  width: 14,
-  height: 14,
-  states: 14,
-  variants: 14,
-});
-
-class WifiIconBehavior extends Behavior {
-  onDisplaying(content) {
-    content.interval = 1000;
-    content.start();
-  }
-  onTimeChanged(content) {
-    let variant = content.variant + 1;
-    if (variant > 5) {
-      variant = 0;
-      content.state = content.state ? 0 : 1;
-    }
-    content.variant = variant;
-  }
-}
-
 const wifiIcon = new Content(null, {
-  skin: wifiSkin,
-  state: 0,
-  variant: 0,
-  Behavior: WifiIconBehavior,
   top: 1,
   right: 16 + 1,
+  skin: new Skin({
+    color: "white",
+    texture: new Texture({
+      path: "wifi-strip.png",
+    }),
+    width: 14,
+    height: 14,
+    states: 14,
+    variants: 14,
+  }),
+  state: 0,
+  variant: 0,
+  Behavior: class extends Behavior {
+    onDisplaying(content) {
+      content.interval = 1000;
+      content.start();
+    }
+    onTimeChanged(content) {
+      let variant = content.variant + 1;
+      if (variant > 5) {
+        variant = 0;
+        content.state = content.state ? 0 : 1;
+      }
+      content.variant = variant;
+    }
+  },
 });
 
 const batteryIcon = new Content(null, {
@@ -126,12 +120,10 @@ const bluetoothIcon = new Content(null, {
   }),
   Behavior: class extends Behavior {
     onDisplaying(content) {
-      trace("BT", "displaying", content.visible, "\n");
       content.interval = 1900;
       content.start();
     }
     onTimeChanged(content) {
-      trace("BT", content.visible, "\n");
       content.visible = !content.visible;
     }
   },
