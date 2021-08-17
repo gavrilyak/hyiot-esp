@@ -10,6 +10,7 @@ let modConfig = {
 try {
   let modConfigLoaded = Modules.importNow("mod/config");
   modConfig = modConfigLoaded;
+	trace(JSON.stringify(modConfig), "\n");
 } catch (e) {
   //silence for release build
 }
@@ -48,7 +49,7 @@ export function loadMod(name, settings = {}) {
   const modOpts = modConfig.mods[name] || {};
   const modPrefs = getModPrefs(name);
   const hostOpts = "mods" in hostConfig ? hostConfig.mods[name] : {};
-  const allPrefs = { name, ...settings, ...hostOpts, ...modOpts, ...modPrefs };
+  const allPrefs = { name, ...settings, ...hostOpts, ...modPrefs, ...modOpts };
   return { module, settings: allPrefs };
 }
 

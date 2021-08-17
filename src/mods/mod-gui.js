@@ -8,7 +8,7 @@ const kbMap = {
 };
 const textStyle = new Style({
   font: "OpenSans-Semibold-16",
-  color: "black",
+  color: "white",
 });
 
 const readyText = new Label(null, {
@@ -56,11 +56,21 @@ const wifiIcon = new Content(null, {
   right: 1,
 });
 
+const statusText = new Label(null, {
+  top: 0,
+  bottom: 48,
+  left: 0,
+  right: 0,
+  style: textStyle,
+  string: "Status bar text long"
+});
+
+
 class AppBehavior extends Behavior {
-  onCreate(app) {
-    app.add(readyText);
-    app.add(wifiIcon);
-  }
+	onCreate(app) {
+		app.add(wifiIcon);
+		app.add(readyText);
+	}
 }
 
 export default function ({ bus }) {
@@ -70,7 +80,7 @@ export default function ({ bus }) {
       displayListLength: 5632,
       commandListLength: 3072,
       skin: new Skin({
-        fill: "white",
+        fill: "black",
       }),
       Behavior: AppBehavior,
     });
