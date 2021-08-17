@@ -11,6 +11,8 @@ export default function modWiFi({ name, bus, ...opts }) {
     if (!ssid) {
       bus.emit("unfconfigured");
       return;
+    } else {
+	    bus.emit("connecting", {ssid, password});
     }
 
     wifi = new WiFi({ ssid, password }, function (msg, code) {
@@ -29,7 +31,7 @@ export default function modWiFi({ name, bus, ...opts }) {
           if (code === -1) {
             stop();
             bus.emit("unfconfigured");
-          } else bus.emit("disconnected");
+          } else bus.emit("unconfigure");
           break;
 
         case WiFi.gotIP:

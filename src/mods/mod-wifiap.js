@@ -3,6 +3,7 @@ import WiFi from "wifi";
 import { getMAC } from "esp32";
 
 export default function ({ bus }) {
+	WiFi.mode= 1 // to get MAC
   const ssid = "PROV_" + String(getMAC("sta")).slice(-8).replaceAll(":", "");
   function start() {
     WiFi.accessPoint({
