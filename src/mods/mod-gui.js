@@ -13,9 +13,6 @@ const textStyle = new Style({
 
 const readyText = new Label(null, {
   top: 16,
-  bottom: 0,
-  left: 20,
-  right: 20,
   style: textStyle,
   string: "Hello, world!",
 });
