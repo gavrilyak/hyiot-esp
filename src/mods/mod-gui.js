@@ -57,76 +57,64 @@ const wifiIcon = new Content(null, {
   right: 16 + 1,
 });
 
-const batteryTexture = new Texture({
-  path: "battery.png",
-});
-
-const batterySkin = new Skin({
-  color: "white",
-  texture: batteryTexture,
-  width: 16,
-  height: 16,
-  states: 16,
-  variants: 16,
-});
-
-class BatteryIconBehavior extends Behavior {
-  onDisplaying(content) {
-    content.interval = 1300;
-    content.start();
-  }
-  onTimeChanged(content) {
-    let variant = content.variant + 1;
-    if (variant > 4) {
-      variant = 0;
-    }
-    content.variant = variant;
-  }
-}
-
 const batteryIcon = new Content(null, {
-  skin: batterySkin,
-  state: 0,
-  variant: 0,
-  Behavior: BatteryIconBehavior,
   top: 0,
   right: 0,
-});
-
-const signalTexture = new Texture({
-  path: "signal.png",
-});
-
-const signalSkin = new Skin({
-  color: "white",
-  texture: signalTexture,
-  width: 16,
-  height: 16,
-  states: 16,
-  variants: 16,
-});
-
-class SignalIconBehavior extends Behavior {
-  onDisplaying(content) {
-    content.interval = 1500;
-    content.start();
-  }
-  onTimeChanged(content) {
-    let variant = content.variant + 1;
-    if (variant > 3) {
-      variant = 0;
-    }
-    content.variant = variant;
-  }
-}
-
-const signalIcon = new Content(null, {
-  skin: signalSkin,
+  skin: new Skin({
+    color: "white",
+    texture: new Texture({
+      path: "battery.png",
+    }),
+    width: 16,
+    height: 16,
+    states: 16,
+    variants: 16,
+  }),
   state: 0,
   variant: 0,
-  Behavior: SignalIconBehavior,
+  Behavior: class BatteryIconBehavior extends Behavior {
+    onDisplaying(content) {
+      content.interval = 1300;
+      content.start();
+    }
+    onTimeChanged(content) {
+      let variant = content.variant + 1;
+      if (variant > 4) {
+        variant = 0;
+      }
+      content.variant = variant;
+    }
+  },
+});
+
+const signalIcon = new Content(null, {
   top: 0,
   right: 32,
+  skin: new Skin({
+    color: "white",
+    texture: new Texture({
+      path: "signal.png",
+    }),
+    width: 16,
+    height: 16,
+    states: 16,
+    variants: 16,
+  }),
+  state: 0,
+  variant: 0,
+  Behavior: class extends Behavior {
+    onDisplaying(content) {
+      content.interval = 1500;
+      content.start();
+    }
+    onTimeChanged(content) {
+      let variant = content.variant + 1;
+      if (variant > 3) {
+        variant = 0;
+      }
+      content.variant = variant;
+    }
+  },
 });
 
 const bluetoothIcon = new Content(null, {
@@ -136,6 +124,17 @@ const bluetoothIcon = new Content(null, {
     width: 16,
     height: 16,
   }),
+  Behavior: class extends Behavior {
+    onDisplaying(content) {
+      trace("BT", "displaying", content.visible, "\n");
+      content.interval = 1900;
+      content.start();
+    }
+    onTimeChanged(content) {
+      trace("BT", content.visible, "\n");
+      content.visible = !content.visible;
+    }
+  },
   top: 0,
   right: 48,
 });
