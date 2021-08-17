@@ -12,8 +12,8 @@ const textStyle = new Style({
 });
 
 const readyText = new Label(null, {
-  top: 20,
-  bottom: 20,
+  top: 16,
+  bottom: 0,
   left: 20,
   right: 20,
   style: textStyle,
@@ -25,6 +25,7 @@ const wifiTexture = new Texture({
 });
 
 const wifiSkin = new Skin({
+  color: "white",
   texture: wifiTexture,
   width: 14,
   height: 14,
@@ -62,23 +63,22 @@ const statusText = new Label(null, {
   left: 0,
   right: 0,
   style: textStyle,
-  string: "Status bar text long"
+  string: "Status bar text long",
 });
 
-
 class AppBehavior extends Behavior {
-	onCreate(app) {
-		app.add(wifiIcon);
-		app.add(readyText);
-	}
+  onCreate(app) {
+    app.add(wifiIcon);
+    app.add(readyText);
+  }
 }
 
 export default function ({ bus }) {
   //if (globalThis.screen == null) throw Error("No screen");
   function start() {
     new Application(null, {
-      displayListLength: 5632,
-      commandListLength: 3072,
+      //displayListLength: 5632,
+      //commandListLength: 3072,
       skin: new Skin({
         fill: "black",
       }),
