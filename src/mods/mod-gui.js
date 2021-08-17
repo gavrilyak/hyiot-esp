@@ -40,7 +40,7 @@ class WifiIconBehavior extends Behavior {
   }
   onTimeChanged(content) {
     let variant = content.variant + 1;
-    if (variant > 4) {
+    if (variant > 5) {
       variant = 0;
       content.state = content.state ? 0 : 1;
     }
@@ -57,19 +57,84 @@ const wifiIcon = new Content(null, {
   right: 1,
 });
 
-const statusText = new Label(null, {
+const batteryTexture = new Texture({
+  path: "battery.png",
+});
+
+const batterySkin = new Skin({
+  color: "white",
+  texture: batteryTexture,
+  width: 16,
+  height: 16,
+  states: 16,
+  variants: 16,
+});
+
+class BatteryIconBehavior extends Behavior {
+  onDisplaying(content) {
+    content.interval = 1000;
+    content.start();
+  }
+  onTimeChanged(content) {
+    let variant = content.variant + 1;
+    if (variant > 4) {
+      variant = 0;
+    }
+    content.variant = variant;
+  }
+}
+
+const batteryIcon = new Content(null, {
+  skin: batterySkin,
+  state: 0,
+  variant: 0,
+  Behavior: BatteryIconBehavior,
   top: 0,
-  bottom: 48,
-  left: 0,
-  right: 0,
-  style: textStyle,
-  string: "Status bar text long",
+  right: 16,
+});
+
+const signalTexture = new Texture({
+  path: "signal.png",
+});
+
+const signalSkin = new Skin({
+  color: "white",
+  texture: signalTexture,
+  width: 16,
+  height: 16,
+  states: 16,
+  variants: 16,
+});
+
+class SignalIconBehavior extends Behavior {
+  onDisplaying(content) {
+    content.interval = 1000;
+    content.start();
+  }
+  onTimeChanged(content) {
+    let variant = content.variant + 1;
+    if (variant > 3) {
+      variant = 0;
+    }
+    content.variant = variant;
+  }
+}
+
+const signalIcon = new Content(null, {
+  skin: signalSkin,
+  state: 0,
+  variant: 0,
+  Behavior: SignalIconBehavior,
+  top: 0,
+  right: 32,
 });
 
 class AppBehavior extends Behavior {
   onCreate(app) {
     app.add(wifiIcon);
     app.add(readyText);
+    app.add(batteryIcon);
+    app.add(signalIcon);
   }
 }
 
