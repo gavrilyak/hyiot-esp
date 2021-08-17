@@ -20,9 +20,46 @@ const readyText = new Label(null, {
   string: "Hello world",
 });
 
+const wifiTexture = new Texture({
+  path: "wifi-strip.png",
+});
+
+const wifiSkin = new Skin({
+  texture: wifiTexture,
+  width: 14,
+  height: 14,
+  states: 14,
+  variants: 14,
+});
+
+class WifiIconBehavior extends Behavior {
+  onDisplaying(content) {
+    content.interval = 1000;
+    content.start();
+  }
+  onTimeChanged(content) {
+    let variant = content.variant + 1;
+    if (variant > 4) {
+      variant = 0;
+      content.state = content.state ? 0 : 1;
+    }
+    content.variant = variant;
+  }
+}
+
+const wifiIcon = new Content(null, {
+  skin: wifiSkin,
+  state: 0,
+  variant: 0,
+  Behavior: WifiIconBehavior,
+  top: 1,
+  right: 1,
+});
+
 class AppBehavior extends Behavior {
   onCreate(app) {
     app.add(readyText);
+    app.add(wifiIcon);
   }
 }
 

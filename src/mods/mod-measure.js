@@ -131,12 +131,12 @@ function performMeasures() {
     s.add(1);
     return s;
   });
-  measure("Set 2 entry", () => {
-    let s = new Set();
-    s.add(1);
-    s.add(2);
-    return s;
-  });
+  // measure("Set 2 entry", () => {
+  //   let s = new Set();
+  //   s.add(1);
+  //   s.add(2);
+  //   return s;
+  // });
   //measure("WeakSet (empty)", () => new WeakSet());
 
   function measure(name, what) {
@@ -178,7 +178,6 @@ function performMeasures() {
   }
 }
 
-performMeasures();
 CLI.install(function (command, _opts) {
   switch (command) {
     case "measure":

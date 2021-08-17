@@ -42,7 +42,7 @@
     "dns/server": "$(MODULES)/network/dns/dnsserver"
   },
   "resources": {
-    "*-alpha": ["../../assets/OpenSans-Semibold-16"]
+    "*-alpha": ["../../assets/OpenSans-Semibold-16", "../../assets/wifi-strip"]
   },
   "preload": [
     "http",
