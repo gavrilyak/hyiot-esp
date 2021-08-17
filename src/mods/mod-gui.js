@@ -8,19 +8,26 @@ const kbMap = {
 };
 const textStyle = new Style({
   font: "OpenSans-Semibold-16",
+  //font: "liberation-14",
   color: "white",
 });
 
 const readyText = new Label(null, {
-  top: 16,
+  bottom: 31,
   style: textStyle,
-  string: "Hello, world!",
+  string: "Hello, world!".toUpperCase(),
 });
 
 const secondText = new Label(null, {
-  top: 32,
+  bottom: 15,
   style: textStyle,
-  string: "Second line - 002",
+  string: "Second line".toUpperCase(),
+});
+
+const thirdText = new Label(null, {
+  bottom: -1,
+  style: textStyle,
+  string: "Third line - 003".toUpperCase(),
 });
 
 const wifiIcon = new Content(null, {
@@ -154,6 +161,7 @@ class AppBehavior extends Behavior {
     app.add(batteryIcon);
     app.add(readyText);
     app.add(secondText);
+    app.add(thirdText);
   }
 }
 
@@ -161,7 +169,7 @@ export default function ({ bus }) {
   //if (globalThis.screen == null) throw Error("No screen");
   function start() {
     new Application(null, {
-      //displayListLength: 5632,
+      displayListLength: 5632,
       //commandListLength: 3072,
       skin: new Skin({
         fill: "black",
