@@ -143,8 +143,22 @@ coro(networkManager(), (err, res) => {
   if (err === coro) trace("NM CORO ERR", res, "\n");
 });
 
-let setup = Modules.importNow("setup/piu");
-setup(
-()=> {
-	bus.emit("start", "gui");
-})
+function startScreen() {
+  let device = globalThis.device;
+  if (device) {
+    try {
+      let SMBus = Modules.importNow("pins/smbus");
+      let io = new SMBus({ address: 60 });
+      io.readByte(0);
+    } catch (e) {
+      trace("No SSD screen here, gui won't start\n");
+      return;
+    }
+  }
+  let setup = Modules.importNow("setup_manual/piu");
+  setup(() => {
+    bus.emit("start", "gui");
+  });
+}
+
+startScreen();

@@ -23,9 +23,9 @@
   "platforms": {
     "esp32": {
       "modules": {
-        "setup/piu": "$(BUILD)/devices/esp32/setup/piu"
+        "setup_manual/piu": "$(BUILD)/devices/esp32/setup/piu"
       },
-      "preload": "setup/piu"
+      "preload": "setup_manual/piu"
     }
   }
 }

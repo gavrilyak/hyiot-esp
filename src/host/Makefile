@@ -1,4 +1,4 @@
-PLATFORM?=esp32
+PLATFORM?=esp32/nodemcu
 
 all: host
 
