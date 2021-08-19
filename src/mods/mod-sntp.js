@@ -35,6 +35,7 @@ export default function ({ bus }) {
       }
     });
   }
+
   function stop() {
     smtp?.close();
     bus.emit("stopped");

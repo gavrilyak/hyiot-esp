@@ -12,7 +12,7 @@ export default function modWiFi({ name, bus, ...opts }) {
       bus.emit("unfconfigured");
       return;
     } else {
-	    bus.emit("connecting", {ssid, password});
+      bus.emit("connecting", { ssid, password });
     }
 
     wifi = new WiFi({ ssid, password }, function (msg, code) {
@@ -37,8 +37,8 @@ export default function modWiFi({ name, bus, ...opts }) {
         case WiFi.gotIP:
           {
             const ip = Net.get("IP");
-            const mac = Net.get("MAC");
-            bus.emit("started", { ip, mac });
+            //const mac = Net.get("MAC");
+            bus.emit("started", { ip }); //, mac });
           }
           break;
       }

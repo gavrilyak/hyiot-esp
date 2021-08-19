@@ -8,6 +8,8 @@
   ],
   "compilerOptions": {
     "noEmit": true,
+    "target": "ES2021",
+    "downlevelIteration": true,
     "declaration": true,
     "module": "esnext",
     "checkJs": true,

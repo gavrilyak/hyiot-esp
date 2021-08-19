@@ -10,7 +10,7 @@ let modConfig = {
 try {
   let modConfigLoaded = Modules.importNow("mod/config");
   modConfig = modConfigLoaded;
-	trace(JSON.stringify(modConfig), "\n");
+  trace(JSON.stringify(modConfig), "\n");
 } catch (e) {
   //silence for release build
 }
@@ -73,7 +73,9 @@ export function instantiateMod(Mod, settings = {}) {
 }
 
 export function loadAndInstantiate(name, initialSettings) {
-  const { module, settings } = loadMod(name, initialSettings);
+  const loadedModule = loadMod(name, initialSettings);
+  if (!loadedModule) return null;
+  const { module, settings } = loadedModule;
   measure(`Loaded ${name}`);
   const result = instantiateMod(module, settings);
   measure(`Instantiated ${name}`);

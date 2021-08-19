@@ -5,8 +5,8 @@ import WiFi from "wifi";
 
 let timer;
 
-bus.on("button_changed", ({ payload }) => {
-  if (!payload) {
+bus.on("button_changed", (val) => {
+  if (!val) {
     timer = Timer.set(() => {
       timer = null;
       trace(`REBOOT\n`);

@@ -22,6 +22,14 @@ class PubSub {
     listeners.push(listener);
   }
 
+  once(topic, listener) {
+    const cb = (arg) => {
+      listener(arg);
+      this.off(topic, cb);
+    };
+    this.on(topic, cb);
+  }
+
   /**
    * @param {string} topic
    * @param {listenerCallback} listener

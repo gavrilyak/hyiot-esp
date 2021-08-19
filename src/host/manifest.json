@@ -15,7 +15,7 @@
     "$(MODDABLE)/modules/base/instrumentation/manifest.json"
   ],
   "creation": {
-    "stack": 512,
+    "stack": 600,
     "static": 131072,
     "keys": {
       "available": 400
@@ -87,7 +87,6 @@
     },
     "esp32": {
       "include": [
-        "./manifest_piu.json",
         "$(MODULES)/io/manifest.json",
         "$(MODULES)/files/file/manifest.json",
         "$(MODULES)/pins/digital/manifest.json",
@@ -136,7 +135,7 @@
         }
       },
       "config": {
-        "screen": "ssd1306",
+        "#screen": "ssd1306",
         "led": {
           "pin": "2"
         },

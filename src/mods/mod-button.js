@@ -12,7 +12,7 @@ export default function ({ bus }) {
         let val = this.read();
         if (val != this.val) {
           this.val = val;
-          bus.emit("changed", { payload: val });
+          bus.emit("changed", val);
           bus.emit(val ? "released" : "pressed");
         }
       },

@@ -45,8 +45,6 @@ class Connection extends WiFi {
   #index = 0;
 
   constructor(options, callback) {
-    options = { ...options };
-
     super(callback?.("getAP", 0) ?? options, (msg, code) => {
       trace("wificonnection", msg, code, "\n");
       if (WiFi.disconnected === msg) {
