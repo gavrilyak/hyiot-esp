@@ -7,6 +7,7 @@ import Timer from "timer";
 import getBlob from "getBlob";
 import getCertSubject from "getCertSubject";
 import { measure } from "profiler";
+import Modules from "modules";
 let deviceId = "device1";
 try {
   deviceId = getCertSubject(getBlob("fctry://l/device.der"))?.CN;
@@ -142,4 +143,8 @@ coro(networkManager(), (err, res) => {
   if (err === coro) trace("NM CORO ERR", res, "\n");
 });
 
-bus.emit("start", "gui");
+let setup = Modules.importNow("setup/piu");
+setup(
+()=> {
+	bus.emit("start", "gui");
+})

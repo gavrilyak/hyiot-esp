@@ -27,7 +27,7 @@ trace("GLOBAL:", Object.keys(globalThis), "\n");
 function startNetwork(inWorker = true) {
   if (inWorker) {
     let networkWorker = new Worker("network", {
-      allocation: 60 * 1024,
+      allocation: 65 * 1024,
       stackCount: 360,
       slotCount: 1024,
     });
