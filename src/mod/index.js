@@ -13,95 +13,50 @@
  */
 
 import Modules from "modules";
+import Worker from "worker";
 import bus from "bus";
-import Resource from "Resource";
-import Net from "net";
-import Timer from "timer";
-//import { getBuildString, restart } from "esp32";
-import { loadAndInstantiate } from "modLoader";
-import { measure } from "profiler";
-import getCertSubject from "getCertSubject";
-import getBlob from "getBlob";
-import coro from "coro";
-import race from "waitForMultiple";
-import join from "waitForAll";
-import sleep from "sleep";
-
-function* waitEvent(bus, topic) {
-  const cont = yield coro;
-  bus.once(topic, (event) => cont(null, event));
-  return yield;
-}
-
-let deviceId = "sim";
-
-try {
-  deviceId = getCertSubject(getBlob("fctry://l/device.der"))?.CN;
-} catch (e) {
-  trace("No certificate found, using default deviceId");
-}
-
-const initialConfig = {
-  measure: {},
-  pref: {},
-  telnet: {
-    port: 8023,
-  },
-  httpserver: {
-    port: 80,
-  },
-  led: {
-    pin: 2,
-  },
-  light: {
-    pin: 10,
-    mod: "mod-led",
-    autostart: true,
-  },
-  button: {
-    pin: 0,
-    autostart: true,
-  },
-  wifista: {
-    autostart: true,
-  },
-  wifiap: {},
-  sntp: {},
-  mqtt: {
-    id: deviceId,
-    host: "a23tqp4io1iber-ats.iot.us-east-2.amazonaws.com",
-    protocol: "mqtts",
-    port: 443,
-    certificate: "fctry://l/server.der",
-    clientKey: "fctry://l/device.pk8",
-    clientCertificates: ["fctry://l/device.der", "fctry://l/ca.der"],
-    applicationLayerProtocolNegotiation: ["x-amzn-mqtt-ca"],
-  },
-  ota: {
-    url: "http://192.168.0.116:5000/hydrolec-host/xs_esp32.bin",
-  },
-  //gui: {},
-};
+const IS_SIMULATOR = !("device" in globalThis);
 
 //trace("BOOTING, build: ", getBuildString(), "\n");
 trace("FW_VERSION:", globalThis.FW_VERSION, "\n");
-trace(`MAC NET, ${Net.get("MAC")}\n`);
-trace(`IP NET, ${Net.get("IP")}\n`);
-//trace(`MAC STA, ${getMAC("sta")}\n`);
-//trace(`MAC AP, ${getMAC("ap")}\n`);
-
 trace(`HOST MODULES: ${Modules.host}\n`);
 trace(`ARCHIVE MODULES: ${Modules.archive}\n`);
-trace(`RESOURCES: ${[...Resource]}\n`);
+trace("IS_SIMULATOR:", IS_SIMULATOR, "\n");
+trace("GLOBAL:", Object.keys(globalThis), "\n");
 
-bus.on("*", (topic, payload) => {
-  trace(
-    `BUS ${new Date().toISOString()} ${topic} ${
-      payload ? JSON.stringify(payload) : ""
-    }\n`
-  );
-});
+function startNetwork(inWorker = true) {
+  if (inWorker) {
+    let networkWorker = new Worker("network", {
+      allocation: 60 * 1024,
+      stackCount: 360,
+      slotCount: 1024,
+    });
+    networkWorker.onmessage = ([topic, payload]) => bus.emit(topic, payload);
+    bus.on("network/out", (message) => networkWorker.postMessage(message));
+  } else {
+    Modules.importNow("network");
+  }
+}
 
+function startHw() {
+  if (!IS_SIMULATOR) Modules.importNow("hardware");
+  /*
+  let hw = new Worker("hardware", {
+    allocation: 30 * 1024,
+    stackCount: 128,
+    slotCount: 1024,
+  });
+
+  hw.onmessage = ([topic, payload]) => bus.emit(topic, payload);
+  bus.on("hw/out", (message) => hw.postMessage(message));
+  bus.on("mqtt/started", () => bus.emit("hw/out", "mqtt/started"));
+  */
+}
+
+startHw();
+startNetwork(!IS_SIMULATOR);
+
+/*
 let mods = {};
 
 for (let [name, initialSettings] of Object.entries(initialConfig)) {
@@ -110,82 +65,9 @@ for (let [name, initialSettings] of Object.entries(initialConfig)) {
   } catch (e) {
     trace(`Module ${name} not loaded, error: ${e}\n`);
   }
-}
+}*/
 
-const MQTT_NS = deviceId;
-
-function JoinWatcher(name) {
-  return (err, { index, result }) => {
-    trace(`JOIN ${name}: Process ${index} finished: e:${err} r:${result}\n`);
-  };
-}
-
-function* networkManager() {
-  trace("Network manager starting\n");
-  bus.emit("wifista/start");
-  for (;;) {
-    yield* waitEvent(bus, "wifista/started");
-    bus.emit("sntp/start");
-    bus.emit("otaserver/start");
-    bus.emit("telnet/start");
-    bus.emit("httpserver/start");
-    let { index: isSntpError, result } = yield* race([
-      waitEvent(bus, "sntp/started"),
-      waitEvent(bus, "sntp/error"),
-    ]);
-    if (!isSntpError) {
-      bus.emit("mqtt/start");
-      let { index: isMqttError, result } = yield* race([
-        waitEvent(bus, "mqtt/started"),
-        waitEvent(bus, "mqtt/error"),
-        waitEvent(bus, "mqtt/stopped"),
-      ]);
-      if (!isMqttError) {
-        trace("NM MQTT started", result, "\n");
-      }
-    }
-    yield* sleep(1000);
-  }
-}
-
-function* hwManager() {
-  trace("HW starting:\n");
-  bus.emit("button/start");
-  bus.emit("led/start");
-  let { index } = yield* race([
-    join(
-      [waitEvent(bus, "button/started"), waitEvent(bus, "led/started")],
-      JoinWatcher("HW")
-    ),
-    sleep(1000),
-  ]);
-  if (index === 1) {
-    trace("HW failed to start\n");
-    return 1;
-  }
-
-  trace("HW started\n");
-  for (;;) {
-    const val = yield* waitEvent(bus, "button/changed");
-    bus.emit("mqtt/pub", {
-      topic: `${MQTT_NS}/button`,
-      payload: String(val),
-    });
-    bus.emit("led/write", !val);
-  }
-}
-
-function* main() {
-  measure("mainstart");
-  yield* join([networkManager(), hwManager()], JoinWatcher("main"));
-  measure("hw");
-}
-measure("main");
-coro(main(), (err, res) => {
-  trace("MAIN handler,", err, ",", res, "\n");
-  if (err === coro) trace("CORO ERR", res, "\n");
-});
-measure("aftermain");
+//measure("aftermain");
 
 /*
 Timer.set(() => {
@@ -235,28 +117,6 @@ bus.on("network/stopped", () => {
   bus.emit("otaserver/stop");
 });
 
-bus.on("mqtt/started", () => {
-  bus.emit("mqtt/sub", { topic: `${MQTT_NS}/hello` });
-  bus.emit("mqtt/sub", { topic: `${MQTT_NS}/led` });
-  bus.emit("mqtt/sub", { topic: `${MQTT_NS}/kb` });
-  //bus.emit("mqtt/sub", { topic: `${MQTT_NS}/bus` });
-  Timer.set(() => {
-    bus.emit("mqtt/pub", {
-      topic: `${MQTT_NS}/hello`,
-      payload: JSON.stringify({ who: "world" }),
-    });
-  }, 100);
-  measure("MQTT Started");
-
-  // bus.on("*", (topic, payload) => {
-  //   if (topic.startsWith("mqtt/")) return;
-  //   mods["mqtt"].pub({
-  //     topic: `${MQTT_NS}/bus`,
-  //     payload: JSON.stringify({ topic, payload }),
-  //   });
-  // });
-});
-
 bus.on("mqtt/message", ({ topic, payload }) => {
   if (topic === `${MQTT_NS}/led`) {
     bus.emit("led/write", { payload: JSON.parse(payload) });
@@ -290,4 +150,4 @@ bus.on("button/changed", ({ payload }) => {
 });
 */
 
-measure("Started");
+//measure("Started");

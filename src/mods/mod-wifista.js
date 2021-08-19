@@ -1,6 +1,6 @@
 //import bus from "bus";
-//import WiFi from "wifi";
-import WiFi from "wificonnection";
+import WiFi from "wifi";
+//import WiFi from "wificonnection";
 import Net from "net";
 
 export default function modWiFi({ name, bus, ...opts }) {
@@ -16,6 +16,7 @@ export default function modWiFi({ name, bus, ...opts }) {
     }
 
     wifi = new WiFi({ ssid, password }, function (msg, code) {
+      trace("WIFI event", msg, code, "\n");
       switch (msg) {
         case WiFi.connected:
           {
@@ -31,7 +32,7 @@ export default function modWiFi({ name, bus, ...opts }) {
           if (code === -1) {
             stop();
             bus.emit("unfconfigured");
-          } else bus.emit("unconfigure");
+          } else bus.emit("disconnected");
           break;
 
         case WiFi.gotIP:
@@ -50,6 +51,7 @@ export default function modWiFi({ name, bus, ...opts }) {
   function stop() {
     if (wifi) {
       wifi.close();
+      wifi = null;
     }
     bus.emit("stopped");
   }

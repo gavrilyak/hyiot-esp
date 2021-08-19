@@ -15,12 +15,12 @@ export default function (PREFIX = "/api/prefs") {
   return function prefsHandler(message, value, method) {
     switch (message) {
       case Server.status:
-
-      case Server.headersComplete:
         if (!value.startsWith(PREFIX)) return false;
         this.method = method;
         this.path = value.slice(PREFIX.length);
         return true;
+
+      case Server.headersComplete:
         return String; //receive body as string
 
       case Server.requestComplete:

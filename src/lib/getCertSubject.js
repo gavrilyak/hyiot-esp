@@ -21,7 +21,7 @@ const KNOWN_OIDS = Object.freeze({
 });
 
 function getCertSubject(cert) {
-  if(!cert || cert.length == 0) return null;
+  if (!cert || cert.length == 0) return null;
   const { subject } = X509.decodeTBS(X509.decode(new Uint8Array(cert)).tbs);
   let ber = new Ber(subject);
   ber.getTag(), ber.getLength();
@@ -47,4 +47,4 @@ function getCertSubject(cert) {
   return results;
 }
 
-export { getCertSubject as default };
+export default getCertSubject;

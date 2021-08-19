@@ -12,7 +12,8 @@
     "$(MODDABLE)/modules/files/preference/manifest.json",
     "$(MODDABLE)/modules/files/resourceiterator/manifest.json",
     "$(MODDABLE)/modules/crypt/tls.json",
-    "$(MODDABLE)/modules/base/instrumentation/manifest.json"
+    "$(MODDABLE)/modules/base/instrumentation/manifest.json",
+    "$(MODDABLE)/modules/base/worker/manifest.json"
   ],
   "creation": {
     "stack": 600,

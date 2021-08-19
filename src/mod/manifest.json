@@ -4,16 +4,16 @@
   },
   "modules": {
     "mod": ["./index"],
-    "*": ["../mods/*", "../lib/*"]
+    "*": ["../mods/*", "../lib/*", "./*"]
   },
   "data": {
     "*": ["../../web/*"]
   },
   "config": {
     "mods": {
-	    "wifista": {
-	    }
- 
+      "wifista": {
+        "#ssid": "home"
+      }
     }
   }
 }

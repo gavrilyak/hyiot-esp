@@ -4,8 +4,7 @@ import Timer from "timer";
  * @param {any} payload
  */
 class PubSub {
-  constructor(prefix) {
-    this.prefix = prefix;
+  constructor() {
     this.channels = new Map();
   }
   /**
@@ -20,14 +19,6 @@ class PubSub {
       this.channels.set(topic, listeners);
     }
     listeners.push(listener);
-  }
-
-  once(topic, listener) {
-    const cb = (arg) => {
-      listener(arg);
-      this.off(topic, cb);
-    };
-    this.on(topic, cb);
   }
 
   /**
@@ -51,7 +42,7 @@ class PubSub {
    * @param {string[]} payload
    * @returns {void}
    * */
-  emit(topic, ...payload) {
+  emit(topic, payload) {
     {
       let listeners = this.channels.get(topic);
       if (listeners)
@@ -59,7 +50,7 @@ class PubSub {
           //listener(...payload);
           Timer.set(() => {
             try {
-              listener(...payload);
+              listener(payload, topic);
             } catch (e) {
               trace(`ERR in topic ${topic}: ${e}`);
             }
@@ -70,7 +61,7 @@ class PubSub {
       let listeners = this.channels.get("*");
       if (listeners)
         for (let listener of listeners)
-          Timer.set(() => listener(topic, ...payload));
+          Timer.set(() => listener(payload, topic));
     }
   }
 }

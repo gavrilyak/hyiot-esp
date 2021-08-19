@@ -29,6 +29,7 @@ function coro(gen, handler = noop) {
         // caller can have a word, if nothing from caller it will be just resumed
         // if caller throws, it will be resumed with error
         // error can be {return: 42} - in this case generator will return 42;
+        trace("UNEXPECTED yield value:", value, "\n");
         handler(coro, value, continuation);
       }
     } catch (e) {
