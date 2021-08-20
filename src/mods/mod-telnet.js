@@ -10,7 +10,7 @@ CLI.install(function (command, params) {
   switch (command) {
     case "pub":
       if (params.length == 1) this.line(`publising ${params[0]}`);
-      globalBus.emit(params[0]);
+      globalBus.emit(params[0], params[1]);
       return true;
     case "sub":
       if (this.cb == null) {

@@ -66,12 +66,10 @@ bus.on("mqtt/started", () => {
 });
 
 function* networkManager() {
-  bus.emit("start", "wifista");
   let errorCounter = 0;
   for (let restartCounter = 0; ; restartCounter++) {
     bus.emit("nm/starting", { restartCounter, errorCounter });
-
-    bus.emit("wifista/start");
+    bus.emit("start", "wifista");
     const [topic] = yield* once(
       "wifista/started",
       "wifista/disconnected",
@@ -143,20 +141,3 @@ coro(networkManager(), (err, res) => {
   if (err === coro) trace("NM CORO ERR", res, "\n");
 });
 
-function startScreen() {
-  /*
-  let device = globalThis.device;
-  if (device) {
-    try {
-      let SMBus = Modules.importNow("pins/smbus");
-      let io = new SMBus({ address: 60 });
-      io.readByte(0);
-    } catch (e) {
-      trace("No SSD screen here, gui won't start\n");
-      return;
-    }
-  }*/
-  bus.emit("start", "gui");
-}
-
-startScreen();
