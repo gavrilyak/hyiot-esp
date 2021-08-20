@@ -141,3 +141,4 @@ coro(networkManager(), (err, res) => {
   if (err === coro) trace("NM CORO ERR", res, "\n");
 });
 
+bus.emit("start", "gui");

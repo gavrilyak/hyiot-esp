@@ -15,14 +15,24 @@
 import Modules from "modules";
 import Worker from "worker";
 import bus from "bus";
-const IS_SIMULATOR = !("device" in globalThis);
+import { measure } from "profiler";
 
+const IS_SIMULATOR = !("device" in globalThis);
 //trace("BOOTING, build: ", getBuildString(), "\n");
 trace("FW_VERSION:", globalThis.FW_VERSION, "\n");
 trace(`HOST MODULES: ${Modules.host}\n`);
 trace(`ARCHIVE MODULES: ${Modules.archive}\n`);
 trace("IS_SIMULATOR:", IS_SIMULATOR, "\n");
 trace("GLOBAL:", Object.keys(globalThis), "\n");
+
+bus.on("*", (payload, topic) => {
+  trace(
+    `MAIN BUS ${new Date().toISOString()} ${topic} ${
+      payload != null ? JSON.stringify(payload) : ""
+    }\n`
+  );
+  measure(topic);
+});
 
 function startNetwork(inWorker = true) {
   if (inWorker) {
