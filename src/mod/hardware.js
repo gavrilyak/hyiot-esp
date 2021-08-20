@@ -13,6 +13,7 @@ if ("self" in globalThis) {
   let bus = Modules.importNow("bus");
   emit = (topic, payload) => {
     bus.emit(topic, payload);
+    bus.emit("network/out", ["button/changed", payload]);
   };
 }
 
@@ -28,7 +29,7 @@ const button = new Digital({
     if (val != this.val) {
       this.val = val;
       led.write(!val);
-      emit("button/changed", val);
+      //emit("button/changed", val);
     }
   },
 });

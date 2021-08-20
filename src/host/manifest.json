@@ -13,7 +13,8 @@
     "$(MODDABLE)/modules/files/resourceiterator/manifest.json",
     "$(MODDABLE)/modules/crypt/tls.json",
     "$(MODDABLE)/modules/base/instrumentation/manifest.json",
-    "$(MODDABLE)/modules/base/worker/manifest.json"
+    "$(MODDABLE)/modules/base/worker/manifest.json",
+    "$(MODDABLE)/modules/network/ble/manifest_client.json"
   ],
   "defines": {
     "XS_MODS": 1
@@ -64,7 +65,8 @@
     "Reflect",
     "SharedArrayBuffer",
     "WeakMap",
-    "WeakSet"
+    "WeakSet",
+    "RegExp"
   ],
   "config": {
     "tls": {

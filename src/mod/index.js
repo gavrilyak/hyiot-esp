@@ -37,7 +37,7 @@ bus.on("*", (payload, topic) => {
 function startNetwork(inWorker = true) {
   if (inWorker) {
     let networkWorker = new Worker("network", {
-      allocation: 65 * 1024,
+      allocation: 76 * 1024,
       stackCount: 360,
       slotCount: 1024,
     });

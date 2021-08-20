@@ -6,8 +6,8 @@ import Net from "net";
 export default function modWiFi({ name, bus, ...opts }) {
   let wifi;
 
-  function start() {
-    const { ssid, password } = opts;
+  function start(...startOpts) {
+    const { ssid, password } = { ...opts, ...startOpts };
     if (!ssid) {
       bus.emit("unfconfigured");
       return;

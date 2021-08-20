@@ -3,27 +3,23 @@ class URL {
     this.parseHref(url);
   }
 
-  parseHref(value) {
-    const INDEX_PROTOCOL = 1;
-    const INDEX_USERNAME = 2;
-    const INDEX_PASSWORD = 3;
-    const INDEX_HOSTNAME = 4;
-    const INDEX_PORT = 5;
-    const INDEX_PATHNAME = 6;
-    const INDEX_SEARCH = 7;
-    const INDEX_HASH = 8;
-    const re =
-      /(?:([a-z0-9]+:)?\/\/(?:([^:]*)(?::([^@]*))?@)?(?:([^/:]+)(?::(\d+))?))?([^?#]*)(\?[^#]*)?(#.*)?/i;
-
-    const parsed = value.match(re);
-    this.protocol = ((parsed && parsed[INDEX_PROTOCOL]) || "").toLowerCase();
-    this.username = (parsed && parsed[INDEX_USERNAME]) || "";
-    this.password = (parsed && parsed[INDEX_PASSWORD]) || "";
-    this.hostname = (parsed && parsed[INDEX_HOSTNAME]) || "";
-    this.port = ((parsed && parsed[INDEX_PORT]) || "").replace(/^0*/, "");
-    this.pathname = (parsed && parsed[INDEX_PATHNAME]) || "/";
-    this.search = (parsed && parsed[INDEX_SEARCH]) || "";
-    this.hash = (parsed && parsed[INDEX_HASH]) || "";
+  parseHref(url) {
+    //TODO this is totally naive and incorrect implementation for embedded
+    const schemeEnd = url.indexOf("://");
+    const scheme = url.slice(0, schemeEnd);
+    url = url.slice(schemeEnd + 3);
+    const hostEnd = url.indexOf("/");
+    const [hostname, port] = url.slice(0, hostEnd).split(":");
+    const pathname = url.slice(hostEnd);
+    this.protocol = scheme + ":";
+    this.hostname = hostname;
+    this.port = port;
+    this.pathname = pathname;
+    //TODO
+    this.search = "";
+    this.hash = "";
+    //this.search = (parsed && parsed[INDEX_SEARCH]) || "";
+    //this.hash = (parsed && parsed[INDEX_HASH]) || "";
   }
 
   // @ts-ignore

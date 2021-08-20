@@ -37,6 +37,7 @@ export default Object.freeze(
     ota: {
       url: "http://192.168.0.116:5000/hydrolec-host/xs_esp32.bin",
     },
+    ble: {},
     //gui: {},
   },
   true

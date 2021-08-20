@@ -8,6 +8,7 @@ import getBlob from "getBlob";
 import getCertSubject from "getCertSubject";
 import { measure } from "profiler";
 import Modules from "modules";
+import race from "waitForMultiple";
 let deviceId = "device1";
 try {
   deviceId = getCertSubject(getBlob("fctry://l/device.der"))?.CN;
@@ -25,6 +26,11 @@ bus.on("*", (payload, topic) => {
 
   if (topic.endsWith("started")) {
     measure(topic);
+  }
+});
+bus.on("pref/changed", (val) => {
+  for (const [ns, value] of Object.entries(val)) {
+    bus.emit(`${ns}/reconfigured`, value);
   }
 });
 
@@ -67,7 +73,7 @@ bus.on("mqtt/started", () => {
 
 function* networkManager() {
   let errorCounter = 0;
-  for (let restartCounter = 0; ; restartCounter++) {
+  for (let restartCounter = 0; ; ) {
     bus.emit("nm/starting", { restartCounter, errorCounter });
     bus.emit("start", "wifista");
     const [topic] = yield* once(
@@ -78,12 +84,13 @@ function* networkManager() {
     if (topic != "wifista/started") {
       errorCounter++;
       yield* stopWifiSta();
+
       if (errorCounter < 3) {
         continue;
       }
+      //many errrors
       errorCounter = 0;
-
-      if (restartCounter === 0) {
+      if (restartCounter++ === 0) {
         bus.emit("start", "wifiap");
         yield* once("wifiap/started");
 
@@ -93,14 +100,29 @@ function* networkManager() {
         bus.emit("start", "httpserver");
         yield* once("httpserver/started");
 
+        let { index } = yield* race([
+          once("wifista/reconfigured"),
+          sleep(5 * 60 * 1000), //5 minutes
+        ]);
+
+        if (index == 0) {
+          trace("New config!!");
+        }
+        bus.emit("httpserver/stop");
+        bus.emit("telnet/stop");
+        bus.emit("wifiap/stop");
+        continue;
+      } else {
+        trace("Try to START MODEM?\n");
         yield* sleep(60000);
-        return;
+        Modules.importNow("esp32").restart();
       }
-      trace("Try to START MODEM?\n");
       continue;
     } else {
       bus.emit("start", "sntp");
       bus.emit("start", "telnet");
+      bus.emit("start", "httpserver");
+
       const [topic] = yield* once("sntp/started", "sntp/error");
       if (topic == "sntp/started") {
         bus.emit("start", { name: "mqtt", id: deviceId });
@@ -142,3 +164,10 @@ coro(networkManager(), (err, res) => {
 });
 
 bus.emit("start", "gui");
+bus.emit("start", "ble");
+
+if ("self" in globalThis) {
+  self.onmessage = ([topic, payload]) => {
+    bus.emit(topic, payload);
+  };
+}

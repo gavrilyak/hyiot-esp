@@ -10,11 +10,14 @@ build:
 deploy: 
 	mcconfig -d -m -p $(PLATFORM) -t deploy
 
+xsbug: 
+	mcconfig -d -m -p $(PLATFORM) -t xsbug
+
 instrumented:
-	mcconfig -i -m -p esp32  manifest_release.json 
+	mcconfig -i -m -p $(PLATFORM)  manifest_release.json  -f gray256
 
 release:
-	mcconfig -m -p esp32  manifest_release.json 
+	mcconfig -m -p $(PLATFORM)  manifest_release.json  -f gray256
 
 sim:
 	-killall simulator

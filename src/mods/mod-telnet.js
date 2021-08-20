@@ -65,6 +65,5 @@ export default function ({ name = "telnet", bus, port = 2300 } = {}) {
   return Object.freeze({
     start,
     stop,
-    depends: ["network"],
   });
 }

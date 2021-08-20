@@ -26,7 +26,7 @@ export default function (config = {}) {
   };
 
   function onReady() {
-    bus.emit("started");
+    bus.emit("started", { protocol, host });
   }
 
   function onClose() {
@@ -81,7 +81,6 @@ export default function (config = {}) {
     pub,
     sub,
     unsub,
-    depends: ["network"],
   };
 }
 //export default connectToMQTT;

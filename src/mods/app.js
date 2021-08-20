@@ -167,7 +167,6 @@ class AppBehavior extends Behavior {
 
 export default function ({ bus }) {
   bus.on("kb", function kb(payload) {
-    trace("KB", payload, "\n");
     let sym = payload in kbMap ? kbMap[payload] : payload;
     readyText.string = "KB:" + sym;
   });

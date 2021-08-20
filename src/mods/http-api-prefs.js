@@ -1,5 +1,6 @@
 import { Server } from "http";
 import pref from "preference";
+import globalBus from "bus";
 import {
   CONTENT_TYPE,
   TEXT_PLAIN,
@@ -69,6 +70,7 @@ export default function (PREFIX = "/api/prefs") {
                 for (const [k, v] of Object.entries(dict)) {
                   pref.set(ns, k, String(v));
                 }
+                globalBus.emit("pref/changed", { [ns]: dict });
                 return JSON_OK;
               } catch (e) {
                 return INVALID_REQUEST;

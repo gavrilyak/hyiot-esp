@@ -45,6 +45,5 @@ export default function ({ name = "httpserver", bus, port = 8080 } = {}) {
   return {
     start,
     stop,
-    depends: ["network"],
   };
 }
