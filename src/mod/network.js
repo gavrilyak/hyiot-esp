@@ -144,6 +144,7 @@ coro(networkManager(), (err, res) => {
 });
 
 function startScreen() {
+  /*
   let device = globalThis.device;
   if (device) {
     try {
@@ -154,11 +155,8 @@ function startScreen() {
       trace("No SSD screen here, gui won't start\n");
       return;
     }
-  }
-  let setup = Modules.importNow("setup_manual/piu");
-  setup(() => {
-    bus.emit("start", "gui");
-  });
+  }*/
+  bus.emit("start", "gui");
 }
 
 startScreen();
