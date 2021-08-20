@@ -15,13 +15,6 @@
     "$(MODDABLE)/modules/base/instrumentation/manifest.json",
     "$(MODDABLE)/modules/base/worker/manifest.json"
   ],
-  "creation": {
-    "stack": 600,
-    "static": 131072,
-    "keys": {
-      "available": 400
-    }
-  },
   "defines": {
     "XS_MODS": 1
   },
@@ -81,12 +74,26 @@
   },
   "platforms": {
     "lin": {
+      "creation": {
+        "stack": 600,
+        "#static": 131072,
+        "keys": {
+          "available": 400
+        }
+      },
       "include": ["./manifest_piu.json"],
       "data": {
         "*": ["../../certs/*"]
       }
     },
     "esp32": {
+      "creation": {
+        "stack": 600,
+        "#static": 131072,
+        "keys": {
+          "available": 400
+        }
+      },
       "include": [
         "$(MODULES)/io/manifest.json",
         "$(MODULES)/files/file/manifest.json",
