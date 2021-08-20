@@ -24,11 +24,15 @@ export default function ({ bus }) {
       }
       onDiscovered(device) {
         let scanResponse = device.scanResponse;
-        let completeName = scanResponse.completeName;
-        if (completeName) {
+        let {completeName, completeUUID16List, incompleteUUID16List, manufacturerSpecific={}} = scanResponse;
+	//const {identifier, data} = manufacturerSpecific;
+
+	trace("MSP:",device.address, ":", new Uint8Array(scanResponse.buffer), "-", completeUUID16List, "-", incompleteUUID16List,"\n");
+        if (completeName || manufacturerSpecific) {
           bus.emit("discovered", {
             address: "" + device.address,
-            completeName: scanResponse.completeName,
+            completeName,
+	    manufacturerSpecific,
           });
         }
       }
