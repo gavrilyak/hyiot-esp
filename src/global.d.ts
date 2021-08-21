@@ -95,6 +95,8 @@ declare module "esp32" {
   export function restart():void;
   export function getBuildString():string;
   export function getMAC(staOrAP:string):string;
+  export function tzset():void;
+  export function setenv(name: string, value: string, override: number):void;
 }
 
 declare module "esp32/ota" {

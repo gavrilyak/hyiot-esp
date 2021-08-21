@@ -4,10 +4,7 @@ import { loadAndInstantiate } from "modLoader";
 import coro from "coro";
 import sleep from "sleep";
 import Timer from "timer";
-import getBlob from "getBlob";
-import getCertSubject from "getCertSubject";
 import { measure } from "profiler";
-import Modules from "modules";
 import race from "waitForMultiple";
 
 bus.on("*", (payload, topic) => {
@@ -144,6 +141,7 @@ coro(networkManager(), (err, res) => {
   if (err === coro) trace("NM CORO ERR", res, "\n");
 });
 
+bus.emit("start", "tz");
 bus.emit("start", "gui");
 bus.emit("start", "ble");
 

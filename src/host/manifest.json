@@ -93,7 +93,7 @@
         "stack": 600,
         "#static": 131072,
         "keys": {
-          "available": 400
+          "available": 500
         }
       },
       "include": [
@@ -106,6 +106,7 @@
       ],
       "modules": {
         "~": ["$(BUILD)/devices/esp32/setup/network"],
+        "inflate": ["./inflate/*"],
         "esp32": ["./native/*"],
         "esp32/ota": "$(BUILD)/devices/esp32/modules/ota/*",
         "modem": ["./modem/*"],
