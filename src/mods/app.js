@@ -1,4 +1,5 @@
 import {} from "piu/MC";
+import globalBus from "bus";
 
 const kbMap = {
   "\u001b[A": "up",
@@ -170,6 +171,11 @@ export default function ({ bus }) {
     let sym = payload in kbMap ? kbMap[payload] : payload;
     readyText.string = "KB:" + sym;
   });
+	globalBus.on("ble/nason", function({pressure, temp, bat}) {
+		readyText.string = pressure.toFixed(2) + " psi";
+		secondText.string = String(temp.toFixed(1)) + " C"
+		thirdText.string = bat + "%"
+	})
   return new Application(null, {
     displayListLength: 5632,
     //commandListLength: 3072,

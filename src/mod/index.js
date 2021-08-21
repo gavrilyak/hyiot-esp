@@ -38,7 +38,7 @@ function startNetwork(inWorker = true) {
   if (inWorker) {
     let networkWorker = new Worker("network", {
       allocation: 76 * 1024,
-      stackCount: 360,
+      stackCount: 560,
       slotCount: 1024,
     });
     networkWorker.onmessage = ([topic, payload]) => bus.emit(topic, payload);

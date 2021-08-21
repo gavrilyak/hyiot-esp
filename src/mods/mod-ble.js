@@ -14,6 +14,15 @@
 
 import BLEClient from "bleclient";
 
+function getFromAdv(b){
+	if (b[9] == 0xff && b[10] == 24) {
+		let d = new DataView(b.buffer);
+		let pressure = (b[11] + (b[12] >> 8) + (b[13] >> 16)) / 256;
+		let temp = d.getUint16(14, true) / 256;
+		let bat = b[16];
+		return { pressure, temp, bat };
+	}
+}
 export default function ({ bus }) {
   let scanner;
   function start() {
@@ -24,15 +33,15 @@ export default function ({ bus }) {
       }
       onDiscovered(device) {
         let scanResponse = device.scanResponse;
-        let {completeName, completeUUID16List, incompleteUUID16List, manufacturerSpecific={}} = scanResponse;
-	//const {identifier, data} = manufacturerSpecific;
-
-	trace("MSP:",device.address, ":", new Uint8Array(scanResponse.buffer), "-", completeUUID16List, "-", incompleteUUID16List,"\n");
-        if (completeName || manufacturerSpecific) {
+	let {address, scanResponse:{buffer, completeName}} = device
+	let measurement = getFromAdv(new Uint8Array(buffer));
+	if(measurement) {
+		bus.emit("nason", measurement);
+	}
+        if (completeName){
           bus.emit("discovered", {
-            address: "" + device.address,
+            address: "" + address,
             completeName,
-	    manufacturerSpecific,
           });
         }
       }
