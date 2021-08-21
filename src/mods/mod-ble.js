@@ -14,14 +14,14 @@
 
 import BLEClient from "bleclient";
 
-function getFromAdv(b){
-	if (b[9] == 0xff && b[10] == 24) {
-		let d = new DataView(b.buffer);
-		let pressure = (b[11] + (b[12] >> 8) + (b[13] >> 16)) / 256;
-		let temp = d.getUint16(14, true) / 256;
-		let bat = b[16];
-		return { pressure, temp, bat };
-	}
+function getFromAdv(b) {
+  if (b[9] == 0xff && b[10] == 24) {
+    let d = new DataView(b.buffer);
+    let pressure = (b[11] + (b[12] >> 8) + (b[13] >> 16)) / 256;
+    let temp = d.getUint16(14, true) / 256;
+    let bat = b[16];
+    return { pressure, temp, bat };
+  }
 }
 export default function ({ bus }) {
   let scanner;
@@ -32,13 +32,15 @@ export default function ({ bus }) {
         bus.emit("started");
       }
       onDiscovered(device) {
-        let scanResponse = device.scanResponse;
-	let {address, scanResponse:{buffer, completeName}} = device
-	let measurement = getFromAdv(new Uint8Array(buffer));
-	if(measurement) {
-		bus.emit("nason", measurement);
-	}
-        if (completeName){
+        let {
+          address,
+          scanResponse: { buffer, completeName },
+        } = device;
+        let measurement = getFromAdv(new Uint8Array(buffer));
+        if (measurement) {
+          bus.emit("nason", measurement);
+        }
+        if (completeName) {
           bus.emit("discovered", {
             address: "" + address,
             completeName,
