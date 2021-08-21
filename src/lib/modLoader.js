@@ -73,21 +73,29 @@ export function instantiateMod(Mod, settings = {}) {
 
 let mods = {};
 
+function unloadMod(name) {
+  const modInstance = mods[name];
+  if (!modInstance) return;
+  try {
+    modInstance?.stop();
+  } catch (e) {
+    trace("mod ", name, " failed to stop:", e, "\n");
+  }
+  for (const [handlerName, f] of Object.entries(modInstance)) {
+    if (typeof f !== "function") continue;
+    bus.off(`${name}/${handlerName}`, f);
+  }
+  delete mods[name];
+}
+
 export function loadAndInstantiate(name, initialSettings) {
-  if (name in mods) return mods[name];
+  unloadMod(name);
   const loadedModule = loadMod(name, initialSettings);
   if (!loadedModule) return null;
   const { module, settings } = loadedModule;
   measure(`Loaded ${name}`);
-  const result = instantiateMod(module, settings);
-  mods[name] = result;
+  const instance = instantiateMod(module, settings);
+  mods[name] = instance;
   measure(`Instantiated ${name}`);
-  return result;
-}
-
-export function unloadMod(name) {
-  bus.on(`${name}_stopped`, () => {
-    trace(`${name} stopped`);
-  });
-  bus.emit(`${name}/stop`, name);
+  return instance;
 }

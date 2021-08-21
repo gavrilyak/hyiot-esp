@@ -9,13 +9,6 @@ import getCertSubject from "getCertSubject";
 import { measure } from "profiler";
 import Modules from "modules";
 import race from "waitForMultiple";
-let deviceId = "device1";
-try {
-  deviceId = getCertSubject(getBlob("fctry://l/device.der"))?.CN;
-} catch (e) {
-  trace("No certificate found, using default deviceId");
-}
-const MQTT_NS = deviceId;
 
 bus.on("*", (payload, topic) => {
   trace(
@@ -59,22 +52,30 @@ bus.on("start", (event) => {
 });
 
 bus.on("mqtt/started", () => {
-  bus.emit("mqtt/sub", { topic: `${MQTT_NS}/hello` });
-  bus.emit("mqtt/sub", { topic: `${MQTT_NS}/led` });
-  bus.emit("mqtt/sub", { topic: `${MQTT_NS}/kb` });
-  bus.emit("mqtt/sub", { topic: `${MQTT_NS}/button` });
+  bus.emit("mqtt/sub", "hello");
+  bus.emit("mqtt/sub", `led`);
+  bus.emit("mqtt/sub", `kb`);
+  bus.emit("mqtt/sub", `button`);
   Timer.set(() => {
-    bus.emit("mqtt/pub", {
-      topic: `${MQTT_NS}/hello`,
-      payload: JSON.stringify({ who: "world" }),
-    });
+    bus.emit("mqtt/pub", [`hello`, JSON.stringify({ who: "world" })]);
   }, 100);
 });
 
 function* networkManager() {
   let errorCounter = 0;
+  loadAndInstantiate("pref");
+  loadAndInstantiate("wifista");
+
   for (let restartCounter = 0; ; ) {
     bus.emit("nm/starting", { restartCounter, errorCounter });
+
+    bus.emit("mqtt/stop");
+    bus.emit("telnet/stop");
+    bus.emit("httpserver/stop");
+    bus.emit("sntp/stop");
+    bus.emit("wifista/stop");
+    bus.emit("wifiap/stop");
+
     bus.emit("start", "wifista");
     const [topic] = yield* once(
       "wifista/started",
@@ -85,9 +86,8 @@ function* networkManager() {
       errorCounter++;
       yield* stopWifiSta();
 
-      if (errorCounter < 3) {
-        continue;
-      }
+      if (topic == "wifista/disconnected" && errorCounter < 3) continue;
+
       //many errrors
       errorCounter = 0;
       if (restartCounter++ === 0) {
@@ -108,53 +108,34 @@ function* networkManager() {
         if (index == 0) {
           trace("New config!!");
         }
-        bus.emit("httpserver/stop");
-        bus.emit("telnet/stop");
-        bus.emit("wifiap/stop");
         continue;
       } else {
         trace("Try to START MODEM?\n");
         yield* sleep(60000);
-        Modules.importNow("esp32").restart();
+        //Modules.importNow("esp32").restart();
       }
       continue;
     } else {
       bus.emit("start", "sntp");
       bus.emit("start", "telnet");
-      bus.emit("start", "httpserver");
+      //bus.emit("start", "httpserver");
 
       const [topic] = yield* once("sntp/started", "sntp/error");
       if (topic == "sntp/started") {
-        bus.emit("start", { name: "mqtt", id: deviceId });
-        let [topic, payload] = yield* once(
-          "mqtt/started",
-          "mqtt/error",
-          "mqtt/stopped"
-        );
-        if (topic === "mqtt/started") {
-          trace("NM MQTT started", payload, "\n");
-        }
-      } else {
-        bus.emit("telnet/stop");
-        bus.emit("sntp/stop");
-        yield* sleep(100);
-        continue;
-        //no sntp - no time - no ssl
+        bus.emit("start", "mqtt");
+        let [topic] = yield* once("mqtt/started", "mqtt/error", "mqtt/stopped");
+        if (topic != "mqtt/started") continue;
       }
-
-      yield* once(
-        "wifista/stopped",
-        "wifista/disconnected",
-        "wifista/unfconfigured"
-      );
-
-      bus.emit("mqtt/stop");
-      bus.emit("telnet/stop");
-      bus.emit("sntp/stop");
-      yield* stopWifiSta();
-      bus.emit("nm/restarted");
-      yield* sleep(500);
     }
+
+    bus.emit("nm/success");
+    let [restartTopic] = yield* once(
+      "wifista/stopped",
+      "wifista/disconnected",
+      "wifista/unfconfigured",
+      "mqtt/stopped"
+    );
+    bus.emit("nm/restarted", { cause: restartTopic });
   }
 }
 

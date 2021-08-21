@@ -3,7 +3,6 @@
     "NAME": "hydrolec-mod"
   },
   "modules": {
-    "mod": ["./index"],
     "*": ["../mods/*", "../lib/*", "./*"]
   },
   "data": {

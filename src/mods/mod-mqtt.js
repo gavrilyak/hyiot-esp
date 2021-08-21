@@ -1,11 +1,24 @@
 import getBlob from "getBlob";
 import Client from "mqtt";
 import SecureSocket from "securesocket";
+import getCertSubject from "getCertSubject";
+const specialPrefixes = [
+  "$aws/rules/${ruleName}",
+  "$aws/things/${thingName}/jobs",
+  "$aws/things/thingName/shadow",
+];
+
 export default function (config = {}) {
   //trace(Object.entries(config) + "\n");
-  const { protocol, host, port, id, bus } = config;
-
+  const { protocol, host, port, bus } = config;
+  const clientCertificates = config.clientCertificates?.map(getBlob);
   let client = null;
+  let id;
+  {
+    id = config.id;
+    if (id == null) id = getCertSubject(getBlob("fctry://l/device.der"))?.CN;
+    if (id == null) throw Error("mqtt: no client id");
+  }
 
   const isConnected = (client) => {
     if (!client) return false;
@@ -13,16 +26,16 @@ export default function (config = {}) {
     return true;
   };
 
-  const pub = ({ topic, payload }) => {
-    if (isConnected(client)) client.publish(topic, payload);
+  const pub = ([topic, payload]) => {
+    if (isConnected(client)) client.publish(`${id}/${topic}`, payload);
   };
 
-  const sub = ({ topic }) => {
-    if (isConnected(client)) client.subscribe(topic);
+  const sub = (topic) => {
+    if (isConnected(client)) client.subscribe(`${id}/${topic}`);
   };
-  const unsub = ({ topic }) => {
-    if (isConnected(client)) client.unsubscribe(topic);
-    client.unsubscribe(topic);
+
+  const unsub = (topic) => {
+    if (isConnected(client)) client.unsubscribe(`${id}/${topic}`);
   };
 
   function onReady() {
@@ -36,7 +49,7 @@ export default function (config = {}) {
 
   function onMessage(topic, body) {
     const payload = String.fromArrayBuffer(body);
-    bus.emit("message", { topic, payload });
+    bus.emit("message", [topic, payload]);
   }
 
   const stop = () => {
@@ -46,7 +59,6 @@ export default function (config = {}) {
 
   function start() {
     stop();
-
     client = new Client({
       host,
       id,
@@ -58,7 +70,7 @@ export default function (config = {}) {
               protocolVersion: 0x0303,
               certificate: getBlob(config.certificate),
               clientKey: getBlob(config.clientKey),
-              clientCertificates: config.clientCertificates?.map(getBlob),
+              clientCertificates,
               applicationLayerProtocolNegotiation:
                 config.applicationLayerProtocolNegotiation,
               trace: Boolean(config.traceSSL),

@@ -31,13 +31,13 @@ let serial = new device.io.Serial({
 */
 export default function () {
   trace("HOST: ver.", FW_VERSION, "\n");
-  if (!Modules.has("mod")) {
+  if (!Modules.has("index")) {
     trace("WAITING FOR MOD\r\n");
     trace("Host installed. Ready for mods.\n");
     return;
   }
   trace("IMPORTING MOD\r\n");
   //Modules.importNow("check")();
-  Modules.importNow("mod");
+  Modules.importNow("index");
   //Promise.resolve().then(()=> Modules.importNow("mod"));
 }
