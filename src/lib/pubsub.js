@@ -52,7 +52,7 @@ class PubSub {
             try {
               listener(payload, topic);
             } catch (e) {
-              trace(`ERR in topic ${topic}: ${e}`);
+              trace(`ERR in topic ${topic}: ${e}\n`);
             }
           });
         }
