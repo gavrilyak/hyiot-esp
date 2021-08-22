@@ -161,7 +161,7 @@ static void esp_handle_uart_pattern(esp_modem_dte_t *esp_dte)
         size_t length = 0;
         uart_get_buffered_data_len(esp_dte->uart_port, &length);
         if (length) {
-            ESP_LOGD(MODEM_TAG, "Pattern not found in the pattern queue, uart data length = %d", length);
+            ESP_LOGD(MODEM_TAG, "Pattern not found in the pattern queue, uart data length = %zu", length);
             length = MIN(esp_dte->line_buffer_size-1, length);
             length = uart_read_bytes(esp_dte->uart_port, esp_dte->buffer, length, portMAX_DELAY);
             ESP_LOG_BUFFER_HEXDUMP("esp-modem-pattern: debug_data", esp_dte->buffer, length, ESP_LOG_DEBUG);
@@ -200,7 +200,7 @@ static void esp_handle_uart_data(esp_modem_dte_t *esp_dte)
                 bytes = uart_read_bytes(esp_dte->uart_port,
                                         esp_dte->buffer + length, 1, pdMS_TO_TICKS(100));
                 length += bytes;
-                ESP_LOGV("esp-modem: debug_data", "Continuous read in non-data mode: length: %d char: %x", length, esp_dte->buffer[length-1]);
+                ESP_LOGV("esp-modem: debug_data", "Continuous read in non-data mode: length: %zu char: %x", length, esp_dte->buffer[length-1]);
             }
             esp_dte->buffer[length] = '\0';
         }
