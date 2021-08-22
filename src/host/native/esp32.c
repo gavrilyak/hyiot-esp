@@ -1,7 +1,7 @@
 #include "xsmc.h"
 #include "xsHost.h"
 #include "buildinfo.h"
-
+#include <esp_wifi.h>
 
 void xs_getbuildstring(xsMachine *the)
 {
@@ -22,7 +22,6 @@ void xs_getbuildstring(xsMachine *the)
   xsmcSetString(xsResult, str);
 }
 
-#include <esp_wifi.h>
 void xs_getmac(xsMachine *the)
 {
   xsmcSetArrayBuffer(xsResult, NULL, 6);
@@ -32,39 +31,4 @@ void xs_getmac(xsMachine *the)
 void xs_do_restart(xsMachine *the)
 {
 	esp_restart();
-}
-
-void xs_setenv(xsMachine* the)
-{
-  xsStringValue name = xsmcToString(xsArg(0));
-  xsStringValue value = xsmcToString(xsArg(1));
-  xsIntegerValue c = xsmcToInteger(xsArgc);
-  xsIntegerValue overwrite = 1;
-  if (c > 2)
-    overwrite = xsmcToInteger(xsArg(2));
-  setenv(name, value, overwrite);
-}
-
-void xs_getenv(xsMachine* the)
-{
-  xsStringValue name = xsmcToString(xsArg(0));
-  char *value = getenv(name);
-  if(value) {
-    xsmcSetString(xsResult, value);
-  }
-}
-
-void xs_tzset(xsMachine* the)
-{
-  tzset();
-}
-
-void xs_localtime(xsMachine* the) {
-  static char strftime_buf[64];
-  time_t now;
-  struct tm timeinfo;
-  time(&now);
-  localtime_r(&now, &timeinfo);
-  strftime(strftime_buf, sizeof(strftime_buf), "%c", &timeinfo);
-  xsmcSetString(xsResult, strftime_buf);
 }

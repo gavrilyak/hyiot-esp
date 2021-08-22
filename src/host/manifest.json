@@ -14,7 +14,8 @@
     "$(MODDABLE)/modules/crypt/tls.json",
     "$(MODDABLE)/modules/base/instrumentation/manifest.json",
     "$(MODDABLE)/modules/base/worker/manifest.json",
-    "$(MODDABLE)/modules/network/ble/manifest_client.json"
+    "$(MODDABLE)/modules/network/ble/manifest_client.json",
+    "./native/manifest.json"
   ],
   "defines": {
     "XS_MODS": 1

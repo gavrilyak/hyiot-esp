@@ -7,11 +7,9 @@ import { measure } from "profiler";
 let modConfig = {
   mods: {},
 };
-try {
+if (Modules.has("mod/config")) {
   let modConfigLoaded = Modules.importNow("mod/config");
   modConfig = modConfigLoaded;
-} catch (e) {
-  //silence for release build
 }
 
 import PubSub from "pubsub";

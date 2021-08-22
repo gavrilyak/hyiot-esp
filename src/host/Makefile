@@ -21,7 +21,7 @@ release:
 
 sim:
 	-killall simulator
-	mcconfig -d -m -p lin
+	mcconfig -d -m -p lin manifest_release.json
 
 clean:
 	mcconfig -d -m -p $(PLATFORM) -t clean
