@@ -1,18 +1,11 @@
 import SNTP from "sntp";
 import Time from "time";
 
-const globalHosts = [
-  "0.pool.ntp.org",
-  "1.pool.ntp.org",
-  // "2.pool.ntp.org",
-  // "3.pool.ntp.org",
-];
-
-export default function ({ bus }) {
+export default function ({ bus, hosts }) {
   let sntp;
   function start() {
-    let hosts = [...globalHosts];
-    sntp = new SNTP({ host: hosts.shift() }, function (message, ts) {
+    let hostArr = hosts.split(",").map((x) => x.trim());
+    sntp = new SNTP({ host: hostArr.shift() }, function (message, ts) {
       switch (message) {
         case SNTP.time:
           //it is closed by itself on sucsess
@@ -28,9 +21,10 @@ export default function ({ bus }) {
           break;
 
         case SNTP.error:
-          if (hosts.length) {
-            return hosts.shift();
+          if (hostArr.length) {
+            return hostArr.shift();
           } else {
+            sntp = null;
             bus.emit("error");
           }
 
@@ -41,11 +35,9 @@ export default function ({ bus }) {
 
   function stop() {
     if (sntp) {
-      try {
-        sntp?.close();
-      } catch (e) {}
+      sntp.close();
+      sntp = null;
     }
-    sntp = null;
     bus.emit("stopped");
   }
 

@@ -24,7 +24,9 @@ export default Object.freeze(
       autostart: true,
     },
     wifiap: {},
-    sntp: {},
+    sntp: {
+      hosts: "0.pool.ntp.org,1.pool.ntp.org,2.pool.ntp.org,3.pool.ntp.org",
+    },
     mqtt: {
       host: "a23tqp4io1iber-ats.iot.us-east-2.amazonaws.com",
       protocol: "mqtts",
