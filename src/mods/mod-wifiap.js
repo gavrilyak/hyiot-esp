@@ -1,6 +1,6 @@
 import Net from "net";
 import WiFi from "wifi";
-import { getMAC } from "esp32";
+import { getMAC } from "native/esp32";
 
 export default function ({ bus }) {
   WiFi.mode = 1; // to get MAC

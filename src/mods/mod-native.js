@@ -1,4 +1,4 @@
-import { tzset, getenv, setenv, localtime } from "esp32";
+import { tzset, getenv, setenv, localtime } from "native/all";
 
 import CLI from "cli";
 

@@ -116,13 +116,16 @@ function* networkManager() {
       bus.emit("start", "sntp");
       bus.emit("start", "telnet");
       //bus.emit("start", "httpserver");
-
-      const [topic] = yield* once("sntp/started", "sntp/error");
-      if (topic == "sntp/started") {
-        bus.emit("start", "mqtt");
-        let [topic] = yield* once("mqtt/started", "mqtt/error", "mqtt/stopped");
-        if (topic != "mqtt/started") continue;
+      const [sntpTopic] = yield* once("sntp/started", "sntp/error");
+      if (sntpTopic == "sntp/started") {
+        trace("NO TIME\n");
       }
+      bus.emit("start", "mqtt");
+
+      let [topic] = yield* once("mqtt/started", "mqtt/error", "mqtt/stopped");
+      if (topic != "mqtt/started") continue;
+      //} else {
+      //}
     }
 
     bus.emit("nm/success");
