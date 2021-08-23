@@ -1,16 +1,15 @@
-/**
- * @param {Uint8Array} buf
- * @param {string} name
- * @returns {Uint8Array|null}
- */
-
 function getString(buf, start, end) {
-  const a = buf.slice(start, end);
+  const a = buf.slice(start, end, false);
   const b = a.buffer;
   const str = String.fromArrayBuffer(b);
   return str;
 }
 
+/**
+ * @param {Uint8Array} buf
+ * @param {string} name
+ * @returns {Uint8Array|null}
+ */
 function getFileFromArchive(buf, name) {
   for (let p = 0; ; p < buf.byteLength) {
     let end = buf.indexOf(0x0a, p);

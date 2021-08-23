@@ -1,7 +1,7 @@
 import { readFileSync } from "fs";
 import * as ini from "./inifile.mjs";
 
-const zones = JSON.parse(readFileSync("../etc/zones.json").toString());
+const zones = JSON.parse(readFileSync("./zones.json").toString());
 
 let out = {};
 for (let [k, v] of Object.entries(zones)) {
@@ -50,5 +50,13 @@ function test() {
   console.log(findTZ(zonesBin, "America/Indiana/Vincennes"));
   console.log(findTZ(zonesBin, "Pacific/Wallis"));
   console.log(findTZ(zonesBin, "some/shit"));
+
+  for (const section of ini.sections(zonesBin)) {
+    console.log(section);
+  }
+  for (const [k, v] of ini.entries(zonesBin, "Pacific")) {
+    console.log(k, v);
+  }
 }
-//test();
+
+test();

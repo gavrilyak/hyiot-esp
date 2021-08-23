@@ -5,7 +5,7 @@ import Timer from "timer";
 import Time from "time";
 
 import OTA from "esp32/ota";
-import * as esp32 from "esp32";
+import * as esp32 from "native/esp32";
 
 export default function (PREFIX = "/api/ota") {
   /**

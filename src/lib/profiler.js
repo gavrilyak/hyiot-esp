@@ -14,6 +14,7 @@ export function measure(name) {
   Debug.gc();
   let slots = Instrumentation.get(SLOTS);
   let chunks = Instrumentation.get(CHUNKS);
+  let freeMem = Instrumentation.get(FREE_MEM);
   trace(
     [
       "MEASURE",
@@ -21,6 +22,8 @@ export function measure(name) {
       chunks - last.chunks,
       Math.round((slots + chunks) / 1024),
       "kB",
+      Math.round(freeMem / 1024),
+      "free ",
       name,
       "\n",
     ].join(" ")

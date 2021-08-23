@@ -13,15 +13,16 @@
  */
 
 import Modules from "modules";
-import Worker from "worker";
 import bus from "bus";
 import { measure } from "profiler";
+import { loadAndInstantiate } from "modLoader";
+measure("start");
 
-const IS_SIMULATOR = !("device" in globalThis);
+const IS_SIMULATOR = !Modules.has("flash"); //!("device" in globalThis);
 //trace("BOOTING, build: ", getBuildString(), "\n");
 trace("FW_VERSION:", globalThis.FW_VERSION, "\n");
-trace(`HOST MODULES: ${Modules.host}\n`);
-trace(`ARCHIVE MODULES: ${Modules.archive}\n`);
+//trace("HOST MODULES:", Modules.host, "\n");
+trace("ARCHIVE MODULES:", Modules.archive, "\n");
 trace("IS_SIMULATOR:", IS_SIMULATOR, "\n");
 trace("GLOBAL:", Object.keys(globalThis), "\n");
 
@@ -34,37 +35,13 @@ bus.on("*", (payload, topic) => {
   measure(topic);
 });
 
-function startNetwork(inWorker = true) {
-  if (inWorker) {
-    let networkWorker = new Worker("network", {
-      allocation: 76 * 1024,
-      stackCount: 560,
-      slotCount: 1024,
-    });
-    networkWorker.onmessage = ([topic, payload]) => bus.emit(topic, payload);
-    bus.on("network/out", (message) => networkWorker.postMessage(message));
-  } else {
-    Modules.importNow("network");
-  }
-}
-
 function startHw() {
   if (!IS_SIMULATOR) Modules.importNow("hardware");
-  /*
-  let hw = new Worker("hardware", {
-    allocation: 30 * 1024,
-    stackCount: 128,
-    slotCount: 1024,
-  });
-
-  hw.onmessage = ([topic, payload]) => bus.emit(topic, payload);
-  bus.on("hw/out", (message) => hw.postMessage(message));
-  bus.on("mqtt/started", () => bus.emit("hw/out", "mqtt/started"));
-  */
 }
 
 startHw();
-startNetwork(!IS_SIMULATOR);
+loadAndInstantiate("network", { inWorker: !IS_SIMULATOR });
+bus.emit("network/start");
 
 /*
 let mods = {};

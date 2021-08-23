@@ -108,3 +108,15 @@ declare module "esp32/ota" {
   }
   export {OTA as default}
 }
+
+declare module "Resource" {
+  class HostBuffer {
+    byteLength: number
+  }
+
+  class Resource extends HostBuffer {
+    constructor(path: string);
+    slice(begin: number, end?: number, copy?: boolean): ArrayBuffer;
+    static exists(path: string): boolean;
+  }
+}
