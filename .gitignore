@@ -1,4 +1,4 @@
 certs/
 compile_commands.json
-moddable/
-.build/
+moddable
+.build
