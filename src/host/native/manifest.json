@@ -1,0 +1,14 @@
+{
+  "modules": {
+    "native/all": ["./all*"]
+  },
+  "preload": ["native/all"],
+  "platforms": {
+    "esp32": {
+      "modules": {
+        "native/esp32": ["./esp32*"]
+      },
+      "preload": ["native/esp32"]
+    }
+  }
+}

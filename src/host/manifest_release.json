@@ -1,4 +1,7 @@
 {
+  "defines": {
+    "XS_MOD": 0
+  },
   "include": ["./manifest.json"],
   "modules": {
     "*": ["../lib/*", "../mods/*", "../mod/*"]

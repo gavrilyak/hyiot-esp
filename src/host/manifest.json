@@ -15,6 +15,7 @@
     "$(MODDABLE)/modules/base/instrumentation/manifest.json",
     "$(MODDABLE)/modules/base/worker/manifest.json",
     "$(MODDABLE)/modules/network/ble/manifest_client.json",
+    "./uart/manifest.json",
     "./native/manifest.json"
   ],
   "defines": {
@@ -91,50 +92,54 @@
     },
     "esp32": {
       "creation": {
+        "chunk": {
+          "#incremental": 1024,
+          "#initial": 32768
+        },
+        "#heap": {
+          "#initial": 100,
+          "#incremental": 64
+        },
         "stack": 600,
-        "#static": 131072,
+        "#stack": 512,
         "keys": {
-          "available": 500
-        }
+          "available": 500,
+          "#available": 256,
+          "#name": 127,
+          "#symbol": 127
+        },
+        "parser": {
+          "buffer": 10,
+          "table": 10
+        },
+        "#static": 40960,
+        "#static_max": 134000,
+        "static": 32768,
+        "#main": "main"
       },
       "include": [
         "$(MODULES)/io/manifest.json",
-        "$(MODULES)/files/file/manifest.json",
-        "$(MODULES)/pins/digital/manifest.json",
-        "$(MODULES)/pins/i2c/manifest.json",
         "$(MODULES)/drivers/ssd1306/manifest_i2c.json",
         "./manifest_piu.json"
       ],
       "modules": {
         "~": ["$(BUILD)/devices/esp32/setup/network"],
-        "inflate": ["./inflate/*"],
         "esp32": ["./native/*"],
+        "pppos": ["./pppos/*"],
         "esp32/ota": "$(BUILD)/devices/esp32/modules/ota/*",
-        "modem": ["./modem/*"],
         "flash": ["$(MODULES)/files/flash/*", "$(MODULES)/files/flash/esp32/*"],
-        "pins/digital": "$(MODULES)/pins/digital/digital",
-        "pins/smbus": "$(MODULES)/pins/smbus/smbus",
-        "cli/digital": "$(MODULES)/base/cli/commands/digital",
-        "cli/files": "$(MODULES)/base/cli/commands/files",
-        "cli/i2c": "$(MODULES)/base/cli/commands/i2c",
         "cli/network": "$(MODULES)/base/cli/commands/network"
       },
-      "preload": ["pins/*"],
+      "preload": ["flash"],
       "defines": {
-        "modem": {
-          "uart_tx_pin": 25,
-          "uart_rx_pin": 26,
-          "uart_rts_pin": 27,
-          "uart_cts_pin": 23,
-          "uart_event_task_stack_size": 3072,
-          "uart_event_task_priority": 5,
-          "uart_event_queue_size": 30,
-          "uart_pattern_queue_size": 20,
-          "uart_tx_buffer_size": 512,
-          "uart_rx_buffer_size": 1024,
-          "ppp_auth_username": "#user",
-          "ppp_auth_password": "#pass",
-          "device_sim800": 1
+        "serial": {
+          "interface_uart": 2,
+          "baud": 115200,
+          "tx_pin": 25,
+          "rx_pin": 26,
+          "txbuffersize": 256,
+          "rxbuffersize": 256,
+          "timeout": 1000
         },
         "ssd1306": {
           "width": 128,
