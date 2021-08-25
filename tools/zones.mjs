@@ -14,22 +14,25 @@ for (let [k, v] of Object.entries(zones)) {
 }
 
 //console.log(JSON.stringify(out, null, 2));
-//
-const SP = " ";
-const EQ = "=";
-const CR = "\n";
+function encodeIni(out) {
+  const SP = " ";
+  const EQ = "=";
+  const CR = "\n";
 
-function encode(m) {
-  return (
-    Object.entries(m)
-      .map(([k, v]) => k + EQ + v)
-      .join(CR) + CR
-  );
+  function encode(m) {
+    return (
+      Object.entries(m)
+        .map(([k, v]) => k + EQ + v)
+        .join(CR) + CR
+    );
+  }
+  let zonesStr = [...Object.entries(out)]
+    .map(([c, v]) => "[" + c + "]\n" + encode(v))
+    .join(CR);
+  return zonesStr;
 }
-let zonesStr = [...Object.entries(out)]
-  .map(([c, v]) => "[" + c + "]\n" + encode(v))
-  .join(CR);
-console.log(zonesStr);
+
+//console.log(zonesStr);
 
 String.fromArrayBuffer = function (b) {
   if (!(b instanceof ArrayBuffer)) throw Error("Must be array buffer");
@@ -59,4 +62,6 @@ function test() {
   }
 }
 
-test();
+//test();
+//console.log(JSON.stringify(out, null, 2));
+console.log(encodeIni(out));

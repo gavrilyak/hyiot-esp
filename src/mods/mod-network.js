@@ -10,7 +10,7 @@ export default function ({ bus, inWorker = true }) {
     }
     if (inWorker) {
       networkWorker = new Worker("network", {
-        allocation: 64 * 1024,
+        allocation: 69 * 1024,
         stackCount: 560,
         slotCount: 1024,
       });

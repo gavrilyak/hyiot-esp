@@ -15,7 +15,6 @@
     "$(MODDABLE)/modules/base/instrumentation/manifest.json",
     "$(MODDABLE)/modules/base/worker/manifest.json",
     "$(MODDABLE)/modules/network/ble/manifest_client.json",
-    "./uart/manifest.json",
     "./native/manifest.json"
   ],
   "defines": {
@@ -39,14 +38,17 @@
     "dns/server": "$(MODULES)/network/dns/dnsserver"
   },
   "resources": {
-    "*-alpha": [
-      "../../assets/OpenSans-Semibold-16",
+    "*-alpha": ["../../assets/arial-regular-14"],
+    "*-mask": [
       "../../assets/wifi-strip",
       "../../assets/battery",
       "../../assets/signal",
       "../../assets/bluetooth",
       "../../assets/logo"
     ]
+  },
+  "data": {
+    "*": ["../../assets/zones"]
   },
   "preload": [
     "http",
@@ -85,6 +87,12 @@
           "available": 400
         }
       },
+      "config": {
+        "file": {
+          "root": "~/.config/"
+        }
+      },
+
       "include": ["./manifest_piu.json"],
       "data": {
         "*": ["../../certs/*"]
@@ -120,7 +128,8 @@
       "include": [
         "$(MODULES)/io/manifest.json",
         "$(MODULES)/drivers/ssd1306/manifest_i2c.json",
-        "./manifest_piu.json"
+        "./manifest_piu.json",
+        "./uart/manifest.json"
       ],
       "modules": {
         "~": ["$(BUILD)/devices/esp32/setup/network"],

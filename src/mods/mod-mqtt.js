@@ -2,11 +2,14 @@ import getBlob from "getBlob";
 import Client from "mqtt";
 import SecureSocket from "securesocket";
 import getCertSubject from "getCertSubject";
-const specialPrefixes = [
-  "$aws/rules/${ruleName}",
-  "$aws/things/${thingName}/jobs",
-  "$aws/things/thingName/shadow",
-];
+
+const specialPrefixes = {
+  $rules: "$aws/rules", ///${ruleName}",
+  $jobs: "$aws/things/{id}/jobs",
+  $shadow: "$aws/things/{id}/shadow",
+};
+
+const GET_DELTA = "/update/delta";
 
 export default function (config = {}) {
   //trace(Object.entries(config) + "\n");
@@ -20,6 +23,16 @@ export default function (config = {}) {
     if (id == null) throw Error("mqtt: no client id");
   }
 
+  function translateTopic(topic) {
+    if (topic.startsWith("$")) {
+      const [first, ...other] = topic.split("/");
+      let special = specialPrefixes[first];
+      if (special == null) throw Error(`Unsupported special topic ${first}`);
+      return special.replace("{id}", id) + "/" + other.join("/");
+    } else {
+      return `${id}/${topic}`;
+    }
+  }
   const isConnected = (client) => {
     if (!client) return false;
     if (client.state != 2) return false;
@@ -27,15 +40,17 @@ export default function (config = {}) {
   };
 
   const pub = ([topic, payload]) => {
-    if (isConnected(client)) client.publish(`${id}/${topic}`, payload);
+    if (isConnected(client)) {
+      client.publish(translateTopic(topic), payload);
+    }
   };
 
   const sub = (topic) => {
-    if (isConnected(client)) client.subscribe(`${id}/${topic}`);
+    if (isConnected(client)) client.subscribe(translateTopic(topic));
   };
 
   const unsub = (topic) => {
-    if (isConnected(client)) client.unsubscribe(`${id}/${topic}`);
+    if (isConnected(client)) client.unsubscribe(translateTopic(topic));
   };
 
   function onReady() {

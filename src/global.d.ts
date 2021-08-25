@@ -1,31 +1,3 @@
-/**
- * moddable added
- */
-declare function trace(...args: any[]): void; 
-interface StringConstructor {
-  /**
-   * moddable added
-   */
-    fromArrayBuffer(buf: ArrayBuffer): string;
-}
-
-interface ArrayBufferConstructor {
-  /**
-   * moddable added
-   */
-    fromString(str: String): ArrayBuffer;
-}
-
-
-interface ObjectConstructor {
-  /**
-   * Moddable added
-   */
-    freeze<T>(a: T[], deep: boolean): readonly T[];
-    freeze<T extends Function>(f: T, deep: boolean): T;
-    freeze<T>(o: T, deep: boolean): Readonly<T>;
-}
-
 declare module "cli" {
   class CLI {
     line(str: string): void;
@@ -91,10 +63,13 @@ declare module "modules" {
   export {Modules as default}
 }
 
-declare module "esp32" {
+declare module "native/esp32" {
   export function restart():void;
   export function getBuildString():string;
   export function getMAC(staOrAP:string):string;
+}
+
+declare module "native/all" {
   export function tzset():void;
   export function setenv(name: string, value: string, override: number):void;
 }
@@ -110,10 +85,6 @@ declare module "esp32/ota" {
 }
 
 declare module "Resource" {
-  class HostBuffer {
-    byteLength: number
-  }
-
   class Resource extends HostBuffer {
     constructor(path: string);
     slice(begin: number, end?: number, copy?: boolean): ArrayBuffer;

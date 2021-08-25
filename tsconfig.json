@@ -1,6 +1,7 @@
 {
   "baseURL": "./",
   "include": [
+    "./moddable/xs/includes/xs.d.ts",
     "./src/**/*.js",
     "./src/**/*.d.ts",
     "./moddable/typings/**/*.d.ts",

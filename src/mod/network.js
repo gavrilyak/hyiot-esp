@@ -53,8 +53,11 @@ bus.on("mqtt/started", () => {
   bus.emit("mqtt/sub", `led`);
   bus.emit("mqtt/sub", `kb`);
   bus.emit("mqtt/sub", `button`);
+  bus.emit("mqtt/sub", "$jobs/$next/get/accepted");
+  bus.emit("mqtt/sub", "$jobs/notify-next");
   Timer.set(() => {
     bus.emit("mqtt/pub", [`hello`, JSON.stringify({ who: "world" })]);
+    bus.emit("mqtt/pub", ["$jobs/$next/get", "{}"]);
   }, 100);
 });
 
@@ -124,7 +127,7 @@ function* networkManager() {
       let [topic] = yield* once("mqtt/started", "mqtt/error", "mqtt/stopped");
       bus.emit("start", "httpserver");
       if (topic != "mqtt/started") continue;
-      self.postMessage(["started"]);
+      if ("self" in globalThis) self.postMessage(["started"]);
 
       //} else {
       //}
@@ -147,7 +150,7 @@ coro(networkManager(), (err, res) => {
 });
 
 bus.emit("start", "tz");
-//bus.emit("start", "gui");
+bus.emit("start", "gui");
 bus.emit("start", "ble");
 
 if ("self" in globalThis) {

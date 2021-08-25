@@ -2,4 +2,4 @@ certs/
 compile_commands.json
 moddable
 moddable/
-.build
+.build*

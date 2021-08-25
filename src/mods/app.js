@@ -8,7 +8,9 @@ const kbMap = {
   "\u001b[D": "left",
 };
 const textStyle = new Style({
-  font: "OpenSans-Semibold-16",
+  //font: "OpenSans-Semibold-16",
+  //font: "liberation-regular-14",
+  font: "arial-regular-14",
   //font: "liberation-14",
   color: "white",
 });
@@ -16,19 +18,19 @@ const textStyle = new Style({
 const readyText = new Label(null, {
   bottom: 31,
   style: textStyle,
-  string: "Hello, world!".toUpperCase(),
+  string: "Hello, world!",
 });
 
 const secondText = new Label(null, {
   bottom: 15,
   style: textStyle,
-  string: "Second line".toUpperCase(),
+  string: "Second line",
 });
 
 const thirdText = new Label(null, {
   bottom: -1,
   style: textStyle,
-  string: "Third line - 003".toUpperCase(),
+  string: "Third line - 003",
 });
 
 const wifiIcon = new Content(null, {
@@ -171,11 +173,11 @@ export default function ({ bus }) {
     let sym = payload in kbMap ? kbMap[payload] : payload;
     readyText.string = "KB:" + sym;
   });
-	globalBus.on("ble/nason", function({pressure, temp, bat}) {
-		readyText.string = pressure.toFixed(2) + " psi";
-		secondText.string = String(temp.toFixed(1)) + " C"
-		thirdText.string = bat + "%"
-	})
+  globalBus.on("ble/nason", function ({ pressure, temp, bat }) {
+    readyText.string = pressure.toFixed(2) + " psi";
+    secondText.string = String(temp.toFixed(1)) + " C";
+    thirdText.string = bat + "%";
+  });
   return new Application(null, {
     displayListLength: 5632,
     //commandListLength: 3072,
