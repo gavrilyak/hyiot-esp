@@ -20,8 +20,9 @@ release:
 	mcconfig -m -p $(PLATFORM)  manifest_release.json  -f gray256
 
 sim:
+	-killall mcsim
 	-killall simulator
-	mcconfig -d -m -p lin manifest_release.json
+	mcconfig -d -m -p lin manifest_release.json  -f gray256
 
 clean:
 	mcconfig -d -m -p $(PLATFORM) -t clean

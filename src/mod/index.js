@@ -16,15 +16,16 @@ import Modules from "modules";
 import bus from "bus";
 import { measure } from "profiler";
 import { loadAndInstantiate } from "modLoader";
+import initialConfig from "config";
 measure("start");
 
 const IS_SIMULATOR = !Modules.has("flash"); //!("device" in globalThis);
 //trace("BOOTING, build: ", getBuildString(), "\n");
 trace("FW_VERSION:", globalThis.FW_VERSION, "\n");
 //trace("HOST MODULES:", Modules.host, "\n");
-trace("ARCHIVE MODULES:", Modules.archive, "\n");
+//trace("ARCHIVE MODULES:", Modules.archive, "\n");
 trace("IS_SIMULATOR:", IS_SIMULATOR, "\n");
-trace("GLOBAL:", Object.keys(globalThis), "\n");
+//trace("GLOBAL:", Object.keys(globalThis), "\n");
 
 bus.on("*", (payload, topic) => {
   trace(
@@ -35,13 +36,20 @@ bus.on("*", (payload, topic) => {
   measure(topic);
 });
 
+bus.on("start", (event) => {
+  const { name, ...opts } = typeof event === "string" ? { name: event } : event;
+  loadAndInstantiate(name, { ...initialConfig[name], ...opts });
+  bus.emit(`${name}/start`);
+});
+
 function startHw() {
   if (!IS_SIMULATOR) Modules.importNow("hardware");
 }
 
 startHw();
-loadAndInstantiate("network", { inWorker: !IS_SIMULATOR });
+loadAndInstantiate("network", { inWorker: true }); //!IS_SIMULATOR });
 bus.emit("network/start");
+bus.emit("start", "tz");
 
 /*
 let mods = {};

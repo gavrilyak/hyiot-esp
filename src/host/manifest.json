@@ -45,7 +45,8 @@
       "../../assets/signal",
       "../../assets/bluetooth",
       "../../assets/logo"
-    ]
+    ],
+    "~": ["$(MODULES)/crypt/data/ca"]
   },
   "data": {
     "*": ["../../assets/zones"]
@@ -61,17 +62,7 @@
     "telnet",
     "cli/*"
   ],
-  "strip": [
-    "Atomics",
-    "eval",
-    "Function",
-    "Proxy",
-    "Reflect",
-    "SharedArrayBuffer",
-    "WeakMap",
-    "WeakSet",
-    "RegExp"
-  ],
+
   "config": {
     "tls": {
       "DHE_RSA": false,
@@ -81,21 +72,21 @@
   "platforms": {
     "lin": {
       "creation": {
-        "stack": 600,
-        "#static": 131072,
+        "stack": 1900,
+        "static": 531072,
         "keys": {
-          "available": 400
+          "available": 1700
         }
       },
       "config": {
         "file": {
-          "root": "~/.config/"
+          "root": "/var/tmp/"
         }
       },
 
       "include": ["./manifest_piu.json"],
       "data": {
-        "*": ["../../certs/*"]
+        "*": ["../../certs/common/*", "../../certs/simulator1/*"]
       }
     },
     "esp32": {
@@ -120,9 +111,9 @@
           "buffer": 10,
           "table": 10
         },
-        "#static": 40960,
+        "static": 40960,
         "#static_max": 134000,
-        "static": 32768,
+        "#static": 32768,
         "#main": "main"
       },
       "include": [
@@ -140,6 +131,17 @@
         "cli/network": "$(MODULES)/base/cli/commands/network"
       },
       "preload": ["flash"],
+      "strip": [
+        "Atomics",
+        "eval",
+        "Function",
+        "Proxy",
+        "Reflect",
+        "SharedArrayBuffer",
+        "WeakMap",
+        "WeakSet",
+        "RegExp"
+      ],
       "defines": {
         "serial": {
           "interface_uart": 2,

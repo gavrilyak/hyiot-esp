@@ -116,14 +116,17 @@ function* networkManager() {
       }
       continue;
     } else {
-      bus.emit("start", "sntp");
       bus.emit("start", "telnet");
-      //const [sntpTopic] = yield* once("sntp/started", "sntp/error");
-      //if (sntpTopic == "sntp/started") {
-      //  trace("NO TIME\n");
-      //}
-      bus.emit("start", "mqtt");
+      for (let i = 0; i < 3; i++) {
+        bus.emit("start", "sntp");
+        const [sntpTopic] = yield* once("sntp/started", "sntp/error");
+        if (sntpTopic == "sntp/started") {
+          trace("sntp date:", new Date().toString(), "\n");
+          break;
+        }
+      }
 
+      bus.emit("start", "mqtt");
       let [topic] = yield* once("mqtt/started", "mqtt/error", "mqtt/stopped");
       bus.emit("start", "httpserver");
       if (topic != "mqtt/started") continue;
@@ -149,8 +152,7 @@ coro(networkManager(), (err, res) => {
   if (err === coro) trace("NM CORO ERR", res, "\n");
 });
 
-bus.emit("start", "tz");
-bus.emit("start", "gui");
+//bus.emit("start", "gui");
 bus.emit("start", "ble");
 
 if ("self" in globalThis) {
