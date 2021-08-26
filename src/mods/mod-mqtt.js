@@ -19,7 +19,7 @@ export default function (config = {}) {
   let id;
   {
     id = config.id;
-    if (id == null) id = getCertSubject(getBlob("fctry://l/device.der"))?.CN;
+    if (id == null) id = getCertSubject(clientCertificates[0])?.CN;
     if (id == null) throw Error("mqtt: no client id");
   }
 
@@ -74,32 +74,36 @@ export default function (config = {}) {
 
   function start() {
     stop();
-    client = new Client({
-      host,
-      id,
-      port,
-      ...(protocol === "mqtts"
-        ? {
-            Socket: SecureSocket,
-            secure: {
-              protocolVersion: 0x0303,
-              certificate: getBlob(config.certificate),
-              clientKey: getBlob(config.clientKey),
-              clientCertificates,
-              applicationLayerProtocolNegotiation:
-                config.applicationLayerProtocolNegotiation,
-              trace: Boolean(config.traceSSL),
-            },
-          }
-        : {}),
-    });
+    try {
+      client = new Client({
+        host,
+        id,
+        port,
+        ...(protocol === "mqtts"
+          ? {
+              Socket: SecureSocket,
+              secure: {
+                protocolVersion: 0x0303,
+                certificate: getBlob(config.certificate),
+                clientKey: getBlob(config.clientKey),
+                clientCertificates,
+                applicationLayerProtocolNegotiation:
+                  config.applicationLayerProtocolNegotiation,
+                trace: Boolean(config.traceSSL),
+              },
+            }
+          : {}),
+      });
 
-    Object.assign(client, {
-      onReady: onReady,
-      onClose: onClose,
-      onMessage,
-    });
-    return client;
+      Object.assign(client, {
+        onReady: onReady,
+        onClose: onClose,
+        onMessage,
+      });
+      return client;
+    } catch (e) {
+      bus.emit("error", e);
+    }
   }
 
   return {
