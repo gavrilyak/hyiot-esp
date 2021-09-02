@@ -3,6 +3,8 @@ import hostConfig from "mc/config";
 import pref from "preference";
 import Modules from "modules";
 import { measure } from "profiler";
+import PubSub from "pubsub";
+import initialConfig from "config";
 
 let modConfig = {
   mods: {},
@@ -12,7 +14,13 @@ if (Modules.has("mod/config")) {
   modConfig = modConfigLoaded;
 }
 
-import PubSub from "pubsub";
+bus.on("start", (event) => {
+  const { name, ...opts } = typeof event === "string" ? { name: event } : event;
+  loadAndInstantiate(name, { ...initialConfig[name], ...opts });
+  bus.emit(`${name}/start`);
+});
+bus.on("stop", (name) => unloadMod(name));
+
 function makePrefixedBus1(prefix) {
   return {
     on(topic, handler) {
@@ -30,6 +38,7 @@ function makePrefixedBus1(prefix) {
 function makePrefixedBus(prefix) {
   return new PubSub(prefix);
 }
+
 function getModPrefs(name) {
   const keys = pref.keys(name);
   let result = {};
@@ -58,7 +67,7 @@ export function instantiateMod(Mod, settings = {}) {
   }
 
   let bus = makePrefixedBus1(name);
-  measure("bus");
+  //measure("bus");
   const modInstance = new Mod({ ...settings, bus });
   if (typeof modInstance == "object" && modInstance) {
     for (const [handlerName, f] of Object.entries(modInstance)) {
@@ -74,16 +83,20 @@ let mods = {};
 function unloadMod(name) {
   const modInstance = mods[name];
   if (!modInstance) return;
+
   try {
     modInstance?.stop();
   } catch (e) {
     trace("mod ", name, " failed to stop:", e, "\n");
   }
+
   for (const [handlerName, f] of Object.entries(modInstance)) {
     if (typeof f !== "function") continue;
     bus.off(`${name}/${handlerName}`, f);
   }
   delete mods[name];
+  measure(`unloaded ${name}`);
+  trace("unloaded mod", name, "\n");
 }
 
 export function loadAndInstantiate(name, initialSettings) {
@@ -91,9 +104,9 @@ export function loadAndInstantiate(name, initialSettings) {
   const loadedModule = loadMod(name, initialSettings);
   if (!loadedModule) return null;
   const { module, settings } = loadedModule;
-  measure(`Loaded ${name}`);
+  //measure(`Loaded ${name}`);
   const instance = instantiateMod(module, settings);
   mods[name] = instance;
-  measure(`Instantiated ${name}`);
+  //measure(`Instantiated ${name}`);
   return instance;
 }

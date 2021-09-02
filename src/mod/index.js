@@ -15,8 +15,8 @@
 import Modules from "modules";
 import bus from "bus";
 import { measure } from "profiler";
+//this is for side effect
 import { loadAndInstantiate } from "modLoader";
-import initialConfig from "config";
 measure("start");
 
 const IS_SIMULATOR = !Modules.has("flash"); //!("device" in globalThis);
@@ -33,23 +33,198 @@ bus.on("*", (payload, topic) => {
       payload != null ? JSON.stringify(payload) : ""
     }\n`
   );
-  measure(topic);
-});
-
-bus.on("start", (event) => {
-  const { name, ...opts } = typeof event === "string" ? { name: event } : event;
-  loadAndInstantiate(name, { ...initialConfig[name], ...opts });
-  bus.emit(`${name}/start`);
+  //measure(topic);
 });
 
 function startHw() {
   if (!IS_SIMULATOR) Modules.importNow("hardware");
 }
 
-startHw();
-loadAndInstantiate("network", { inWorker: true }); //!IS_SIMULATOR });
-bus.emit("network/start");
-bus.emit("start", "tz");
+import coro from "coro";
+function* start(name) {
+  let cont = yield coro;
+  const listener = (payload) => cont(null, payload);
+  const topic = name + "/started";
+  bus.on(topic, listener);
+  try {
+    bus.emit("start", name);
+    return yield;
+  } finally {
+    bus.off(topic, listener);
+  }
+}
+
+//startHw();
+function* startSequence() {
+  startHw();
+  bus.emit("start", "pref");
+  bus.emit("start", "tz");
+  bus.emit("start", "gui");
+  const mods = [
+    //"tz",
+    "wifista",
+    "sntp",
+    //"mqtt",
+    "telnet",
+    //"httpserver",
+    "ble",
+  ];
+  for (let modName of mods) {
+    yield* start(modName);
+    measure("Started " + modName);
+  }
+}
+
+import Worker from "worker";
+//bus.on("mqtt/start", startMQTT);
+function startMQTT() {
+  let worker = new Worker("mqtt-worker", {
+    //allocation: 63 * 1024,
+    allocation: 33 * 1024,
+    stackCount: 256,
+    //slotCount: 200,
+  });
+
+  worker.onmessage = ([topic, payload]) => {
+    bus.emit("mqtt/" + topic, payload);
+  };
+
+  function sendToWorker(payload, topic) {
+    worker.postMessage([topic.slice(5), payload]);
+  }
+
+  function stopped() {
+    worker.terminate();
+    worker = null;
+  }
+
+  function stop() {
+    bus.off("mqtt/pub", sendToWorker);
+    bus.off("mqtt/sub", sendToWorker);
+    bus.off("mqtt/unsub", sendToWorker);
+    bus.off("mqtt/stop", stop);
+
+    worker.postMessage(["stop"]);
+    bus.once("mqtt/stopped", stopped);
+  }
+
+  function onStarted() {
+    bus.on("mqtt/pub", sendToWorker);
+    bus.on("mqtt/sub", sendToWorker);
+    bus.on("mqtt/unsub", sendToWorker);
+    bus.on("mqtt/stop", stop);
+  }
+
+  bus.once("mqtt/started", onStarted);
+}
+
+/**
+ * @param {string[]} topics
+ */
+function* once(...topics) {
+  const cont = yield coro;
+  const listener = (payload, topic) => {
+    cont(null, [topic, payload]);
+    topics.forEach((topic) => bus.off(topic, listener));
+  };
+  try {
+    topics.forEach((topic) => bus.on(topic, listener));
+    return yield;
+  } finally {
+    topics.forEach((topic) => bus.off(topic, listener));
+  }
+}
+
+import sleep from "sleep";
+
+function* mqttSaga() {
+  let restart = false;
+  for (;;) {
+    if (restart) yield* sleep(1000);
+    else yield* once("mqtt/start");
+
+    let worker = new Worker("mqtt-worker", {
+      allocation: 33 * 1024,
+      stackCount: 256, //4Kb
+      //slotCount: 200,
+    });
+    worker.onmessage = ([topic, payload]) => bus.emit("mqtt/" + topic, payload);
+    let [topic, payload] = yield* once(
+      "mqtt/started",
+      "mqtt/error",
+      "mqtt/stopped"
+    );
+    if (topic === "mqtt/started") {
+      restart = false;
+      try {
+        for (;;) {
+          const proxyTopics = [
+            "mqtt/pub",
+            "mqtt/sub",
+            "mqtt/unsub",
+            "mqtt/stop",
+          ];
+          let [topic, payload] = yield* once(...proxyTopics, "mqtt/stopped");
+          trace("SAGA", topic, ",", payload, "\n");
+          if (proxyTopics.indexOf(topic) >= 0) {
+            worker.postMessage([topic.slice(5), payload]);
+          }
+          if (topic === "mqtt/stop") {
+            yield* once("mqtt/stopped");
+            break;
+          } else if (topic == "mqtt/stopped") {
+            restart = true;
+            break;
+          }
+        }
+      } catch (e) {
+        trace("ERROR in saga:", e.message, "\n");
+      } finally {
+        worker.terminate();
+      }
+    } else {
+      trace("ERROR starting worker", topic, payload, "\n");
+      restart = true;
+    }
+  }
+}
+
+function startAsync() {
+  coro(mqttSaga());
+  coro(startSequence(), (err, res) => {
+    trace("coro", err, res, "\n");
+    bus.emit("mqtt/start");
+    //startMQTT();
+  });
+}
+
+function startSequenceEvents() {
+  bus.emit("start", "pref");
+  bus.emit("start", "tz");
+  bus.emit("start", "wifista");
+  bus.on("wifista/started", () => {
+    bus.emit("start", "mqtt");
+    bus.emit("start", "telnet");
+  });
+
+  bus.on("mqtt/started", () => {
+    bus.emit("start", "gui");
+  });
+
+  bus.on("gui/started", () => {
+    bus.emit("start", "ble");
+  });
+}
+
+//startSequenceEvents();
+startAsync();
+
+//bus.emit("start", "gui");
+//bus.emit("start", { name: "network", inWorker: true });
+//bus.emit("start", "ble");
+
+//loadAndInstantiate("network", { inWorker: false }); //!IS_SIMULATOR });
+//bus.emit("network/start");
 
 /*
 let mods = {};

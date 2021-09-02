@@ -14,9 +14,13 @@ export default function modWiFi({ name, bus, ...opts }) {
     } else {
       bus.emit("connecting", { ssid, password });
     }
-
-    wifi = new WiFi({ ssid, password }, function (msg, code) {
-      trace("WIFI event", msg, code, "\n");
+    if (wifi) {
+      trace("WIFI SECOND INSTANCE");
+      debugger;
+      return;
+    }
+    function callback(msg, code) {
+      //trace("WIFI event", msg, code, "\n");
       switch (msg) {
         case WiFi.connected:
           {
@@ -43,9 +47,15 @@ export default function modWiFi({ name, bus, ...opts }) {
           }
           break;
       }
-    });
-    WiFi.mode = 1;
-    return wifi;
+    }
+
+    try {
+      wifi = new WiFi({ ssid, password }, callback);
+      WiFi.mode = 1;
+    } catch (e) {
+      bus.emit("error", e.message);
+      stop();
+    }
   }
 
   function stop() {

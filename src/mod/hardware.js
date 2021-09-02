@@ -1,41 +1,20 @@
 import Digital from "embedded:io/digital";
 import bus from "bus";
-import Modules from "modules";
-function probeSSD1306() {
-  let I2C = Modules.importNow("pins/i2c");
-  let i2c = new I2C({
-    address: 0x3c,
-    scl: 22,
-    sda: 21,
-    throw: false,
-    timeout: 10,
-  });
-  i2c.write(0, false);
-  let i2cres = i2c.read(1);
-  let result = Boolean(i2cres && i2cres.length == 1);
-  trace("i2cres:", result, "\n");
-  return result;
-}
-probeSSD1306();
-
-//led.write(1);
-
-let isOnline = false;
-
-bus.on("network/started", () => {
-  isOnline = true;
-});
-
-bus.on("network/stopped", () => {
-  isOnline = false;
-});
 
 const emit = (topic, payload) => {
   bus.emit(topic, payload);
-  if (isOnline) {
-    bus.emit("network/out", [topic, payload]);
-  }
+  bus.emit("mqtt/pub", [topic, payload]);
 };
+
+/*
+const button = new globalThis.Host.Button.Default({ onPush });
+const led = new globalThis.Host.LED.Default();
+function onPush() {
+  let val = led.read();
+  led.write(1 - val);
+  bus.emit("button/pushed");
+}
+*/
 
 const led = new Digital({ pin: 2, mode: Digital.Output });
 
@@ -49,7 +28,6 @@ const button = new Digital({
       this.val = val;
       led.write(!val);
       emit("button/changed", val);
-      //bus.emit(val ? "network/start" : "network/stop");
     }
   },
 });

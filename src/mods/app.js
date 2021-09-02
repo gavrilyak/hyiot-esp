@@ -48,7 +48,7 @@ const wifiIcon = new Content(null, {
   }),
   state: 0,
   variant: 0,
-  Behavior: class extends Behavior {
+  _Behavior: class extends Behavior {
     onDisplaying(content) {
       content.interval = 1000;
       content.start();
@@ -79,7 +79,7 @@ const batteryIcon = new Content(null, {
   }),
   state: 0,
   variant: 0,
-  Behavior: class BatteryIconBehavior extends Behavior {
+  _Behavior: class BatteryIconBehavior extends Behavior {
     onDisplaying(content) {
       content.interval = 1300;
       content.start();
@@ -109,7 +109,7 @@ const signalIcon = new Content(null, {
   }),
   state: 0,
   variant: 0,
-  Behavior: class extends Behavior {
+  _Behavior: class extends Behavior {
     onDisplaying(content) {
       content.interval = 1500;
       content.start();
@@ -131,7 +131,7 @@ const bluetoothIcon = new Content(null, {
     width: 16,
     height: 16,
   }),
-  Behavior: class extends Behavior {
+  _Behavior: class extends Behavior {
     onDisplaying(content) {
       content.interval = 1900;
       content.start();
@@ -155,19 +155,6 @@ const logoIcon = new Content(null, {
   left: 1,
 });
 
-class AppBehavior extends Behavior {
-  onCreate(app) {
-    app.add(logoIcon);
-    app.add(bluetoothIcon);
-    app.add(wifiIcon);
-    app.add(signalIcon);
-    app.add(batteryIcon);
-    app.add(readyText);
-    app.add(secondText);
-    app.add(thirdText);
-  }
-}
-
 export default function ({ bus }) {
   bus.on("kb", function kb(payload) {
     let sym = payload in kbMap ? kbMap[payload] : payload;
@@ -184,6 +171,18 @@ export default function ({ bus }) {
     skin: new Skin({
       fill: "black",
     }),
-    Behavior: AppBehavior,
+    Behavior: class AppBehavior extends Behavior {
+      onCreate(app) {
+        app.add(logoIcon);
+        app.add(bluetoothIcon);
+        app.add(wifiIcon);
+        app.add(signalIcon);
+        app.add(batteryIcon);
+        app.add(readyText);
+        app.add(secondText);
+        app.add(thirdText);
+        bus.emit("started");
+      }
+    },
   });
 }

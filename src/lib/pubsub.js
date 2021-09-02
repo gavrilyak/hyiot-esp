@@ -64,6 +64,14 @@ class PubSub {
           Timer.set(() => listener(payload, topic));
     }
   }
+
+  once(topic, listener) {
+    let that = this;
+    this.on(topic, function listenerStub(payload) {
+      listener(payload);
+      that.off(topic, listenerStub);
+    });
+  }
 }
 
 Object.freeze(PubSub.prototype);

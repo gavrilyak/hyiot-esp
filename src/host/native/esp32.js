@@ -1,5 +1,4 @@
 export function restart() @ "xs_do_restart";
-export function getBuildString	() @ "xs_getbuildstring";
 function getMacBin() @ "xs_getmac";
 
 export function getMAC(staOrApString = "sta") {

@@ -1,7 +1,7 @@
 {
   "build": {
-    "SDKCONFIGPATH": "./sdkconfig",
-    "PARTITIONS_FILE": "./sdkconfig/partitions.csv",
+    "SDKCONFIGPATH": "./esp_config",
+    "PARTITIONS_FILE": "./esp_config/partitions.csv",
     "NAME": "hydrolec-host"
   },
   "include": [
@@ -99,7 +99,7 @@
           "#initial": 100,
           "#incremental": 64
         },
-        "stack": 600,
+        "stack": 400,
         "#stack": 512,
         "keys": {
           "available": 500,
@@ -111,7 +111,8 @@
           "buffer": 10,
           "table": 10
         },
-        "static": 40960,
+        "#static_": 50960,
+        "static": 50000,
         "#static_max": 134000,
         "#static": 32768,
         "#main": "main"

@@ -34,12 +34,13 @@ export default function ({ name = "httpserver", bus, port = 8080 } = {}) {
     };
 
     bus.emit("started", { port, url: `http://${Net.get("IP")}:${port}` });
-    trace(`${name} ready at http://${Net.get("IP")}:${port}/\n`);
+    //trace(`${name} ready at http://${Net.get("IP")}:${port}/\n`);
   }
 
   function stop() {
     server?.close();
     server = null;
+    bus.emit("stopped");
   }
 
   return {

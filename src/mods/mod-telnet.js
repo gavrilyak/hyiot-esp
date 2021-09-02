@@ -9,8 +9,8 @@ CLI.install(function (command, params) {
   // }
   switch (command) {
     case "pub":
-      if (params.length == 1) this.line(`publising ${params[0]}`);
-      globalBus.emit(params[0], params[1]);
+      //if (params.length == 1) this.line(`publising ${params[0]}`);
+      globalBus.emit(params[0], params.slice(1));
       return true;
     case "sub":
       if (this.cb == null) {
@@ -40,7 +40,7 @@ CLI.install(function (command, params) {
   return true;
 });
 
-export default function ({ name = "telnet", bus, port = 2300 } = {}) {
+export default function ({ name = "telnet", bus, port = 8023 } = {}) {
   let server = null;
 
   function start() {
@@ -50,16 +50,14 @@ export default function ({ name = "telnet", bus, port = 2300 } = {}) {
     }
     server = new Telnet({ port });
     bus.emit("started", { port });
-    trace(`${name} ready on port ${port}\n`);
   }
 
   function stop() {
-    trace(`${name} stopping\n`);
     if (server) {
       server.close();
       server = null;
-      bus.emit("stopped");
     }
+    bus.emit("stopped");
   }
 
   return Object.freeze({

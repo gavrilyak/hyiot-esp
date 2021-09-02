@@ -4,13 +4,13 @@ export default function ({ bus, inWorker = true }) {
   let networkWorker;
   function start() {
     if (networkWorker) {
-      debugger;
       trace("No double start");
-      return;
+      debugger;
     }
     if (inWorker) {
       networkWorker = new Worker("network", {
-        allocation: 69 * 1024,
+        //allocation: 63 * 1024,
+        allocation: 60 * 1024,
         stackCount: 560,
         slotCount: 1024,
       });
@@ -19,7 +19,7 @@ export default function ({ bus, inWorker = true }) {
       };
       //bus.emit("started");
     } else {
-      Modules.importNow("network");
+      networkWorker = Modules.importNow("network")();
     }
   }
 
@@ -29,7 +29,13 @@ export default function ({ bus, inWorker = true }) {
   }
 
   function stop() {
-    networkWorker.terminate();
+    if (networkWorker != null) {
+      if (networkWorker.terminate) {
+        networkWorker.terminate();
+      } else if (networkWorker.close) {
+        networkWorker.close();
+      }
+    }
     networkWorker = null;
     bus.emit("stopped");
   }
