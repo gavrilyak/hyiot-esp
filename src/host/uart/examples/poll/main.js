@@ -24,15 +24,14 @@ import Serial from "serial";
 
 let serial = new Serial();
 
-export default function() {
-	serial.onDataReceived = function(str, len) {
-		trace("got: [" + str + "]\n");
-		if (-1 != str.indexOf("stop"))
-			serial.poll();
-	}
-	serial.poll({ terminators: "\r\n", trim: 1, chunkSize: 16 });
+export default function () {
+  serial.onDataReceived = function (str, len) {
+    trace("got: [" + str + "]\n");
+    if (-1 != str.indexOf("stop")) serial.poll();
+  };
+  serial.poll({ terminators: "\r\n", trim: 1, chunkSize: 16 });
 
-	Timer.repeat(() => {
-		serial.writeLine("tick.");
-	}, 10000);
+  Timer.repeat(() => {
+    serial.writeLine("tick.");
+  }, 10000);
 }

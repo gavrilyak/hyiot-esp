@@ -313,16 +313,8 @@ void modSerialIssueCallback(void *the, void *refcon, uint8_t *message, uint16_t 
 
 void modSerialTriggerCallback(uint8_t *data, int len, void *refcon) {
 	modSerial serial = (modSerial)refcon;
-//	modMessagePostToMachine(serial->the, data, len, modSerialIssueCallback, serial);
-	modSerialIssueCallback(serial->the, serial, data, len);
-}
-#if gecko
-#else
-void modSerialTriggerCallback_fromThread(uint8_t *data, int len, void *refcon) {
-	modSerial serial = (modSerial)refcon;
 	modMessagePostToMachine(serial->the, data, len, modSerialIssueCallback, serial);
 }
-#endif
 
 void xs_uart_poll(xsMachine *the) {
 	modSerial serial = xsmcGetHostData(xsThis);

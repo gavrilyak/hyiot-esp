@@ -116,6 +116,7 @@ void xs_modem_stop(xsMachine *the){
   pppapi_free(gModem->pcb);
   gModem->pcb = NULL;
   xsForget(gModem->callback);
+  uart_driver_delete(MODDEF_SERIAL_INTERFACE_UART);
   c_free(gModem);
   gModem = NULL;
 }

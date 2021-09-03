@@ -112,7 +112,7 @@
           "table": 10
         },
         "#static_": 50960,
-        "static": 50000,
+        "static": 60000,
         "#static_max": 134000,
         "#static": 32768,
         "#main": "main"
@@ -120,8 +120,7 @@
       "include": [
         "$(MODULES)/io/manifest.json",
         "$(MODULES)/drivers/ssd1306/manifest_i2c.json",
-        "./manifest_piu.json",
-        "./uart/manifest.json"
+        "./manifest_piu.json"
       ],
       "modules": {
         "~": ["$(BUILD)/devices/esp32/setup/network"],
@@ -145,10 +144,11 @@
       ],
       "defines": {
         "serial": {
-          "interface_uart": 2,
+          "interface": { "UART": 2 },
           "baud": 115200,
-          "tx_pin": 25,
-          "rx_pin": 26,
+          "config": { "dataBits": 8, "parity": "#N", "stopBits": 1 },
+          "tx_pin": 17,
+          "rx_pin": 16,
           "txbuffersize": 256,
           "rxbuffersize": 256,
           "timeout": 1000

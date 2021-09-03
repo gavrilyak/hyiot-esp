@@ -59,7 +59,9 @@ function* startSequence() {
   startHw();
   bus.emit("start", "pref");
   bus.emit("start", "tz");
-  bus.emit("start", "gui");
+  //bus.emit("start", "modem");
+  bus.emit("start", "serial");
+  //bus.emit("start", "gui");
   const mods = [
     //"tz",
     "wifista",
@@ -67,7 +69,7 @@ function* startSequence() {
     //"mqtt",
     "telnet",
     //"httpserver",
-    "ble",
+    //"ble",
   ];
   for (let modName of mods) {
     yield* start(modName);
@@ -193,7 +195,7 @@ function startAsync() {
   coro(mqttSaga());
   coro(startSequence(), (err, res) => {
     trace("coro", err, res, "\n");
-    bus.emit("mqtt/start");
+    //bus.emit("mqtt/start");
     //startMQTT();
   });
 }
