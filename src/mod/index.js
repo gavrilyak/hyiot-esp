@@ -62,20 +62,15 @@ function* startSequence() {
   //bus.emit("start", "modem");
   bus.emit("start", "serial");
   bus.emit("start", "gui");
-  const mods = [
-    //"tz",
-    "wifista",
-    "sntp",
-    //"mqtt",
-    //"wifiap",
-    "telnet",
-    //"httpserver",
-    "ble",
-  ];
-  for (let modName of mods) {
-    yield* start(modName);
-    measure("Started " + modName);
+  bus.emit("start", "ble");
+  bus.emit("start", "wifista");
+  let [topic] = yield* once("wifista/started", "wifista/unfconfigured");
+  if (topic == "wifista/unfconfigured") {
+    yield* start("wifiap");
+  } else if (topic == "wifista/started") {
+    yield* start("sntp");
   }
+  yield* start("telnet");
 }
 
 import Worker from "worker";
