@@ -20,6 +20,7 @@ export default function ({ bus }) {
     serial = new device.io.Serial({
       ...device.Serial.default,
       baud: 115200,
+      //baud: 9600,
       port: 2,
       receive: 16,
       transmit: 17,
@@ -36,7 +37,7 @@ export default function ({ bus }) {
         let wholeResp = resps
           .map((resp) => String.fromArrayBuffer(resp))
           .join("");
-        if(cli) cli.line(wholeResp);
+        if (cli) cli.line(wholeResp);
         trace(wholeResp);
       },
     });

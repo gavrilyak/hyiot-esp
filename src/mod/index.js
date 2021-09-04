@@ -61,16 +61,16 @@ function* startSequence() {
   bus.emit("start", "tz");
   //bus.emit("start", "modem");
   bus.emit("start", "serial");
-  //bus.emit("start", "gui");
+  bus.emit("start", "gui");
   const mods = [
     //"tz",
-    //"wifista",
-    //"sntp",
+    "wifista",
+    "sntp",
     //"mqtt",
-    "wifiap",
+    //"wifiap",
     "telnet",
     //"httpserver",
-    //"ble",
+    "ble",
   ];
   for (let modName of mods) {
     yield* start(modName);
