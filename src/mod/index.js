@@ -64,9 +64,10 @@ function* startSequence() {
   //bus.emit("start", "gui");
   const mods = [
     //"tz",
-    "wifista",
-    "sntp",
+    //"wifista",
+    //"sntp",
     //"mqtt",
+    "wifiap",
     "telnet",
     //"httpserver",
     //"ble",

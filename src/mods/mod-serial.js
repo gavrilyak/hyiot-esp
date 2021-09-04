@@ -36,7 +36,7 @@ export default function ({ bus }) {
         let wholeResp = resps
           .map((resp) => String.fromArrayBuffer(resp))
           .join("");
-        cli.line(wholeResp);
+        if(cli) cli.line(wholeResp);
         trace(wholeResp);
       },
     });
