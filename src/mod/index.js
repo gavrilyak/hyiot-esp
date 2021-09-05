@@ -74,6 +74,7 @@ function* startSequence() {
   } else if (topic == "wifista/started") {
     yield* start("sntp");
   }
+  yield* start("httpserver");
   yield* start("telnet");
 }
 

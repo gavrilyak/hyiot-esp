@@ -31,17 +31,16 @@ export default function ({ bus }) {
   });
 
   function* read(timeout = 100) {
-    trace("READ", timeout, "\n");
+    //trace("READ", timeout, "\n");
     yield* sleep(timeout);
     let resp = serial.read();
     if (!resp) return null;
     let str = String.fromArrayBuffer(resp);
-    trace("RESP", str, "\n");
+    //trace("RESP", str, "\n");
     return str;
   }
 
   function writeln(str) {
-    trace("WRITE", str, "\n");
     return serial.write(ArrayBuffer.fromString(str + "\r\n"));
   }
 
@@ -61,7 +60,6 @@ export default function ({ bus }) {
 
   function* send(cmd, timeout = 100) {
     let written = writeln(cmd);
-    trace("WRITTEN:", written, " of ", cmd.length + 2);
     const res = yield* read(timeout);
     return res;
   }
@@ -78,12 +76,11 @@ export default function ({ bus }) {
         transmit: 17,
         format: "buffer",
       });
-      trace("serial created\n");
       yield* findModem();
-      //let cpinRes = yield* send("AT+CPIN?");
-      //trace("CPIN", JSON.stringify(cpinRes), "\n");
-      //let csqResp = yield* send("AT+CSQ");
-      //trace("CSQ", JSON.stringify(csqResp), "\n");
+      let cpinRes = yield* send("AT+CPIN?");
+      trace("CPIN", JSON.stringify(cpinRes), "\n");
+      let csqResp = yield* send("AT+CSQ");
+      trace("CSQ", JSON.stringify(csqResp), "\n");
       trace(yield* send('AT+CGDCONT=1,"IP","hologram"'), "\n");
       trace(yield* send("ATD*99#"), "\n");
       serial.close();
@@ -94,8 +91,7 @@ export default function ({ bus }) {
       for (;;) {
         msg = yield;
         trace("PPPOS MSG:", msg, "\n");
-        //if (msg != pppos.PPPERR_NONE)
-        break;
+        if (msg != pppos.PPPERR_NONE) break;
       }
       pppos.stop();
       bus.emit("stopped", { msg });
