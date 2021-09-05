@@ -1,4 +1,5 @@
 #include "xs.h"
+#include "xsmc.h"
 #include "xsHost.h"
 
 
@@ -12,10 +13,17 @@
 #include "netif/ppp/pppapi.h"
 #include "esp_log.h"
 #include "driver/uart.h"
-#include "mc.defines.h"
+#include "hal/uart_hal.h"
+#include "hal/uart_types.h"
+//#include "soc/uart_caps.h"
+#include "soc/uart_struct.h"
+//#include "mc.defines.h"
 
 
-#define PPP_CLOSE_TIMEOUT_MS (4000)
+#define UART_NUM 2
+#define UART_REG &UART2
+#define BUF_SIZE 256
+
 static char *TAG = "pppos";
 
 typedef struct xsModemRecord {
@@ -66,34 +74,36 @@ static void ppp_status_cb(ppp_pcb *pcb, int err_code, void *ctx) {
 
 
 static u32_t ppp_output_callback(ppp_pcb *pcb, u8_t *data, u32_t len, void *ctx) {
-  //printf("ppp_output_callback %d\n", len);
-  return uart_tx_chars(MODDEF_SERIAL_INTERFACE_UART, (const char *)data, len);
+  printf("ppp_output_callback %d\n", len);
+  return uart_tx_chars(UART_NUM, (const char *)data, len);
 }
 
 static void pppos_client_task(void *self_in) {
-  xsModemRec *self = (xsModemRec *)self_in;
-  uint8_t buf[MODDEF_SERIAL_RXBUFFERSIZE];
+  ppp_pcb* pcb = gModem->pcb;
+  uint8_t buf[BUF_SIZE];
   for(;;){
-    int len = uart_read_bytes(MODDEF_SERIAL_INTERFACE_UART, (uint8_t *)buf, sizeof(buf), 50 / portTICK_RATE_MS);
+    int len = uart_read_bytes(UART_NUM, (uint8_t *)buf, sizeof(buf), 50 / portTICK_RATE_MS);
     if (len > 0) {
-      //printf("LEN IS %d\n", len);
-      pppos_input_tcpip(self->pcb, (u8_t *)buf, len);
+      printf("LEN IS %d\n", len);
+      pppos_input_tcpip(pcb, (u8_t *)buf, len);
     }
   }
 }
 
-void setup_uart() {
-    int uart_num = MODDEF_SERIAL_INTERFACE_UART;
-    uart_config_t uart_config = {
-      .baud_rate = MODDEF_SERIAL_BAUD,
-      .data_bits = 8,
-      .parity = UART_PARITY_DISABLE,
-      .stop_bits = UART_STOP_BITS_1,
-      .flow_ctrl = UART_HW_FLOWCTRL_DISABLE
-    };
-    uart_param_config(uart_num, &uart_config) ;
-    uart_set_pin(uart_num, MODDEF_SERIAL_TX_PIN, MODDEF_SERIAL_RX_PIN, UART_PIN_NO_CHANGE, UART_PIN_NO_CHANGE);
-    uart_driver_install(uart_num, MODDEF_SERIAL_TXBUFFERSIZE, MODDEF_SERIAL_RXBUFFERSIZE, 0, NULL, 0);   
+static u32_t ppp_output_callback_ll(ppp_pcb *pcb, u8_t *data, u32_t len, void *ctx) {
+  int count = uart_ll_get_txfifo_len(UART_REG);
+  uart_ll_write_txfifo(UART_REG, data, count);
+  return count;
+}
+
+void xs_modem_write(xsMachine *the) {
+  if (gModem == NULL) {
+    xsUnknownError("PPP stopped");
+    return;
+  }
+  unsigned char* buffer = xsmcToArrayBuffer(xsArg(0));
+  int requested = xsmcGetArrayBufferLength(xsArg(0));
+  pppos_input_tcpip(gModem->pcb, buffer, requested);
 }
 
 
@@ -107,7 +117,7 @@ void xs_modem_stop(xsMachine *the){
   pppapi_close(pcb, 1);
   pppapi_free(pcb);
   xsForget(gModem->callback);
-  uart_driver_delete(MODDEF_SERIAL_INTERFACE_UART);
+  uart_driver_delete(UART_NUM);
   c_free(gModem);
   gModem = NULL;
 }
@@ -120,11 +130,13 @@ void xs_modem_start(xsMachine *the) {
   }
 
   gModem = c_malloc(sizeof(xsModemRec));
-  if (!gModem)
+  if (!gModem){
     xsUnknownError("out of memory");
+    return;
+  }
   gModem->callback = xsArg(0);
   esp_err_t err;
-  err =  uart_driver_install(MODDEF_SERIAL_INTERFACE_UART, MODDEF_SERIAL_TXBUFFERSIZE, MODDEF_SERIAL_RXBUFFERSIZE, 0, NULL, 0);
+  err =  uart_driver_install(UART_NUM, BUF_SIZE, BUF_SIZE, 0, NULL, 0);
   if (err != ESP_OK) goto bail1;
 
   gModem->the = the;
