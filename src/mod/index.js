@@ -14,6 +14,7 @@
 
 import Modules from "modules";
 import bus from "bus";
+import WiFi from "wifi";
 import { measure } from "profiler";
 //this is for side effect
 import { loadAndInstantiate } from "modLoader";
@@ -26,6 +27,9 @@ trace("FW_VERSION:", globalThis.FW_VERSION, "\n");
 //trace("ARCHIVE MODULES:", Modules.archive, "\n");
 trace("IS_SIMULATOR:", IS_SIMULATOR, "\n");
 //trace("GLOBAL:", Object.keys(globalThis), "\n");
+
+//THIS is NECCESSARY for network stack initialization
+WiFi.mode = 0;
 
 bus.on("*", (payload, topic) => {
   trace(
@@ -60,9 +64,9 @@ function* startSequence() {
   bus.emit("start", "pref");
   bus.emit("start", "tz");
   //bus.emit("start", "modem");
-  bus.emit("start", "serial");
   bus.emit("start", "gui");
   bus.emit("start", "ble");
+  bus.emit("start", "serial");
   bus.emit("start", "wifista");
   let [topic] = yield* once("wifista/started", "wifista/unfconfigured");
   if (topic == "wifista/unfconfigured") {
