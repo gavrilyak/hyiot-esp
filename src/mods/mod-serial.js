@@ -30,14 +30,17 @@ export default function ({ bus }) {
     return false;
   });
 
-  function* read(timeout = 100) {
+  function* readString(timeout = 100) {
     //trace("READ", timeout, "\n");
     yield* sleep(timeout);
     let resp = serial.read();
     if (!resp) return null;
-    let str = String.fromArrayBuffer(resp);
-    //trace("RESP", str, "\n");
-    return str;
+    try {
+      return String.fromArrayBuffer(resp);
+    } catch (e) {
+      //It MUST be string, what else
+      return null;
+    }
   }
 
   function writeln(str) {
@@ -49,18 +52,18 @@ export default function ({ bus }) {
       yield* pressButton();
       for (let i = 0; i < 7; i++) {
         writeln("ATZ");
-        let res = yield* read(200);
+        let res = yield* readString(200);
         if (!res) continue;
         if (res.includes("ERROR")) continue;
         if (res.includes("OK")) return res;
       }
     }
-    throw Error("No modem found");
+    return null;
   }
 
   function* send(cmd, timeout = 100) {
-    let written = writeln(cmd);
-    const res = yield* read(timeout);
+    writeln(cmd);
+    const res = yield* readString(timeout);
     return res;
   }
 
@@ -76,18 +79,27 @@ export default function ({ bus }) {
         transmit: 17,
         format: "buffer",
       });
-      yield* findModem();
-      let cpinRes = yield* send("AT+CPIN?");
-      trace("CPIN", JSON.stringify(cpinRes), "\n");
-      let csqResp = yield* send("AT+CSQ");
-      trace("CSQ", JSON.stringify(csqResp), "\n");
-      trace(yield* send('AT+CGDCONT=1,"IP","hologram"'), "\n");
-      trace(yield* send("ATD*99#"), "\n");
+      let found = yield* findModem();
+      if (!found) {
+        trace("Modem not found\n");
+        bus.emit("error", "modem not found");
+        serial.close();
+        yield* sleep(20000);
+        continue;
+      }
+      trace("CPIN", JSON.stringify(yield* send("AT+CPIN?")), "\n");
+      trace("CSQ", JSON.stringify(yield* send("AT+CSQ")), "\n");
+      trace(
+        "CGDCONT",
+        JSON.stringify(yield* send('AT+CGDCONT=1,"IP","hologram"')),
+        "\n"
+      );
+      trace("ATD", JSON.stringify(yield* send("ATD*99#")), "\n");
       serial.close();
-      serial = null;
+
       const cont = yield coro;
-      pppos.start((msg) => cont(null, msg));
       let msg;
+      pppos.start((msg) => cont(null, msg));
       for (;;) {
         msg = yield;
         trace("PPPOS MSG:", msg, "\n");
@@ -95,7 +107,7 @@ export default function ({ bus }) {
       }
       pppos.stop();
       bus.emit("stopped", { msg });
-      yield* sleep(100);
+      yield* sleep(5000);
     }
   }
 
