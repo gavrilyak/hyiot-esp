@@ -34,7 +34,6 @@ export default function ({ bus }) {
 
   function onReadable(count) {
     trace("Readable,", count);
-    resps = [];
     let resp;
     while ((resp = this.read())) {
       //trace("resp", resp.byteLength, "\n");
@@ -49,30 +48,29 @@ export default function ({ bus }) {
 
   function* read(timeout = 100) {
     trace("READ", timeout, "\n");
-    if (resps.length == 0) {
-      let cont = yield coro;
-      readableCB = cont;
-      let timer = Timer.set(() => {
-        cont(null, "TIMEOUT");
-      }, timeout);
+    let cont = yield coro;
+    resps = [];
+    readableCB = cont;
+    let timer = Timer.set(() => {
+      cont(null, "TIMEOUT");
+    }, timeout);
+
+    for (;;) {
       let res = yield;
-      readableCB = null;
       if (res === "TIMEOUT") {
         trace("TIMEOUT\n");
-        return null;
-      } else {
-        Timer.clear(timer);
+        break;
       }
     }
-
+    //Timer.clear(timer);
+    readableCB = null;
     let str = resps
       .map((resp) => String.fromArrayBuffer(resp))
       .join("")
       .trim();
     trace("MODEM RESP", JSON.stringify(str), "\n");
-    let res = str.split("\r\n");
     resps = [];
-    return res;
+    return str;
   }
 
   function writeln(str) {
@@ -84,10 +82,9 @@ export default function ({ bus }) {
     for (let i = 0; i < 4; i++) {
       for (let i = 0; i < 7; i++) {
         writeln("ATZ");
-        let res = yield* read(500);
+        let res = yield* read(200);
         if (!res) continue;
-
-        let [cmd, ok] = res;
+        let [cmd, ok] = res.split("\r\n");
         trace("got something:", cmd, ok === "OK", "\n");
         if (cmd.trim() !== "ATZ" || ok !== "OK") break;
         return res;
