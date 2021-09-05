@@ -64,7 +64,7 @@ static void ppp_status_cb(ppp_pcb *pcb, int err_code, void *ctx) {
 
 
 static u32_t ppp_output_callback(ppp_pcb *pcb, u8_t *data, u32_t len, void *ctx) {
-  return uart_write_bytes(MODDEF_SERIAL_INTERFACE_UART, (const char *)data, len);
+  return uart_tx_chars(MODDEF_SERIAL_INTERFACE_UART, (const char *)data, len);
 }
 
 static void pppos_client_task(void *self_in) {

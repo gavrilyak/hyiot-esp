@@ -112,7 +112,7 @@
           "table": 10
         },
         "#static_": 50960,
-        "static": 60000,
+        "static": 65536,
         "#static_max": 134000,
         "#static": 32768,
         "#main": "main"
