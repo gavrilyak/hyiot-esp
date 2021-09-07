@@ -67,6 +67,7 @@ function* startSequence() {
   bus.emit("start", "gui");
   bus.emit("start", "ble");
   bus.emit("start", "serial");
+	return;
   bus.emit("start", "wifista");
   let [topic] = yield* once("wifista/started", "wifista/unfconfigured");
   if (topic == "wifista/unfconfigured") {
