@@ -39,7 +39,7 @@ export default function ({ bus }) {
     let resp = serial.read();
     if (!resp) return null;
     try {
-      if (resp.find((x) => x > 127) >= 0) {
+      if (new Uint8Array(resp).find((x) => x > 127) >= 0) {
         trace("Not valid ascii string\n");
         return null;
       }
