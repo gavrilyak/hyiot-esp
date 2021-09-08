@@ -17,7 +17,7 @@ export default function ({ bus }) {
     pwrKey.write(1);
     yield* sleep(1100);
     pwrKey.write(0);
-    yield* sleep(5000);
+    yield* sleep(10000);
     trace("powerOn done\n");
   }
 
@@ -25,6 +25,7 @@ export default function ({ bus }) {
     if (typeof command === "string" && command.toUpperCase().startsWith("AT")) {
       cli = this;
       serial.write(ArrayBuffer.fromString(command + "\r\n"));
+      coro(readString(),(e, r)=> {if(r) cli.line(r)});
       return true;
     }
     return false;
@@ -36,7 +37,8 @@ export default function ({ bus }) {
     let resp = serial.read();
     if (!resp) return null;
     try {
-      return String.fromArrayBuffer(resp);
+      let res =  String.fromArrayBuffer(resp);
+      return res;
     } catch (e) {
       //It MUST be string, what else
       return null;
@@ -51,7 +53,7 @@ export default function ({ bus }) {
     for (let i = 0; i < 4; i++) {
       yield* pressButton();
       for (let i = 0; i < 7; i++) {
-        writeln("ATZ");
+        writeln("AT");
         let res = yield* readString(200);
         if (!res) continue;
         if (res.includes("ERROR")) continue;
@@ -87,8 +89,13 @@ export default function ({ bus }) {
         yield* sleep(20000);
         continue;
       }
+      trace("Modem found\n");
+      trace("SMNB", JSON.stringify(yield* send("AT+CMNB=3")), "\n");
       trace("CPIN", JSON.stringify(yield* send("AT+CPIN?")), "\n");
       trace("CSQ", JSON.stringify(yield* send("AT+CSQ")), "\n");
+      trace("COPS", JSON.stringify(yield* send("AT+COPS?")), "\n");
+      trace("CPSI", JSON.stringify(yield* send("AT+CPSI?")), "\n");
+      trace("CREG", JSON.stringify(yield* send("AT+CREG?")), "\n");
       trace(
         "CGDCONT",
         JSON.stringify(yield* send('AT+CGDCONT=1,"IP","hologram"')),
@@ -104,6 +111,7 @@ export default function ({ bus }) {
         msg = yield;
         trace("PPPOS MSG:", msg, "\n");
         if (msg != pppos.PPPERR_NONE) break;
+	if(msg == 0) bus.emit("connected");
       }
       pppos.stop();
       bus.emit("stopped", { msg });

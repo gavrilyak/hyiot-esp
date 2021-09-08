@@ -144,8 +144,9 @@ void xs_modem_start(xsMachine *the) {
   gModem->pcb = pppapi_pppos_create(&gModem->pppif, ppp_output_callback, ppp_status_cb, gModem);
 
   if (gModem->pcb == NULL) goto bail1;
-  ppp_set_usepeerdns(gModem->pcb, true);
-  if ((err = xTaskCreate(pppos_client_task, "ppp", 2048, gModem, 1, (TaskHandle_t *)&gModem->task)) != pdPASS) goto bail2;
+  pppapi_set_default(gModem->pcb);
+  ppp_set_usepeerdns(gModem->pcb, 1);
+  if ((err = xTaskCreate(pppos_client_task, "ppp", BUF_SIZE*4, gModem, 1, (TaskHandle_t *)&gModem->task)) != pdPASS) goto bail2;
   if ((err = pppapi_connect(gModem->pcb, 0)) != ESP_OK) goto bail3;
 
   xsRemember(gModem->callback);

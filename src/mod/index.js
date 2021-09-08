@@ -15,6 +15,8 @@
 import Modules from "modules";
 import bus from "bus";
 import WiFi from "wifi";
+import Net from "net";
+
 import { measure } from "profiler";
 //this is for side effect
 import { loadAndInstantiate } from "modLoader";
@@ -67,14 +69,14 @@ function* startSequence() {
   bus.emit("start", "gui");
   bus.emit("start", "ble");
   bus.emit("start", "serial");
-	return;
-  bus.emit("start", "wifista");
+  /*bus.emit("start", "wifista");
   let [topic] = yield* once("wifista/started", "wifista/unfconfigured");
   if (topic == "wifista/unfconfigured") {
     yield* start("wifiap");
   } else if (topic == "wifista/started") {
     yield* start("sntp");
-  }
+  }*/
+  yield* start("wifiap");
   yield* start("httpserver");
   yield* start("telnet");
 }
@@ -192,6 +194,20 @@ function* mqttSaga() {
     }
   }
 }
+
+bus.on("serial/connected", ()=> {
+   trace("IP", Net.get("IP"), "\n");
+   trace("DNS", Net.get("DNS"), "\n");
+	Net.resolve("pool.ntp.org", (name, host) => {
+		if (!host) {
+			trace("Unable to resolve sntp host\n");
+			return;
+		}
+		trace(`resolved ${name} to ${host}\n`);
+   	        bus.emit("start", "sntp");
+	})
+
+})
 
 function startAsync() {
   coro(mqttSaga());
