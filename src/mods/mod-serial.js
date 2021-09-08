@@ -25,7 +25,9 @@ export default function ({ bus }) {
     if (typeof command === "string" && command.toUpperCase().startsWith("AT")) {
       cli = this;
       serial.write(ArrayBuffer.fromString(command + "\r\n"));
-      coro(readString(),(e, r)=> {if(r) cli.line(r)});
+      coro(readString(), (e, r) => {
+        if (r) cli.line(r);
+      });
       return true;
     }
     return false;
@@ -37,7 +39,11 @@ export default function ({ bus }) {
     let resp = serial.read();
     if (!resp) return null;
     try {
-      let res =  String.fromArrayBuffer(resp);
+      if (resp.find((x) => x > 127) >= 0) {
+        trace("Not valid ascii string\n");
+        return null;
+      }
+      let res = String.fromArrayBuffer(resp);
       return res;
     } catch (e) {
       //It MUST be string, what else
@@ -111,7 +117,7 @@ export default function ({ bus }) {
         msg = yield;
         trace("PPPOS MSG:", msg, "\n");
         if (msg != pppos.PPPERR_NONE) break;
-	if(msg == 0) bus.emit("connected");
+        if (msg == 0) bus.emit("connected");
       }
       pppos.stop();
       bus.emit("stopped", { msg });
