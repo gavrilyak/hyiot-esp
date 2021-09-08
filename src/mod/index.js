@@ -66,8 +66,8 @@ function* startSequence() {
   bus.emit("start", "pref");
   bus.emit("start", "tz");
   //bus.emit("start", "modem");
-  //bus.emit("start", "gui");
-  //bus.emit("start", "ble");
+  bus.emit("start", "gui");
+  bus.emit("start", "ble");
 	let startModem = 1;
 	if(startModem) {
 		bus.emit("start", "serial");
@@ -158,7 +158,7 @@ function* mqttSaga() {
     trace("restarting")
 
     let worker = new Worker("mqtt-worker", {
-      allocation: 43 * 1024,
+      allocation: 38 * 1024,
       stackCount: 256, //4Kb
       //slotCount: 200,
     });
