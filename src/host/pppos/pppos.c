@@ -22,7 +22,7 @@
 
 #define UART_NUM 2
 #define UART_REG &UART2
-#define BUF_SIZE 256
+#define BUF_SIZE 256*6
 
 static char *TAG = "pppos";
 
@@ -75,14 +75,14 @@ static void ppp_status_cb(ppp_pcb *pcb, int err_code, void *ctx) {
 
 static u32_t ppp_output_callback(ppp_pcb *pcb, u8_t *data, u32_t len, void *ctx) {
   printf("ppp_output_callback %d\n", len);
-  return uart_tx_chars(UART_NUM, (const char *)data, len);
+  return uart_write_bytes(UART_NUM, (const char *)data, len);
 }
 
 static void pppos_client_task(void *self_in) {
   ppp_pcb* pcb = gModem->pcb;
   uint8_t buf[BUF_SIZE];
   for(;;){
-    int len = uart_read_bytes(UART_NUM, (uint8_t *)buf, sizeof(buf), 50 / portTICK_RATE_MS);
+    int len = uart_read_bytes(UART_NUM, (uint8_t *)buf, sizeof(buf), 20 / portTICK_RATE_MS);
     if (len > 0) {
       printf("LEN IS %d\n", len);
       pppos_input_tcpip(pcb, (u8_t *)buf, len);
@@ -146,7 +146,7 @@ void xs_modem_start(xsMachine *the) {
   if (gModem->pcb == NULL) goto bail1;
   pppapi_set_default(gModem->pcb);
   ppp_set_usepeerdns(gModem->pcb, 1);
-  if ((err = xTaskCreate(pppos_client_task, "ppp", BUF_SIZE*4, gModem, 1, (TaskHandle_t *)&gModem->task)) != pdPASS) goto bail2;
+  if ((err = xTaskCreate(pppos_client_task, "ppp", BUF_SIZE*2, gModem, 1, (TaskHandle_t *)&gModem->task)) != pdPASS) goto bail2;
   if ((err = pppapi_connect(gModem->pcb, 0)) != ESP_OK) goto bail3;
 
   xsRemember(gModem->callback);

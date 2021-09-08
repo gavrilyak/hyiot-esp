@@ -35,7 +35,7 @@ export default Object.freeze(
       clientKey: "fctry://l/device.pk8",
       clientCertificates: ["fctry://l/device.der"], //, "fctry://l/signer.der"],
       applicationLayerProtocolNegotiation: ["x-amzn-mqtt-ca"],
-      traceSSL: false,
+      traceSSL: true,
     },
     ota: {
       url: "http://192.168.0.116:5000/hydrolec-host/xs_esp32.bin",

@@ -10,7 +10,7 @@ const settings = Object.freeze({
   port: 443,
   certificate: "fctry://l/server.der",
   clientKey: "fctry://l/device.pk8",
-  clientCertificates: ["fctry://l/device.der"], //, "fctry://l/signer.der"],
+  clientCertificates: ["fctry://l/device.der"],//, "fctry://l/signer.der"],
   applicationLayerProtocolNegotiation: ["x-amzn-mqtt-ca"],
   traceSSL: false,
 });

@@ -66,27 +66,33 @@ function* startSequence() {
   bus.emit("start", "pref");
   bus.emit("start", "tz");
   //bus.emit("start", "modem");
-  bus.emit("start", "gui");
-  bus.emit("start", "ble");
-  bus.emit("start", "serial");
-  /*bus.emit("start", "wifista");
-  let [topic] = yield* once("wifista/started", "wifista/unfconfigured");
-  if (topic == "wifista/unfconfigured") {
-    yield* start("wifiap");
-  } else if (topic == "wifista/started") {
-    yield* start("sntp");
-  }*/
-  yield* start("wifiap");
-  yield* start("httpserver");
-  yield* start("telnet");
+  //bus.emit("start", "gui");
+  //bus.emit("start", "ble");
+	let startModem = 1;
+	if(startModem) {
+		bus.emit("start", "serial");
+	} else {
+		bus.emit("start", "wifista");
+		let [topic] = yield* once("wifista/started", "wifista/unfconfigured");
+		if (topic == "wifista/unfconfigured") {
+			yield* start("wifiap");
+		} else if (topic == "wifista/started") {
+			yield* start("sntp");
+			//yield* start("mqtt");
+		}
+	}
+  //yield* start("wifiap");
+  //yield* start("httpserver");
+  //yield* start("telnet");
 }
 
 import Worker from "worker";
 //bus.on("mqtt/start", startMQTT);
+/*
 function startMQTT() {
   let worker = new Worker("mqtt-worker", {
     //allocation: 63 * 1024,
-    allocation: 33 * 1024,
+    allocation: 63 * 1024,
     stackCount: 256,
     //slotCount: 200,
   });
@@ -123,6 +129,7 @@ function startMQTT() {
 
   bus.once("mqtt/started", onStarted);
 }
+*/
 
 /**
  * @param {string[]} topics
@@ -148,9 +155,10 @@ function* mqttSaga() {
   for (;;) {
     if (restart) yield* sleep(1000);
     else yield* once("mqtt/start");
+    trace("restarting")
 
     let worker = new Worker("mqtt-worker", {
-      allocation: 33 * 1024,
+      allocation: 43 * 1024,
       stackCount: 256, //4Kb
       //slotCount: 200,
     });
@@ -186,11 +194,13 @@ function* mqttSaga() {
       } catch (e) {
         trace("ERROR in saga:", e.message, "\n");
       } finally {
+	trace("terminating\n")
         worker.terminate();
       }
     } else {
+      worker.terminate();
       trace("ERROR starting worker", topic, payload, "\n");
-      restart = true;
+      restart = false;
     }
   }
 }
@@ -207,6 +217,11 @@ bus.on("serial/connected", ()=> {
    	        bus.emit("start", "sntp");
 	})
 
+})
+
+import {Request} from "http"
+bus.on("sntp/started", () => {
+  bus.emit("mqtt/start");
 })
 
 function startAsync() {
