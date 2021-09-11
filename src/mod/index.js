@@ -71,6 +71,9 @@ function* startSequence() {
 	let startModem = 1;
 	if(startModem) {
 		bus.emit("start", "serial");
+  yield* start("wifiap");
+  yield* start("httpserver");
+  yield* start("telnet");
 	} else {
 		bus.emit("start", "wifista");
 		let [topic] = yield* once("wifista/started", "wifista/unfconfigured");
