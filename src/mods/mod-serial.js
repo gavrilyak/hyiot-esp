@@ -36,17 +36,17 @@ export default function ({ bus }) {
   function* readString(timeout = 100) {
     //yield* sleep(timeout);
     let st = Date.now();
-    let resps = []; 
-    do{
+    let resps = [];
+    do {
       let resp = serial.read();
-      if(resp) {
-	      resps.push(resp)
+      if (resp) {
+        resps.push(resp);
       } else {
-	      yield *sleep(5);
+        yield* sleep(5);
       }
-    }while(Date.now() - st < timeout);
+    } while (Date.now() - st < timeout);
     if (!resps.length) return null;
-    let resp = resps[0].concat(...resps.slice(1))
+    let resp = resps[0].concat(...resps.slice(1));
     try {
       if (new Uint8Array(resp).find((x) => x > 127) >= 0) {
         trace("Not valid ascii string\n");
@@ -78,7 +78,7 @@ export default function ({ bus }) {
     return null;
   }
 
-  function* send(cmd, timeout = 20) {
+  function* send(cmd, timeout = 30) {
     writeln(cmd);
     const res = yield* readString(timeout);
     return res;
@@ -105,23 +105,43 @@ export default function ({ bus }) {
         continue;
       }
       trace("Modem found\n");
-      trace("SMNB", JSON.stringify(yield* send("AT+CMNB=1")), "\n");
-      //for(;;){
-      trace("CPIN", JSON.stringify(yield* send("AT+CPIN?")), "\n");
-      trace("CSQ", JSON.stringify(yield* send("AT+CSQ")), "\n");
-      trace("COPS", JSON.stringify(yield* send("AT+COPS?")), "\n");
-      trace("CPSI", JSON.stringify(yield* send("AT+CPSI?")), "\n");
-      trace("CREG", JSON.stringify(yield* send("AT+CREG?")), "\n"); 
-      trace("CBANDCFG", JSON.stringify(yield* send("AT+CBANDCFG?")), "\n"); 
-	      yield* sleep(2000);
-      //}
-	    return;
+      trace("SMNB", JSON.stringify(yield* send("AT+CMNB=3")), "\n");
+      trace(
+        "CBANDCFG",
+        JSON.stringify(
+          yield* send(
+            'AT+CBANDCFG="NB-IOT",1,2,3,4,5,8,12,13,18,19,20,25,26,28,66,71,85'
+          )
+        ),
+        "\n"
+      );
+
+      trace(
+        "CBANDCFG",
+        JSON.stringify(
+          yield* send(
+            'AT+CBANDCFG="CAT-M",1,2,3,4,5,8,12,13,14,18,19,20,25,26,27,28,66,85'
+          )
+        ),
+        "\n"
+      );
+
+      for (;;) {
+        trace("CPIN", JSON.stringify(yield* send("AT+CPIN?")), "\n");
+        trace("CSQ", JSON.stringify(yield* send("AT+CSQ")), "\n");
+        trace("COPS", JSON.stringify(yield* send("AT+COPS?")), "\n");
+        trace("CPSI", JSON.stringify(yield* send("AT+CPSI?")), "\n");
+        trace("CREG", JSON.stringify(yield* send("AT+CREG?")), "\n");
+        trace("CBANDCFG", JSON.stringify(yield* send("AT+CBANDCFG?")), "\n");
+        yield* sleep(2000);
+      }
+      return;
       trace(
         "CGDCONT",
         JSON.stringify(yield* send('AT+CGDCONT=1,"IP","hologram"')),
         "\n"
       );
-      trace("ATD", JSON.stringify(yield* send("ATD*99#")), "\n");;
+      trace("ATD", JSON.stringify(yield* send("ATD*99#")), "\n");
       serial.close();
 
       const cont = yield coro;
