@@ -16,6 +16,7 @@ import Modules from "modules";
 import bus from "bus";
 import WiFi from "wifi";
 import Net from "net";
+import Timer from "timer";
 
 import { measure } from "profiler";
 //this is for side effect
@@ -68,72 +69,28 @@ function* startSequence() {
   //bus.emit("start", "modem");
   bus.emit("start", "gui");
   bus.emit("start", "ble");
-	let startModem = 1;
-	if(startModem) {
-		bus.emit("start", "serial");
-  yield* start("wifiap");
-  yield* start("httpserver");
-  yield* start("telnet");
-	} else {
-		bus.emit("start", "wifista");
-		let [topic] = yield* once("wifista/started", "wifista/unfconfigured");
-		if (topic == "wifista/unfconfigured") {
-			yield* start("wifiap");
-		} else if (topic == "wifista/started") {
-			yield* start("sntp");
-			//yield* start("mqtt");
-		}
-	}
+  let startModem = 0;
+  if (startModem) {
+    bus.emit("start", "serial");
+    yield* start("wifiap");
+    yield* start("httpserver");
+    yield* start("telnet");
+  } else {
+    bus.emit("start", "wifista");
+    let [topic] = yield* once("wifista/started", "wifista/unfconfigured");
+    if (topic == "wifista/unfconfigured") {
+      yield* start("wifiap");
+    } else if (topic == "wifista/started") {
+      yield* start("sntp");
+      //yield* start("mqtt");
+    }
+  }
   //yield* start("wifiap");
   //yield* start("httpserver");
   //yield* start("telnet");
 }
 
 import Worker from "worker";
-//bus.on("mqtt/start", startMQTT);
-/*
-function startMQTT() {
-  let worker = new Worker("mqtt-worker", {
-    //allocation: 63 * 1024,
-    allocation: 63 * 1024,
-    stackCount: 256,
-    //slotCount: 200,
-  });
-
-  worker.onmessage = ([topic, payload]) => {
-    bus.emit("mqtt/" + topic, payload);
-  };
-
-  function sendToWorker(payload, topic) {
-    worker.postMessage([topic.slice(5), payload]);
-  }
-
-  function stopped() {
-    worker.terminate();
-    worker = null;
-  }
-
-  function stop() {
-    bus.off("mqtt/pub", sendToWorker);
-    bus.off("mqtt/sub", sendToWorker);
-    bus.off("mqtt/unsub", sendToWorker);
-    bus.off("mqtt/stop", stop);
-
-    worker.postMessage(["stop"]);
-    bus.once("mqtt/stopped", stopped);
-  }
-
-  function onStarted() {
-    bus.on("mqtt/pub", sendToWorker);
-    bus.on("mqtt/sub", sendToWorker);
-    bus.on("mqtt/unsub", sendToWorker);
-    bus.on("mqtt/stop", stop);
-  }
-
-  bus.once("mqtt/started", onStarted);
-}
-*/
-
 /**
  * @param {string[]} topics
  */
@@ -158,7 +115,7 @@ function* mqttSaga() {
   for (;;) {
     if (restart) yield* sleep(1000);
     else yield* once("mqtt/start");
-    trace("restarting")
+    trace("restarting");
 
     let worker = new Worker("mqtt-worker", {
       allocation: 38 * 1024,
@@ -197,7 +154,7 @@ function* mqttSaga() {
       } catch (e) {
         trace("ERROR in saga:", e.message, "\n");
       } finally {
-	trace("terminating\n")
+        trace("terminating\n");
         worker.terminate();
       }
     } else {
@@ -208,24 +165,40 @@ function* mqttSaga() {
   }
 }
 
-bus.on("serial/connected", ()=> {
-   trace("IP", Net.get("IP"), "\n");
-   trace("DNS", Net.get("DNS"), "\n");
-	Net.resolve("pool.ntp.org", (name, host) => {
-		if (!host) {
-			trace("Unable to resolve sntp host\n");
-			return;
-		}
-		trace(`resolved ${name} to ${host}\n`);
-   	        bus.emit("start", "sntp");
-	})
+bus.on("serial/connected", () => {
+  trace("IP", Net.get("IP"), "\n");
+  trace("DNS", Net.get("DNS"), "\n");
+  Net.resolve("pool.ntp.org", (name, host) => {
+    if (!host) {
+      trace("Unable to resolve sntp host\n");
+      return;
+    }
+    trace(`resolved ${name} to ${host}\n`);
+    bus.emit("start", "sntp");
+  });
+});
 
-})
-
-import {Request} from "http"
 bus.on("sntp/started", () => {
   bus.emit("mqtt/start");
-})
+});
+
+bus.on("mqtt/started", () => {
+  Timer.set(() => {
+    bus.emit("mqtt/sub", "hello");
+    bus.emit("mqtt/sub", `led`);
+    bus.emit("mqtt/sub", `kb`);
+    bus.emit("mqtt/sub", `button`);
+    bus.emit("mqtt/sub", "$jobs/$next/get/accepted");
+    bus.emit("mqtt/sub", "$jobs/notify-next");
+  }, 50);
+  Timer.set(() => {
+    bus.emit("mqtt/pub", [`hello`, JSON.stringify({ who: "world" })]);
+    bus.emit("mqtt/pub", ["$jobs/$next/get", "{}"]);
+  }, 100);
+  bus.on("ble/nason", (payload) => {
+    bus.emit("mqtt/pub", ["nason", JSON.stringify(payload)]);
+  });
+});
 
 function startAsync() {
   coro(mqttSaga());
