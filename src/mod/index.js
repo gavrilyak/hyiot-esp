@@ -69,7 +69,7 @@ function* startSequence() {
   //bus.emit("start", "modem");
   bus.emit("start", "gui");
   bus.emit("start", "ble");
-  let startModem = 1;
+  let startModem = 0;
   if (startModem) {
     bus.emit("start", "serial");
     //yield* start("wifiap");
@@ -80,6 +80,7 @@ function* startSequence() {
     let [topic] = yield* once("wifista/started", "wifista/unfconfigured");
     if (topic == "wifista/unfconfigured") {
       yield* start("wifiap");
+      yield* start("telnet");
     } else if (topic == "wifista/started") {
       yield* start("sntp");
       //yield* start("mqtt");

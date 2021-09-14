@@ -126,7 +126,7 @@ export default function ({ bus }) {
         "\n"
       );
 
-      for (;;) {
+      //for (;;) {
         trace("CPIN", JSON.stringify(yield* send("AT+CPIN?")), "\n");
         trace("CSQ", JSON.stringify(yield* send("AT+CSQ")), "\n");
         trace("COPS", JSON.stringify(yield* send("AT+COPS?")), "\n");
@@ -134,8 +134,8 @@ export default function ({ bus }) {
         trace("CREG", JSON.stringify(yield* send("AT+CREG?")), "\n");
         trace("CBANDCFG", JSON.stringify(yield* send("AT+CBANDCFG?")), "\n");
         yield* sleep(2000);
-      }
-      return;
+      //}
+      //return;
       trace(
         "CGDCONT",
         JSON.stringify(yield* send('AT+CGDCONT=1,"IP","hologram"')),
