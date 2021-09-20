@@ -14,7 +14,6 @@
 
 import Modules from "modules";
 import bus from "bus";
-import WiFi from "wifi";
 import Net from "net";
 import Timer from "timer";
 
@@ -32,7 +31,8 @@ trace("IS_SIMULATOR:", IS_SIMULATOR, "\n");
 //trace("GLOBAL:", Object.keys(globalThis), "\n");
 
 //THIS is NECCESSARY for network stack initialization
-WiFi.mode = 0;
+//import WiFi from "wifi";
+//WiFi.mode = 0;
 
 bus.on("*", (payload, topic) => {
   trace(
@@ -69,7 +69,7 @@ function* startSequence() {
   //bus.emit("start", "modem");
   bus.emit("start", "gui");
   bus.emit("start", "ble");
-  let startModem = 0;
+  let startModem = 1;
   if (startModem) {
     bus.emit("start", "serial");
     //yield* start("wifiap");

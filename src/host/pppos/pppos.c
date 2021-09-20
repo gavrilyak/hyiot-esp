@@ -128,6 +128,7 @@ void xs_modem_start(xsMachine *the) {
     xsEvalError("Modem already started");
     return;
   }
+  esp_netif_init();
 
   gModem = c_malloc(sizeof(xsModemRec));
   if (!gModem){
