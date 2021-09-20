@@ -69,7 +69,7 @@ function* startSequence() {
   //bus.emit("start", "modem");
   bus.emit("start", "gui");
   bus.emit("start", "ble");
-  let startModem = 1;
+  let startModem = 0;
   if (startModem) {
     bus.emit("start", "serial");
     //yield* start("wifiap");

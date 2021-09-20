@@ -41,6 +41,9 @@ export default Object.freeze(
       url: "http://192.168.0.116:5000/hydrolec-host/xs_esp32.bin",
     },
     ble: {},
+    tz: {
+      tz: "America/New_York"
+    }
     //gui: {},
   },
   true
