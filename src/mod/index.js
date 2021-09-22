@@ -68,11 +68,11 @@ function* startSequence() {
   bus.emit("start", "tz");
   //bus.emit("start", "modem");
   bus.emit("start", "gui");
-  bus.emit("start", "ble");
+  //bus.emit("start", "ble");
   let startModem = 0;
   if (startModem) {
-    bus.emit("start", "serial");
-    //yield* start("wifiap");
+    //bus.emit("start", "serial");
+    yield* start("wifiap");
     //yield* start("httpserver");
     //yield* start("telnet");
   } else {
@@ -80,11 +80,11 @@ function* startSequence() {
     let [topic] = yield* once("wifista/started", "wifista/unfconfigured");
     if (topic == "wifista/unfconfigured") {
       yield* start("wifiap");
-      yield* start("telnet");
     } else if (topic == "wifista/started") {
       yield* start("sntp");
       //yield* start("mqtt");
     }
+    yield* start("telnet");
   }
   //yield* start("wifiap");
   //yield* start("httpserver");
@@ -169,6 +169,7 @@ function* mqttSaga() {
 bus.on("serial/connected", () => {
   trace("IP", Net.get("IP"), "\n");
   trace("DNS", Net.get("DNS"), "\n");
+  bus.emit("start", "telnet");
   Net.resolve("pool.ntp.org", (name, host) => {
     if (!host) {
       trace("Unable to resolve sntp host\n");
@@ -202,7 +203,7 @@ bus.on("mqtt/started", () => {
 });
 
 function startAsync() {
-  coro(mqttSaga());
+  //coro(mqttSaga());
   coro(startSequence(), (err, res) => {
     trace("coro", err, res, "\n");
     //bus.emit("mqtt/start");

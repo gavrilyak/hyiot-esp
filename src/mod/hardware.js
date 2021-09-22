@@ -7,6 +7,16 @@ const emit = (topic, payload) => {
   bus.emit("mqtt/pub", [topic, payload]);
 };
 
+bus.emit("start", "ads1115");
+
+bus.on("ads1115/started", ()=> {
+  let ch=0;
+  Timer.repeat(()=>{
+    bus.emit("ads1115/measure", {ch, delay:10});
+    ch = (ch + 1) % 12; 
+  }, 300);
+})
+
 /*
 const button = new globalThis.Host.Button.Default({ onPush });
 const led = new globalThis.Host.LED.Default();

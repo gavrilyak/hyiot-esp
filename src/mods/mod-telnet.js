@@ -2,6 +2,15 @@ import globalBus from "bus";
 import Telnet from "telnet";
 import CLI from "cli";
 
+function parseObject(strs) {
+  let res = {}
+  for(let str of strs) {
+    const [k, v] = str.split("=");
+    res[k]=v;
+  }
+  return res;
+}
+
 CLI.install(function (command, params) {
   // let cli = this;
   // function printSub(...args) {
@@ -10,17 +19,18 @@ CLI.install(function (command, params) {
   switch (command) {
     case "pub":
       //if (params.length == 1) this.line(`publising ${params[0]}`);
-      globalBus.emit(params[0], params.slice(1));
+      globalBus.emit(params[0], parseObject(params.slice(1)));
       return true;
     case "sub":
-      if (this.cb == null) {
-        this.cb = (...args) => {
-          this.line(`\nSUB: ${JSON.stringify(args)}`);
-        };
-        globalBus.on("*", this.cb);
-      } else {
-        this.line("Already subscribed");
+      if (this.cb) {
+        globalBus.off("*", this.cb);
       }
+      this.cb = (payload, topic) => {
+        if (!params || params.length == 0 || params.includes(topic)) {
+          this.line(`\nSUB: ${topic}, ${JSON.stringify(payload)}`);
+        }
+      };
+      globalBus.on("*", this.cb);
       return true;
 
     case "unsub":

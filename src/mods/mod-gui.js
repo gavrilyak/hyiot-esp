@@ -11,8 +11,6 @@ export default function ({ bus }) {
     let I2C = Modules.importNow("pins/i2c");
     let i2c = new I2C({
       address: 0x3c,
-      scl: 22,
-      sda: 21,
       throw: false,
       timeout: 10,
     });

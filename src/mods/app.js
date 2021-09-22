@@ -1,5 +1,7 @@
 import {} from "piu/MC";
 import globalBus from "bus";
+import { getMAC } from "native/esp32";
+const MAC =  "HL1-" + String(getMAC()).slice(-8).replaceAll(":", "");
 
 const kbMap = {
   "\u001b[A": "up",
@@ -30,7 +32,7 @@ const secondText = new Label(null, {
 const thirdText = new Label(null, {
   bottom: -1,
   style: textStyle,
-  string: "Third line - 003",
+  string: MAC,
 });
 
 const wifiIcon = new Content(null, {
@@ -163,7 +165,7 @@ export default function ({ bus }) {
   globalBus.on("ble/nason", function ({ pressure, temp, bat }) {
     readyText.string = pressure.toFixed(2) + " psi";
     secondText.string = String(temp.toFixed(1)) + " C";
-    thirdText.string = bat + "%";
+    //thirdText.string = bat + "%";
   });
   return new Application(null, {
     displayListLength: 5632,

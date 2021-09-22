@@ -120,7 +120,9 @@
       "include": [
         "$(MODULES)/io/manifest.json",
         "$(MODULES)/drivers/ssd1306/manifest_i2c.json",
-        "./manifest_piu.json"
+        "./manifest_piu.json",
+        "$(MODULES)/pins/digital/manifest.json",
+        "$(MODULES)/pins/i2c/manifest.json"
       ],
       "modules": {
         "~": ["$(BUILD)/devices/esp32/setup/network"],
@@ -128,7 +130,11 @@
         "pppos": ["./pppos/*"],
         "esp32/ota": "$(BUILD)/devices/esp32/modules/ota/*",
         "flash": ["$(MODULES)/files/flash/*", "$(MODULES)/files/flash/esp32/*"],
-        "cli/network": "$(MODULES)/base/cli/commands/network"
+        "pins/digital": "$(MODULES)/pins/digital/digital",
+        "pins/smbus": "$(MODULES)/pins/smbus/smbus",
+        "cli/network": "$(MODULES)/base/cli/commands/network",
+        "cli/i2c": "$(MODULES)/base/cli/commands/i2c",
+        "cli/digital": "$(MODULES)/base/cli/commands/digital"
       },
       "preload": ["flash"],
       "strip": [
