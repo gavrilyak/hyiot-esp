@@ -22,10 +22,28 @@
   "preload": ["commodetto/*", "piu/*"],
   "platforms": {
     "esp32": {
+      "include": [
+        "$(MODULES)/drivers/ssd1306/manifest_i2c.json"
+      ],
       "modules": {
         "setup_manual/piu": "$(BUILD)/devices/esp32/setup/piu"
       },
-      "preload": "setup_manual/piu"
+      "preload": "setup_manual/piu",
+      "defines": {
+        "ssd1306": {
+          "width": 128,
+          "height": 64,
+          "dither": false,
+          "spi": false,
+          "i2c": true,
+          "scl_pin": 22,
+          "sda_pin": 21,
+          "address": "0x3c"
+        }
+      },
+      "config": {
+        "screen": "ssd1306"
+      }
     }
   }
 }

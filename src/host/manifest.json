@@ -15,7 +15,8 @@
     "$(MODDABLE)/modules/base/instrumentation/manifest.json",
     "$(MODDABLE)/modules/base/worker/manifest.json",
     "$(MODDABLE)/modules/network/ble/manifest_client.json",
-    "./native/manifest.json"
+    "./native/manifest.json",
+    "./manifest_piu.json"
   ],
   "defines": {
     "XS_MODS": 1
@@ -84,7 +85,6 @@
         }
       },
 
-      "include": ["./manifest_piu.json"],
       "data": {
         "*": ["../../certs/common/*", "../../certs/simulator1/*"]
       }
@@ -119,8 +119,6 @@
       },
       "include": [
         "$(MODULES)/io/manifest.json",
-        "$(MODULES)/drivers/ssd1306/manifest_i2c.json",
-        "./manifest_piu.json",
         "$(MODULES)/pins/digital/manifest.json",
         "$(MODULES)/pins/i2c/manifest.json"
       ],
@@ -159,23 +157,12 @@
           "rxbuffersize": 256,
           "timeout": 1000
         },
-        "ssd1306": {
-          "width": 128,
-          "height": 64,
-          "dither": false,
-          "spi": false,
-          "i2c": true,
-          "scl_pin": 22,
-          "sda_pin": 21,
-          "address": "0x3c"
-        },
         "i2c": {
           "sda_pin": 21,
           "scl_pin": 22
         }
       },
       "config": {
-        "screen": "ssd1306",
         "led": {
           "pin": "2"
         },
