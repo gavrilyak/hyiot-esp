@@ -1,6 +1,6 @@
-import {} from "piu/MC";
 import globalBus from "bus";
 import { getMAC } from "native/esp32";
+import {} from "piu/MC";
 const MAC =  "HL1-" + String(getMAC()).slice(-8).replaceAll(":", "");
 
 const kbMap = {
@@ -162,6 +162,7 @@ export default function ({ bus }) {
     let sym = payload in kbMap ? kbMap[payload] : payload;
     readyText.string = "KB:" + sym;
   });
+  //trace("HAS ON", "on" in globalBus, "\n");
   globalBus.on("ble/nason", function ({ pressure, temp, bat }) {
     readyText.string = pressure.toFixed(2) + " psi";
     secondText.string = String(temp.toFixed(1)) + " C";

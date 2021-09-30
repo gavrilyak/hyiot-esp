@@ -1,21 +1,26 @@
 import Digital from "embedded:io/digital";
 import bus from "bus";
 import Timer from "timer";
+import mod_ads1115 from "mod-ads1115"
 
+
+/*
+import PubSub from "pubsub";
+const ads1115Bus = new PubSub();
+const ads1115 = mod_ads1115({bus:ads1115Bus})
+ads1115Bus.on("measured", console.log)
+*/
+
+/*
 const emit = (topic, payload) => {
   bus.emit(topic, payload);
   bus.emit("mqtt/pub", [topic, payload]);
 };
 
-bus.emit("start", "ads1115");
-
-bus.on("ads1115/started", ()=> {
-  let ch=0;
-  Timer.repeat(()=>{
-    bus.emit("ads1115/measure", {ch, delay:10});
-    ch = (ch + 1) % 12; 
-  }, 300);
-})
+bus.emit("start", {name: "ads1115_0", mod:"mod-ads1115", address: 0x48, offset: 0});
+bus.emit("start", {name: "ads1115_1", mod:"mod-ads1115", address: 0x49, offset: 4});
+bus.emit("start", {name: "ads1115_2", mod:"mod-ads1115", address: 0x4A, offset: 8});
+*/
 
 /*
 const button = new globalThis.Host.Button.Default({ onPush });

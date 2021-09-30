@@ -35,6 +35,7 @@ trace("IS_SIMULATOR:", IS_SIMULATOR, "\n");
 //WiFi.mode = 0;
 
 bus.on("*", (payload, topic) => {
+  if(topic.endsWith("/measure") || topic.endsWith("/measured")) return;
   trace(
     `MAIN BUS ${new Date().toISOString()} ${topic} ${
       payload != null ? JSON.stringify(payload) : ""
@@ -67,7 +68,7 @@ function* startSequence() {
   bus.emit("start", "pref");
   bus.emit("start", "tz");
   //bus.emit("start", "modem");
-  bus.emit("start", "gui");
+  //bus.emit("start", "gui");
   //bus.emit("start", "ble");
   let startModem = 0;
   if (startModem) {
@@ -203,7 +204,7 @@ bus.on("mqtt/started", () => {
 });
 
 function startAsync() {
-  //coro(mqttSaga());
+  coro(mqttSaga());
   coro(startSequence(), (err, res) => {
     trace("coro", err, res, "\n");
     //bus.emit("mqtt/start");

@@ -1,54 +1,67 @@
 import Modules from "modules";
 import Timer from "timer";
-const START_CONVERSION = 0b1000000000000000
-const MUX = {
-  '0+1':   0b0000000000000000,
-  '0+3':   0b0001000000000000,
-  '1+3':   0b0010000000000000,
-  '2+3':   0b0011000000000000,
-  '0':     0b0100000000000000,
-  '1':     0b0101000000000000,
-  '2':     0b0110000000000000,
-  '3':     0b0111000000000000
-}
-
-
-const addresses = [0x48, 0x49, 0x4A];
-const pgaToVolts = [6.144, 4.096, 2.048, 1.024, 0.512, 0.256];
 import SMBus from "pins/smbus";
-export default function ({ bus, scl=22, sda=22 }) {
-  let busy = 0;
 
+const PGA_TO_VOLTS = [6.144, 4.096, 2.048, 1.024, 0.512, 0.256];
+const HZ = [8, 16, 32, 64, 128, 250, 475, 860];
+
+export default function ({ bus, address = 0x48, interval = 20, offset=0 }) {
+  let busy = false;
+  let i2c = null;
+  let ch = 0;
+  let timer = null;
+  let buf = new Uint8Array(2);
+  let view = new DataView(buf.buffer)
+  let values = [];
+  let counter = 0;
   function start() {
+    stop();
+    i2c = new SMBus({ address });
+    values = [];
+    ch=0;
+    measure(ch);
+    timer = Timer.repeat(measureDone, interval);
     bus.emit("started");
   }
+
   function stop() {
-    bus.emit("stopped");
+    if (i2c) {
+      i2c.close();
+      i2c = null;
+      if (timer) {
+        Timer.clear(timer);
+        timer = null;
+      }
+      bus.emit("stopped");
+    }
   }
 
-  function measure({ch = 0, delay = 10, gain = 1, divider=1250/16, round=10}={}) {
-    const chip = Math.floor(ch / 4); //each chip has 4 chans
-    const busyMask = 1 << chip;
-    const chan = ch % 4;
-    if(busy & busyMask) 
-       return bus.emit("error", {"busy": chip})
-    const address = addresses[chip];
-    if(address == null) throw Error("ADC1115 Invalid channel " + ch);
-    const i2c = new SMBus({ address });
-    busy |= 1 << chip;
-    const mux = MUX[chan];
 
-    // No comparator | 1600 samples per second | single-shot mode
-    //-------------C-mux-pga-S-sps-cmp
-    const conf = 0b0_000_000_1_100_00011 | mux | ((gain & 0b111) << 9) | START_CONVERSION
-    i2c.writeWord(1, conf , true);
-    Timer.set(()=> {
-      let result = i2c.readWord(0, true);
-      i2c.close();
-      busy &= ~busyMask;
-      let v = Math.round(((result > 0x7FFF) ? (result - 0x10000)/0x8000 : result/0x7FFF) * pgaToVolts[gain] * divider * round) / round;
-      bus.emit("measured", {ch, v, result})
-    }, +delay);
+  function measureDone() {
+    //trace("MEASURE DONE:", address, ",", ch, "\n");
+    i2c.write(0, false);     // set address
+    i2c.read(2, buf.buffer); // read two bytes into our buffer
+    let v = Math.idiv(view.getInt16(0), 98);
+    //let v = Math.round(((result > 0x7FFF) ? (result - 0x10000)/0x8000 : result/0x7FFF) * pgaToVolts[gain] * divider * round) / round;
+    if (values[ch] != v) {
+      values[ch] = v;
+      bus.emit("changed", { ch: ch+offset, v });
+    }
+    //next timer;
+    ch = (ch + 1) & 3;
+    measure(ch);
+  }
+
+  function measure(ch) {
+    //trace("MEASURE:", address, ",", ch, "\n");
+    //const gain = 1, sps=7;
+    //const  divider=1250/16, round=10
+    //const delay = 2; //Math.ceil(1000/HZ[sps]) + 1;
+    //---------C-D-ch-pga-M
+    buf[0] = 0b1_1_00_001_1 | ((ch & 0b11)<< 4)
+    //---------sps-compr
+    buf[1] = 0b111_00011 ;
+    i2c.write(1, buf);//buf[0], buf[1]); //conf1, conf2);
  }
 
   return {
