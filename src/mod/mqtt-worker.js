@@ -18,7 +18,7 @@ const settings = Object.freeze({
 const bus = {
   emit(topic, payload) {
     self.postMessage([topic, payload]);
-    measure("emit " + topic);
+    //measure("emit " + topic);
   },
 };
 
@@ -26,8 +26,8 @@ export default function () {
   let mod = Mod({ bus, ...settings });
   mod.start();
   self.onmessage = ([topic, payload]) => {
-    trace("message", topic, ",", JSON.stringify(payload), "\n");
+    trace("worker message:", topic, ",", JSON.stringify(payload), "\n");
     mod[topic](payload);
-    measure("message " + topic);
+    //measure("message " + topic);
   };
 }
