@@ -15,6 +15,7 @@
 #include "driver/uart.h"
 #include "hal/uart_hal.h"
 #include "hal/uart_types.h"
+#include "esp_netif.h"
 //#include "soc/uart_caps.h"
 #include "soc/uart_struct.h"
 //#include "mc.defines.h"
