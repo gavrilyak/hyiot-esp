@@ -73,7 +73,7 @@ function* startSequence() {
   bus.emit("start", "virtmodem");
   let startModem = 0;
   if (startModem) {
-    //bus.emit("start", "serial");
+    //bus.emit("start", "modem");
     yield* start("wifiap");
     //yield* start("httpserver");
     //yield* start("telnet");
@@ -168,7 +168,7 @@ function* mqttSaga() {
   }
 }
 
-bus.on("serial/connected", () => {
+bus.on("modem/connected", () => {
   trace("IP", Net.get("IP"), "\n");
   trace("DNS", Net.get("DNS"), "\n");
   bus.emit("start", "telnet");
