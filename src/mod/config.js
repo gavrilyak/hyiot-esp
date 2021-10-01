@@ -43,6 +43,12 @@ export default Object.freeze(
     ble: {},
     tz: {
       tz: "America/New_York"
+    },
+    serial: {
+      port: 2,
+      dataBits: 7,
+      parity: "e",
+      stopBits: 1
     }
     //gui: {},
   },

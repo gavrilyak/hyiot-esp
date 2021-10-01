@@ -71,6 +71,7 @@ function* startSequence() {
   //bus.emit("start", "gui");
   //bus.emit("start", "ble");
   bus.emit("start", "virtmodem");
+  bus.emit("start", "serial");
   let startModem = 0;
   if (startModem) {
     //bus.emit("start", "modem");
@@ -204,6 +205,17 @@ bus.on("mqtt/started", () => {
   });
 });
 
+
+bus.on("virtmodem/read", (arr) => {
+  bus.emit("serial/write", arr)
+})
+
+bus.on("serial/read", (packet) => {
+  bus.emit("virtmodem/write", packet)
+})
+
+
+
 function startAsync() {
   coro(mqttSaga());
   coro(startSequence(), (err, res) => {
@@ -213,108 +225,4 @@ function startAsync() {
   });
 }
 
-//startSequenceEvents();
 startAsync();
-
-//bus.emit("start", "gui");
-//bus.emit("start", { name: "network", inWorker: true });
-//bus.emit("start", "ble");
-
-//loadAndInstantiate("network", { inWorker: false }); //!IS_SIMULATOR });
-//bus.emit("network/start");
-
-/*
-let mods = {};
-
-for (let [name, initialSettings] of Object.entries(initialConfig)) {
-  try {
-    mods[name] = loadAndInstantiate(name, initialSettings);
-  } catch (e) {
-    trace(`Module ${name} not loaded, error: ${e}\n`);
-  }
-}*/
-
-//measure("aftermain");
-
-/*
-Timer.set(() => {
-  bus.emit("button/start");
-  bus.emit("led/start");
-  bus.emit("wifista/start");
-  bus.emit("gui/start");
-});
-
-bus.on("wifista/started", () => {
-  bus.emit("network/started");
-});
-
-bus.on("wifista/disconnected", () => {
-  bus.emit("network/stopped");
-});
-
-bus.on("wifiap/started", () => {
-  bus.emit("telnet/start");
-  bus.emit("httpserver/start");
-  bus.emit("otaserver/start");
-});
-
-bus.on("wifista/unfconfigured", () => {
-  bus.emit("wifiap/start");
-});
-
-bus.on("network/started", () => {
-  bus.emit("sntp/start");
-  bus.emit("otaserver/start");
-  bus.emit("telnet/start");
-  bus.emit("httpserver/start");
-
-  bus.on("sntp/started", () => {
-    measure("SNTP Started");
-    bus.emit("mqtt/start");
-  });
-  bus.on("sntp/error", () => {
-    //TODO: restart wifi?
-  });
-});
-
-bus.on("network/stopped", () => {
-  bus.emit("mqtt/stop");
-  bus.emit("telnet/stop");
-  bus.emit("httpserver/stop");
-  bus.emit("otaserver/stop");
-});
-
-bus.on("mqtt/message", ({ topic, payload }) => {
-  if (topic === `${MQTT_NS}/led`) {
-    bus.emit("led/write", { payload: JSON.parse(payload) });
-  }
-  if (topic === `${MQTT_NS}/kb`) {
-    bus.emit("gui/kb", payload);
-  }
-});
-
-bus.on("button/pressed", () => {
-  trace.left("on");
-});
-
-bus.on("button/released", () => {
-  trace.right("off");
-});
-
-bus.on("ota/finished", () => {
-  trace("Restarting with new version\n");
-  restart();
-});
-*/
-
-/*
-bus.on("button/changed", ({ payload }) => {
-  bus.emit("mqtt/pub", {
-    topic: `${MQTT_NS}/button`,
-    payload: String(payload),
-  });
-  bus.emit("led/write", { payload: !payload });
-});
-*/
-
-//measure("Started");

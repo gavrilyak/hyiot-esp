@@ -39,17 +39,8 @@ export default function ({ bus }) {
   }
 
   function* loop() {
+    bus.emit("started");
     for (;;) {
-      bus.emit("starting");
-      serial = new device.io.Serial({
-        ...device.Serial.default,
-        baud: 115200,
-        port: 1,
-        receive: 18,
-        transmit: 19,
-        format: "buffer",
-      });
-
       for(;;) {
         //bus.emit("rd");
         let str = yield* readString(30000);
@@ -70,6 +61,8 @@ export default function ({ bus }) {
 	  bus.emit("nothing")
 	}
       }
+
+      bus.emit("connected");
 
       for(;;) {
         let bin = yield* readBin(10000);
@@ -93,10 +86,20 @@ export default function ({ bus }) {
         }
        */
       }
+      bus.emit("disconnected")
     }
   }
 
   function start() {
+    serial = new device.io.Serial({
+      ...device.Serial.default,
+      baud: 115200,
+      port: 1,
+      receive: 18,
+      transmit: 19,
+      format: "buffer",
+    });
+
     coro(loop(), (err, res) => {
       if (!err) {
         bus.emit("started", res);
