@@ -70,6 +70,7 @@ function* startSequence() {
   //bus.emit("start", "modem");
   //bus.emit("start", "gui");
   //bus.emit("start", "ble");
+  bus.emit("start", "virtmodem");
   let startModem = 0;
   if (startModem) {
     //bus.emit("start", "serial");
@@ -209,24 +210,6 @@ function startAsync() {
     trace("coro", err, res, "\n");
     //bus.emit("mqtt/start");
     //startMQTT();
-  });
-}
-
-function startSequenceEvents() {
-  bus.emit("start", "pref");
-  bus.emit("start", "tz");
-  bus.emit("start", "wifista");
-  bus.on("wifista/started", () => {
-    bus.emit("start", "mqtt");
-    bus.emit("start", "telnet");
-  });
-
-  bus.on("mqtt/started", () => {
-    bus.emit("start", "gui");
-  });
-
-  bus.on("gui/started", () => {
-    bus.emit("start", "ble");
   });
 }
 
