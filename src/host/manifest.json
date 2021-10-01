@@ -123,7 +123,6 @@
       ],
       "modules": {
         "~": ["$(BUILD)/devices/esp32/setup/network"],
-        "esp32": ["./native/*"],
         "pppos": ["./pppos/*"],
         "esp32/ota": "$(BUILD)/devices/esp32/modules/ota/*",
         "flash": ["$(MODULES)/files/flash/*", "$(MODULES)/files/flash/esp32/*"],
