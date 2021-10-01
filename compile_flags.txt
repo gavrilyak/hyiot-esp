@@ -125,6 +125,7 @@
 -I/home/gvv/esp/esp-idf/components/unity/include
 -I/home/gvv/esp/esp-idf/components/unity/unity/src
 -I/home/gvv/esp/esp-idf/components/wifi_provisioning/include
+-I/home/gvv/esp/esp-idf/components/hal/include
 -I/home/gvv/code/moddable/xs/platforms/esp
 -I/home/gvv/code/moddable/xs/includes
 -I/home/gvv/code/moddable/xs/sources/
