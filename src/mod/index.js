@@ -79,14 +79,14 @@ function* startSequence() {
     yield* start("wifiap");
     //yield* start("httpserver");
     //yield* start("telnet");
-  } else if(startWifi){
+  } else if (startWifi) {
     bus.emit("start", "wifista");
     let [topic] = yield* once("wifista/started", "wifista/unfconfigured");
     if (topic == "wifista/unfconfigured") {
       yield* start("wifiap");
     } else if (topic == "wifista/started") {
       yield* start("sntp");
-      //yield* start("mqtt");
+      yield* start("mqtt");
     }
     yield* start("telnet");
     yield* start("lineserver");
@@ -207,39 +207,26 @@ bus.on("mqtt/started", () => {
   });
 });
 
-
 bus.on("virtmodem/read", (arr) => {
-  bus.emit("serial/write", arr)
-})
-
-
+  bus.emit("serial/write", arr);
+});
 
 bus.on("serial/read", (packet) => {
-  bus.emit("virtmodem/write", packet)
+  bus.emit("virtmodem/write", packet);
   //bus.emit("lineserver/write", packet);
-})
+});
 
-
-bus.on("lineserver/read", packet => {
+bus.on("lineserver/read", (packet) => {
   bus.emit("serial/write", packet);
-})
+});
 
+const toSend = ArrayBuffer.fromString(":010300006D00018E\n".repeat(4));
 
-bus.on("2serial/started", () => {
-  let arr = new Uint8Array([
-    58,48,177,48,51,48,48,48,48,54,68,48,48,48,177,184,197,141,10,
-    58,48,177,48,51,48,48,48,48,54,68,48,48,48,177,184,197,141,10,
-    58,48,177,48,51,48,48,48,48,54,68,48,48,48,177,184,197,141,10,
-    58,48,177,48,51,48,48,48,48,54,68,48,48,48,177,184,197,141,10,
-    58,48,177,48,51,48,48,48,48,54,68,48,48,48,177,184,197,141,10,
-    58,48,177,48,51,48,48,48,48,54,68,48,48,48,177,184,197,141,10,
-]);
-  Timer.repeat(()=>{
-    bus.emit("serial/write", arr.buffer);
-   //ArrayBuffer.fromString(':010300006D00018E\n')));
-  }, 2000)
-})
-
+bus.on("serial/started", () => {
+  Timer.repeat(() => {
+    bus.emit("serial/write", toSend);
+  }, 1000);
+});
 
 function startAsync() {
   coro(mqttSaga());

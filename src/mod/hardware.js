@@ -1,8 +1,7 @@
 import Digital from "embedded:io/digital";
 import bus from "bus";
 import Timer from "timer";
-import mod_ads1115 from "mod-ads1115"
-
+import mod_ads1115 from "mod-ads1115";
 
 /*
 import PubSub from "pubsub";
@@ -43,7 +42,7 @@ const button = new Digital({
     if (val != this.val) {
       this.val = val;
       led.write(!val);
-      emit("button/changed", val);
+      //emit("button/changed", val);
     }
   },
 });
