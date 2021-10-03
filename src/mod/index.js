@@ -16,7 +16,6 @@ import Modules from "modules";
 import bus from "bus";
 import Net from "net";
 import Timer from "timer";
-
 import { measure } from "profiler";
 //this is for side effect
 import { loadAndInstantiate } from "modLoader";
@@ -24,7 +23,7 @@ measure("start");
 
 const IS_SIMULATOR = !Modules.has("flash"); //!("device" in globalThis);
 //trace("BOOTING, build: ", getBuildString(), "\n");
-trace("FW_VERSION:", globalThis.FW_VERSION, "\n");
+//trace("FW_VERSION:", globalThis.FW_VERSION, "\n");
 //trace("HOST MODULES:", Modules.host, "\n");
 //trace("ARCHIVE MODULES:", Modules.archive, "\n");
 trace("IS_SIMULATOR:", IS_SIMULATOR, "\n");
@@ -35,7 +34,8 @@ trace("IS_SIMULATOR:", IS_SIMULATOR, "\n");
 //WiFi.mode = 0;
 
 bus.on("*", (payload, topic) => {
-  if(topic.endsWith("/measure") || topic.endsWith("/measured")) return;
+  //if(topic.endsWith("/measure") || topic.endsWith("/measured")) return;
+  //if(topic.endsWith("/read2") || topic.endsWith("/write")) return;
   trace(
     `MAIN BUS ${new Date().toISOString()} ${topic} ${
       payload != null ? JSON.stringify(payload) : ""
@@ -73,12 +73,13 @@ function* startSequence() {
   bus.emit("start", "virtmodem");
   bus.emit("start", "serial");
   let startModem = 0;
+  let startWifi = 0;
   if (startModem) {
     //bus.emit("start", "modem");
     yield* start("wifiap");
     //yield* start("httpserver");
     //yield* start("telnet");
-  } else {
+  } else if(startWifi){
     bus.emit("start", "wifista");
     let [topic] = yield* once("wifista/started", "wifista/unfconfigured");
     if (topic == "wifista/unfconfigured") {
@@ -88,6 +89,7 @@ function* startSequence() {
       //yield* start("mqtt");
     }
     yield* start("telnet");
+    yield* start("lineserver");
   }
   //yield* start("wifiap");
   //yield* start("httpserver");
@@ -184,7 +186,7 @@ bus.on("modem/connected", () => {
 });
 
 bus.on("sntp/started", () => {
-  bus.emit("mqtt/start");
+  //bus.emit("mqtt/start");
 });
 
 bus.on("mqtt/started", () => {
@@ -210,10 +212,33 @@ bus.on("virtmodem/read", (arr) => {
   bus.emit("serial/write", arr)
 })
 
+
+
 bus.on("serial/read", (packet) => {
   bus.emit("virtmodem/write", packet)
+  //bus.emit("lineserver/write", packet);
 })
 
+
+bus.on("lineserver/read", packet => {
+  bus.emit("serial/write", packet);
+})
+
+
+bus.on("2serial/started", () => {
+  let arr = new Uint8Array([
+    58,48,177,48,51,48,48,48,48,54,68,48,48,48,177,184,197,141,10,
+    58,48,177,48,51,48,48,48,48,54,68,48,48,48,177,184,197,141,10,
+    58,48,177,48,51,48,48,48,48,54,68,48,48,48,177,184,197,141,10,
+    58,48,177,48,51,48,48,48,48,54,68,48,48,48,177,184,197,141,10,
+    58,48,177,48,51,48,48,48,48,54,68,48,48,48,177,184,197,141,10,
+    58,48,177,48,51,48,48,48,48,54,68,48,48,48,177,184,197,141,10,
+]);
+  Timer.repeat(()=>{
+    bus.emit("serial/write", arr.buffer);
+   //ArrayBuffer.fromString(':010300006D00018E\n')));
+  }, 2000)
+})
 
 
 function startAsync() {

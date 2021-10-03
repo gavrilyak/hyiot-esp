@@ -29,3 +29,15 @@ void xs_uart_set_parity(xsMachine *the) {
     xsUnknownError("Failed to set parity");
   }
 }
+
+/*
+    uart_ll_get_rxfifo_len
+
+    size_t available;
+    uart_get_buffered_data_len(uart->num, &available);
+    return available;
+
+    uint32_t available =  uart_ll_get_txfifo_len(UART_LL_GET_HW(uart->num));  
+    return available;
+*/
+

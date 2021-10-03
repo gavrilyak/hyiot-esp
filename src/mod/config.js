@@ -46,9 +46,10 @@ export default Object.freeze(
     },
     serial: {
       port: 2,
-      dataBits: 7,
-      parity: "e",
-      stopBits: 1
+      baud: 115200,
+      //dataBits: 7,
+      //parity: "e",
+      //stopBits: 1
     }
     //gui: {},
   },
