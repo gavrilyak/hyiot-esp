@@ -18,35 +18,39 @@ export default function ({
   parity = "n",
   stopBits = 1,
 }) {
+  let trace = () => {}
+
   let serial = null;
   let buffer = new BinaryBuffer(30);
   let writebleCount = 0;
 
   function onReadable(cnt) {
     let buf = serial.read(cnt);
-    trace("serial read", cnt, " ", buf.byteLength, "\n");
-    //bus.emit("read", buf);
+    trace("serial", port, " read", cnt, " ", buf.byteLength, "\n");
+    bus.emit("read", buf);
   }
 
   function onWritable(count) {
     writebleCount = count;
+    trace("serial", port, " writable ", count, "\n");
     doWrite();
-    trace("serial writable ", count, "\n");
   }
 
   function doWrite() {
-    if (writebleCount === 0) return;
+    if (writebleCount === 0) {
+      trace("serial", port, " cannot write, full\n");
+      return;
+    }
     let chunk = buffer.read(writebleCount);
     if (chunk) {
-      trace("Writing:", chunk.byteLength, "avail:", writebleCount, "\n");
+      trace("serial", port, " writing:", chunk.byteLength, "avail:", writebleCount, "\n");
       writebleCount -= chunk.byteLength;
       serial.write(chunk);
-    } else {
-      trace("Nothing to write???\n");
     }
   }
 
   function start() {
+    trace("Starting serial ", port, "\n");
     serial = new device.io.Serial({
       ...device.Serial.default,
       baud,

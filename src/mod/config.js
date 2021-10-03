@@ -46,11 +46,23 @@ export default Object.freeze(
     },
     serial: {
       port: 2,
-      baud: 300, //115200,
-      dataBits: 7,
-      parity: "e",
-      stopBits: 1,
+      rx: 16,
+      tx: 17,
+      baud: 115200,
+      //dataBits: 8,
+      //parity: "n",
+      //stopBits: 1,
+      //dataBits: 7,
+      //parity: "e",
+      //stopBits: 1,
     },
+    virtmodem: {
+      mod: "mod-serial",
+      port: 1,
+      rx: 18,
+      tx: 19,
+      baud: 115200,
+    }
     //gui: {},
   },
   true

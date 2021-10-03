@@ -8,28 +8,30 @@ export default function ({ bus }) {
   let readableCB = null;
   let connected = false;
   function onReadable(count) {
-    //if (readableCB) { readableCB(null, count); }
     let buf = serial.read(count);
     let arr = new Uint8Array(buf);
-    for(let i=0, l=arr.length; i < l; i++) arr[i]&=0x7F;
     trace("onReadable ", count, " ",arr.length, "->", arr[arr.length - 1] == 0x0a, "\n");
     if (arr[0] == 43 && arr[1] == 43 && arr[2] == 43) { // "+++"
       trace("+++ received\n")
       connected = false;
+      return;
     } 
-    if(!connected) {
-      let str = String.fromArrayBuffer(buf);
-          if(str.startsWith("ATD")) {
-            writeln("CONNECT"); 
-            connected = true;
-            bus.emit("connected");
-          } else if (str == "ERROR") {
-            writeln("ERROR")
-          }else {
-            writeln("OK")
-          }
-    }else{
+
+    if(connected) {
       bus.emit("read", buf);
+      return;
+    }
+
+    for(let i=0, l=arr.length; i < l; i++) arr[i]&=0x7F;
+    let str = String.fromArrayBuffer(buf);
+    if(str.startsWith("ATD")) {
+      writeln("CONNECT"); 
+      connected = true;
+      bus.emit("connected");
+    } else if (str == "ERROR") {
+      writeln("ERROR")
+    }else {
+      writeln("OK")
     }
   }
 

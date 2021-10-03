@@ -35,7 +35,7 @@ trace("IS_SIMULATOR:", IS_SIMULATOR, "\n");
 
 bus.on("*", (payload, topic) => {
   //if(topic.endsWith("/measure") || topic.endsWith("/measured")) return;
-  //if(topic.endsWith("/read2") || topic.endsWith("/write")) return;
+  if(topic.endsWith("/read") || topic.endsWith("/write")) return;
   trace(
     `MAIN BUS ${new Date().toISOString()} ${topic} ${
       payload != null ? JSON.stringify(payload) : ""
@@ -70,7 +70,7 @@ function* startSequence() {
   //bus.emit("start", "modem");
   //bus.emit("start", "gui");
   //bus.emit("start", "ble");
-  bus.emit("start", "virtmodem");
+  bus.emit("start", "virtmodem");//{name: "virtmodem", mod:"serial"});
   bus.emit("start", "serial");
   let startModem = 0;
   let startWifi = 0;
@@ -207,22 +207,65 @@ bus.on("mqtt/started", () => {
   });
 });
 
-bus.on("virtmodem/read", (arr) => {
-  bus.emit("serial/write", arr);
+let connected = false;
+
+function writeln(str) {
+  trace(str, "\r\n");
+  bus.emit("virtmodem/write", ArrayBuffer.fromString(str + "\r\n"));
+}
+
+const ENABLE_TRAFIC=false;
+
+bus.on("virtmodem/read", (buf) => {
+  let arr = new Uint8Array(buf);
+  //trace(">>", arr, "\n");
+  //trace(">>", JSON.stringify(str), "\n");
+  if (arr[0] == 43 && arr[1] == 43 && arr[2] == 43) { // "+++"
+    writeln("OK");
+  } else if(arr[0] == 65 && (arr[1] == 84 || arr[1] == 212)) { // str.startsWith("AT")) {
+    for(let i=0, l=arr.length; i < l; i++) arr[i]&=0x7F; //remove parity bits;
+    if(arr[2] == 68 && arr[3] == 84) { //str.startsWith("ATDT")) {
+      writeln("CONNECT"); 
+      let str = String.fromArrayBuffer(buf.slice(4, -1));
+      bus.emit("virtmodem/connected", {num: str.trim()});
+    }else if(arr[2] == 72) { //ATH
+      bus.emit("virtmodem/disconnected");
+      writeln("OK");
+    } else {
+      writeln("OK");
+    }
+  }else {
+    bus.emit("serial/write", buf);
+  }
+  if (ENABLE_TRAFIC) traffic(">>", buf);
 });
 
-bus.on("serial/read", (packet) => {
-  bus.emit("virtmodem/write", packet);
-  //bus.emit("lineserver/write", packet);
+
+let _arr = new Uint8Array(new ArrayBuffer(512));
+function traffic(what, buf) {
+  let src = new Uint8Array(buf);
+  for(let i=0, l=src.length; i < l; i++) _arr[i] = src[i] & 0x7F;
+  _arr[src.length] = 0;
+  trace(/*Date.now()%100000, " ",*/ what, " ", String.fromArrayBuffer(_arr.buffer), "\n");
+}
+
+bus.on("serial/read", (buf) => {
+  //let arr = new Uint8Array(buf);
+  //for(let i=0, l=arr.length; i < l; i++) arr[i]&=0x7F;
+  //let str = String.fromArrayBuffer(buf);
+  //trace("<<", JSON.stringify(str), "\n");
+  //trace("<<", arr, "\n");
+  bus.emit("virtmodem/write", buf);
+  if(ENABLE_TRAFIC) traffic("<<", buf);
 });
 
 bus.on("lineserver/read", (packet) => {
   bus.emit("serial/write", packet);
 });
 
-const toSend = ArrayBuffer.fromString(":010300006D00018E\n".repeat(4));
+const toSend = ArrayBuffer.fromString(":010300006D00018E\n".repeat(10));
 
-bus.on("serial/started", () => {
+bus.on("2serial/started", () => {
   Timer.repeat(() => {
     bus.emit("serial/write", toSend);
   }, 1000);
