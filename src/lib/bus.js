@@ -1,3 +1,3 @@
 import PubSub from "pubsub";
-const bus = Object.freeze(new PubSub());
+const bus = new PubSub();
 export default bus;

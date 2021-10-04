@@ -101,7 +101,7 @@
         "stack": 400,
         "#stack": 512,
         "keys": {
-          "available": 500,
+          "available": 600,
           "#available": 256,
           "#name": 127,
           "#symbol": 127

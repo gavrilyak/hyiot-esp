@@ -17,17 +17,34 @@ export default function ({
   dataBits = 8,
   parity = "n",
   stopBits = 1,
+  readLines = true
 }) {
   let trace = () => {}
 
   let serial = null;
   let buffer = new BinaryBuffer(30);
   let writebleCount = 0;
+  let chunksRead = [];
 
   function onReadable(cnt) {
     let buf = serial.read(cnt);
     trace("serial", port, " read", cnt, " ", buf.byteLength, "\n");
-    bus.emit("read", buf);
+    if(!readLines) {
+      bus.emit("read", buf);
+    }else {
+      chunksRead.push(buf); 
+      {
+	let arr = new Uint8Array(buf);
+	let lastChar =  arr[arr.length - 1];
+	if(lastChar == 0x0D || lastChar == 0x0A) {
+	  let firstChunk = chunksRead[0];
+	  let res = (chunksRead.length == 1) ? firstChunk :
+	    firstChunk.concat(...chunksRead.slice(1));
+	  chunksRead.length = 0;
+	  bus.emit("read", res);
+	}
+      }
+    }
   }
 
   function onWritable(count) {

@@ -210,44 +210,58 @@ bus.on("mqtt/started", () => {
 let connected = false;
 
 function writeln(str) {
-  trace(str, "\r\n");
-  bus.emit("virtmodem/write", ArrayBuffer.fromString(str + "\r\n"));
+  trace("<<", str)
+  bus.emit("virtmodem/write", str);
 }
 
-const ENABLE_TRAFIC=false;
+const OK_RESPONSE = ArrayBuffer.fromString("OK\r\n");
+const CONNECT_RESPONSE = ArrayBuffer.fromString("CONNECT\r\n");
+
+
+const ENABLE_TRAFIC = true;
+
+function handleVirtualModem(buf) {
+  let arr = new Uint8Array(buf);
+  let emits = [];
+  if (arr[0] == 43 && arr[1] == 43 && arr[2] == 43) { // "+++"
+    emits.push("write", CONNECT_RESPONSE); 
+  } else if(arr[0] == 65 && (arr[1] == 84 || arr[1] == 212)) { // AT or AT&0x80 parity bit
+    for(let i=0, l=arr.length; i < l; i++) arr[i]&=0x7F; // clear parity bits
+    if(arr[2] == 68 && arr[3] == 84) { //DT
+      emits.push("write", CONNECT_RESPONSE); 
+      emits.push("connected", {num: String.fromArrayBuffer(buf.slice(4, -1)).trim()});
+    }else if(arr[2] == 72) { //ATH
+      emits.push("write", OK_RESPONSE);
+      emits.push("virtmodem/disconnected",undefined);
+    } else {
+      writeln(OK_RESPONSE);
+    }
+  }
+  return emits.length ? emits : null;
+}
 
 bus.on("virtmodem/read", (buf) => {
-  let arr = new Uint8Array(buf);
-  //trace(">>", arr, "\n");
-  //trace(">>", JSON.stringify(str), "\n");
-  if (arr[0] == 43 && arr[1] == 43 && arr[2] == 43) { // "+++"
-    writeln("OK");
-  } else if(arr[0] == 65 && (arr[1] == 84 || arr[1] == 212)) { // str.startsWith("AT")) {
-    for(let i=0, l=arr.length; i < l; i++) arr[i]&=0x7F; //remove parity bits;
-    if(arr[2] == 68 && arr[3] == 84) { //str.startsWith("ATDT")) {
-      writeln("CONNECT"); 
-      let str = String.fromArrayBuffer(buf.slice(4, -1));
-      bus.emit("virtmodem/connected", {num: str.trim()});
-    }else if(arr[2] == 72) { //ATH
-      bus.emit("virtmodem/disconnected");
-      writeln("OK");
-    } else {
-      writeln("OK");
-    }
+  let emits = handleVirtualModem(buf);
+  if (emits) {
+    for(let i=0; i < emits.length; i+=2) bus.emit("virtmodem/" + emits[i], emits[i+1]);
   }else {
-    bus.emit("serial/write", buf);
+    //Timer.set(()=> {
+      bus.emit("serial/write", buf);
+    //}, 10);
   }
   if (ENABLE_TRAFIC) traffic(">>", buf);
 });
 
 
-let _arr = new Uint8Array(new ArrayBuffer(512));
-function traffic(what, buf) {
-  let src = new Uint8Array(buf);
-  for(let i=0, l=src.length; i < l; i++) _arr[i] = src[i] & 0x7F;
-  _arr[src.length] = 0;
-  trace(/*Date.now()%100000, " ",*/ what, " ", String.fromArrayBuffer(_arr.buffer), "\n");
-}
+const traffic = (() => {
+    let _arr = new Uint8Array(new ArrayBuffer(512));
+    return (what, buf) => {
+      let src = new Uint8Array(buf);
+      for(let i=0, l=src.length; i < l; i++) _arr[i] = src[i] & 0x7F;
+      _arr[src.length] = 0;
+      trace(/*Date.now()%100000, " ",*/ what, " ", String.fromArrayBuffer(_arr.buffer), "\n");
+    }
+})()
 
 bus.on("serial/read", (buf) => {
   //let arr = new Uint8Array(buf);

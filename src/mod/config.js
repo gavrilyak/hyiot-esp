@@ -62,6 +62,8 @@ export default Object.freeze(
       rx: 18,
       tx: 19,
       baud: 115200,
+      //dataBits: 7,
+      //parity: "e",
     }
     //gui: {},
   },
