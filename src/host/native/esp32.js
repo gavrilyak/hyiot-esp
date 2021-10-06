@@ -11,3 +11,5 @@ export function getMAC(staOrApString = "sta") {
       .map(x => x.toString(16).toUpperCase().padStart(2, '0'))
     .join(':');
 }
+
+export function set_wifi_ps(mode) @ "xs_set_wifi_ps";
