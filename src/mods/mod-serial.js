@@ -17,9 +17,9 @@ export default function ({
   dataBits = 8,
   parity = "n",
   stopBits = 1,
-  readLines = true
+  readLines = true,
 }) {
-  let trace = () => {}
+  let trace = () => {};
 
   let serial = null;
   let buffer = new BinaryBuffer(30);
@@ -29,20 +29,28 @@ export default function ({
   function onReadable(cnt) {
     let buf = serial.read(cnt);
     trace("serial", port, " read", cnt, " ", buf.byteLength, "\n");
-    if(!readLines) {
+    if (!readLines) {
       bus.emit("read", buf);
-    }else {
-      chunksRead.push(buf); 
+    } else {
+      chunksRead.push(buf);
       {
-	let arr = new Uint8Array(buf);
-	let lastChar =  arr[arr.length - 1];
-	if(lastChar == 0x0D || lastChar == 0x0A) {
-	  let firstChunk = chunksRead[0];
-	  let res = (chunksRead.length == 1) ? firstChunk :
-	    firstChunk.concat(...chunksRead.slice(1));
-	  chunksRead.length = 0;
-	  bus.emit("read", res);
-	}
+        let arr = new Uint8Array(buf);
+        let last = arr[arr.length - 1];
+        // ends with \r \n or startsWith +++
+        if (
+          last == 0x0d ||
+          last == 0x8d ||
+          last == 0x0a ||
+          (arr[0] == 43 && arr[1] == 43 && arr[2] == 43)
+        ) {
+          let firstChunk = chunksRead[0];
+          let res =
+            chunksRead.length == 1
+              ? firstChunk
+              : firstChunk.concat(...chunksRead.slice(1));
+          chunksRead.length = 0;
+          bus.emit("read", res);
+        }
       }
     }
   }
@@ -60,7 +68,15 @@ export default function ({
     }
     let chunk = buffer.read(writebleCount);
     if (chunk) {
-      trace("serial", port, " writing:", chunk.byteLength, "avail:", writebleCount, "\n");
+      trace(
+        "serial",
+        port,
+        " writing:",
+        chunk.byteLength,
+        "avail:",
+        writebleCount,
+        "\n"
+      );
       writebleCount -= chunk.byteLength;
       serial.write(chunk);
     }

@@ -2,11 +2,13 @@ import getBlob from "getBlob";
 import Client from "mqtt";
 import SecureSocket from "securesocket";
 import getCertSubject from "getCertSubject";
+import getDefaultDeviceId from "getDefaultDeviceId";
 
 const specialPrefixes = {
   $rules: "$aws/rules", ///${ruleName}",
   $jobs: "$aws/things/{id}/jobs",
   $shadow: "$aws/things/{id}/shadow",
+  $direct: "",
 };
 
 const GET_DELTA = "/update/delta";
@@ -19,8 +21,9 @@ export default function (config = {}) {
   let id;
   {
     id = config.id;
-    if (id == null) id = getCertSubject(clientCertificates[0])?.CN;
-    if (id == null) throw Error("mqtt: no client id");
+    if (id == null && clientCertificates)
+      id = getCertSubject(clientCertificates[0])?.CN;
+    if (id == null) id = getDefaultDeviceId(); //throw Error("mqtt: no client id");
   }
 
   function translateTopic(topic) {
@@ -28,7 +31,9 @@ export default function (config = {}) {
       const [first, ...other] = topic.split("/");
       let special = specialPrefixes[first];
       if (special == null) throw Error(`Unsupported special topic ${first}`);
-      return special.replace("{id}", id) + "/" + other.join("/");
+      return special
+        ? special.replace("{id}", id) + "/" + other.join("/")
+        : other.join("/");
     } else {
       return `${id}/${topic}`;
     }
@@ -39,9 +44,9 @@ export default function (config = {}) {
     return true;
   };
 
-  const pub = ([topic, payload]) => {
+  const pub = ([topic, payload, directTopic]) => {
     if (isConnected(client)) {
-      client.publish(translateTopic(topic), payload);
+      client.publish(directTopic || translateTopic(topic), payload);
     }
   };
 
@@ -62,8 +67,8 @@ export default function (config = {}) {
     client = null;
   }
 
-  function onMessage(topic, body) {
-    const payload = String.fromArrayBuffer(body);
+  function onMessage(topic, payload) {
+    //const payload = String.fromArrayBuffer(body);
     bus.emit("message", [topic, payload]);
   }
 

@@ -11,6 +11,7 @@ function getString(buf, start, end) {
  * @returns {Uint8Array|null}
  */
 function getFileFromArchive(buf, name) {
+  if (buf[0] == 0xff && buf[1] == 0xff) return null; //EMPTY flash
   for (let p = 0; ; p < buf.byteLength) {
     let end = buf.indexOf(0x0a, p);
     if (end < 0) break;

@@ -2,6 +2,7 @@
 import WiFi from "wifi";
 //import WiFi from "wificonnection";
 import Net from "net";
+import { set_wifi_ps } from "native/esp32";
 
 export default function modWiFi({ name, bus, ...opts }) {
   let wifi;
@@ -50,8 +51,9 @@ export default function modWiFi({ name, bus, ...opts }) {
     }
 
     try {
-      wifi = new WiFi({ ssid, password }, callback);
       WiFi.mode = 1;
+      set_wifi_ps(0);
+      wifi = new WiFi({ ssid, password }, callback);
     } catch (e) {
       bus.emit("error", e.message);
       stop();

@@ -67,6 +67,7 @@ declare module "native/esp32" {
   export function restart():void;
   export function getBuildString():string;
   export function getMAC(staOrAP?:string):string;
+  export function set_wifi_ps(mode:number):void;
 }
 
 declare module "native/all" {

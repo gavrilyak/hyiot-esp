@@ -67,5 +67,5 @@ CLI.install(function (command, opts) {
   return true;
 });
 
-//pref.set("wifista", "ssid", "some");
-//pref.set("wifista", "password", "pass");
+pref.set("wifista", "ssid", "HYDROLEC-GUEST");
+pref.set("wifista", "password", "6960Magic");
