@@ -282,9 +282,59 @@ bus.on("virtmodem/disconnected", ({ num }) => {
   remote = getDefaultDeviceId();
 });
 
+//let cache = new Map([["1"], ["2"]]);
+let cache = [
+  ":0103000066004056\r\n",
+  ":0103000066404016\r\n",
+  ":0103000066800412\r\n",
+  ":011000006C00020E0073\r\n",
+  ":011000006C00020F0072\r\n",
+].map((k) => [new Uint8Array(ArrayBuffer.fromString(k)), null]);
+
+//cache = [];
+
+//let currentRequest = null;
+let cacheWaitsIndex = null;
+
+function respondFromCache(buf) {
+  //currentRequest = buf;
+  //trace("respondFromCache\n");
+  cacheWaitsIndex = null;
+  let bytes = new Uint8Array(buf);
+  let matchedIndex = null;
+  let cacheIndex, k, v;
+  //for (let i = 0, l = bytes.length; i < l; i++) bytes[i] &= 0x7f;
+  for (cacheIndex = 0; cacheIndex < cache.length; cacheIndex++) {
+    [k, v] = cache[cacheIndex];
+    if (bytes.length != k.length) continue;
+    let i = 0,
+      l = bytes.length;
+    for (; i < l; i++) {
+      if ((bytes[i] & 0x7f) != k[i]) break;
+    }
+    if (i == l) break;
+  }
+  if (cacheIndex < cache.length) {
+    if (v) {
+      //trace("SERVING FROM CACHE,", cacheIndex, "-", k, "-", bytes, "->", "\n");
+      bus.emit("virtmodem/write", v);
+      return true;
+    }
+    //trace("WAITING FOR CACHE,", cacheIndex, "-", k, "-", bytes, "\n");
+    cacheWaitsIndex = cacheIndex;
+    return false;
+  }
+  //trace("NOT  IN CACHE\n");
+  return false;
+}
+
 bus.on("remote/write", (buf) => {
   //Timer.set(() => {
-  if (remote) bus.emit("mqtt/pub", [`$direct/${remote}/mb>>`, buf]);
+  if (remote) {
+    if (!respondFromCache(buf)) {
+      bus.emit("mqtt/pub", [`$direct/${remote}/mb>>`, buf]);
+    }
+  }
   //}, 70);
 });
 
@@ -299,9 +349,14 @@ bus.on("mqtt/message", ([topic, payload]) => {
   if (topic.endsWith("/mb>>")) {
     bus.emit("serial/write", payload);
   } else if (topic.endsWith("/mb<<")) {
+    if (cacheWaitsIndex != null) {
+      trace("Cache store ", cacheWaitsIndex, "\n");
+      //store response in cache
+      cache[cacheWaitsIndex][1] = payload;
+      cacheWaitsIndex == null;
+    }
     bus.emit("virtmodem/write", payload);
   } else if (topic.endsWith("/ping")) {
-    trace("PING");
     bus.emit("mqtt/pub", ["pong", payload]);
   }
 });
