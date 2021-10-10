@@ -40,6 +40,7 @@ function startHw() {
   if (!IS_SIMULATOR) {
     trace("DEFAULT DEVICE ID:", getDefaultDeviceId(), "\n");
     Modules.importNow("hardware");
+    Modules.importNow("virtmodem");
   }
 }
 
@@ -214,155 +215,16 @@ bus.on("mqtt/started", () => {
   });
 });
 
-const OK_RESPONSE = ArrayBuffer.fromString("OK\r\n");
-const CONNECT_RESPONSE = ArrayBuffer.fromString("CONNECT\r\n");
-
-const ENABLE_TRAFIC = 0;
-const traffic = (() => {
-  let _arr = new Uint8Array(new ArrayBuffer(512));
-  return (what, buf) => {
-    let src = new Uint8Array(buf);
-    for (let i = 0, l = src.length; i < l; i++) _arr[i] = src[i] & 0x7f;
-    _arr[src.length] = 0;
-    trace(what, " ", String.fromArrayBuffer(_arr.buffer));
-  };
-})();
-
-function handleVirtualModem(buf) {
-  let arr = new Uint8Array(buf);
-  let emits = [];
-  if (arr[0] == 43 && arr[1] == 43 && arr[2] == 43) {
-    // "+++"
-    emits.push("write", OK_RESPONSE);
-  } else if (arr[0] == 65 && (arr[1] == 84 || arr[1] == 212)) {
-    // AT or AT&0x80 parity bit
-    for (let i = 0, l = arr.length; i < l; i++) arr[i] &= 0x7f; // clear parity bits
-    if (arr[2] == 68 && arr[3] == 84) {
-      // DT
-      emits.push("write", CONNECT_RESPONSE);
-      emits.push("connected", {
-        num: String.fromArrayBuffer(buf.slice(4, -1)).trim(),
-      });
-    } else if (arr[2] == 72) {
-      // ATH
-      emits.push("write", OK_RESPONSE);
-      emits.push("virtmodem/disconnected", null);
-    } else {
-      emits.push("write", OK_RESPONSE);
-    }
-  } else if (arr[0] == 0x3a && arr[1] == 0x30 && (arr[2] & 0x7f) == 0x32) {
-    emits.push("write", OK_RESPONSE);
-  }
-  return emits.length ? emits : null;
-}
-
-bus.on("virtmodem/read", (buf) => {
-  let emits = handleVirtualModem(buf);
-  if (emits) {
-    for (let i = 0; i < emits.length; i += 2) {
-      let topic = emits[i];
-      let payload = emits[i + 1];
-      if (ENABLE_TRAFIC && topic == "write") traffic("<-", payload);
-      bus.emit(`virtmodem/${topic}`, payload);
-    }
-  } else {
-    bus.emit("remote/write", buf);
-  }
-  if (ENABLE_TRAFIC) traffic(">>", buf);
-});
-
-let remote = getDefaultDeviceId();
-bus.on("virtmodem/connected", ({ num }) => {
-  remote = num;
-  bus.emit("mqtt/sub", `$direct/${remote}/mb<<`);
-});
-
-bus.on("virtmodem/disconnected", ({ num }) => {
-  bus.emit("mqtt/unsub", `$direct/${remote}/mb<<`);
-  remote = getDefaultDeviceId();
-});
-
-//let cache = new Map([["1"], ["2"]]);
-let cache = [
-  ":0103000066004056\r\n",
-  ":0103000066404016\r\n",
-  ":0103000066800412\r\n",
-  ":011000006C00020E0073\r\n",
-  ":011000006C00020F0072\r\n",
-].map((k) => [new Uint8Array(ArrayBuffer.fromString(k)), null]);
-
-//cache = [];
-
-//let currentRequest = null;
-let cacheWaitsIndex = null;
-
-function respondFromCache(buf) {
-  //currentRequest = buf;
-  //trace("respondFromCache\n");
-  cacheWaitsIndex = null;
-  let bytes = new Uint8Array(buf);
-  let matchedIndex = null;
-  let cacheIndex, k, v;
-  //for (let i = 0, l = bytes.length; i < l; i++) bytes[i] &= 0x7f;
-  for (cacheIndex = 0; cacheIndex < cache.length; cacheIndex++) {
-    [k, v] = cache[cacheIndex];
-    if (bytes.length != k.length) continue;
-    let i = 0,
-      l = bytes.length;
-    for (; i < l; i++) {
-      if ((bytes[i] & 0x7f) != k[i]) break;
-    }
-    if (i == l) break;
-  }
-  if (cacheIndex < cache.length) {
-    if (v) {
-      //trace("SERVING FROM CACHE,", cacheIndex, "-", k, "-", bytes, "->", "\n");
-      bus.emit("virtmodem/write", v);
-      return true;
-    }
-    //trace("WAITING FOR CACHE,", cacheIndex, "-", k, "-", bytes, "\n");
-    cacheWaitsIndex = cacheIndex;
-    return false;
-  }
-  //trace("NOT  IN CACHE\n");
-  return false;
-}
-
-bus.on("remote/write", (buf) => {
-  //Timer.set(() => {
-  if (remote) {
-    if (!respondFromCache(buf)) {
-      bus.emit("mqtt/pub", [`$direct/${remote}/mb>>`, buf]);
-    }
-  }
-  //}, 70);
-});
-
-bus.on("operator/write", (buf) => {
-  //Timer.set(() => {
-  bus.emit("mqtt/pub", ["mb<<", buf]);
-  if (ENABLE_TRAFIC) traffic("<<", buf);
-  //}, 10);
-});
-
 bus.on("mqtt/message", ([topic, payload]) => {
   if (topic.endsWith("/mb>>")) {
     bus.emit("serial/write", payload);
-  } else if (topic.endsWith("/mb<<")) {
-    if (cacheWaitsIndex != null) {
-      trace("Cache store ", cacheWaitsIndex, "\n");
-      //store response in cache
-      cache[cacheWaitsIndex][1] = payload;
-      cacheWaitsIndex == null;
-    }
-    bus.emit("virtmodem/write", payload);
   } else if (topic.endsWith("/ping")) {
     bus.emit("mqtt/pub", ["pong", payload]);
   }
 });
 
 bus.on("serial/read", (buf) => {
-  bus.emit("operator/write", buf);
+  bus.emit("mqtt/pub", ["mb<<", buf]);
 });
 
 function startAsync() {
