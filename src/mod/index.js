@@ -9,6 +9,7 @@ import Worker from "worker";
 import sleep from "sleep";
 //this is for side effect
 import { loadAndInstantiate } from "modLoader";
+import Digital from "embedded:io/digital";
 
 measure("start");
 
@@ -23,7 +24,12 @@ trace("IS_SIMULATOR:", IS_SIMULATOR, "\n");
 //THIS is NECCESSARY for network stack initialization
 //import WiFi from "wifi";
 //WiFi.mode = 0;
+//
+const hasModem = true; //!new Digital({ pin: 27, mode: Digital.InputPullUp }).read();
+trace("Has modem:", hasModem, "\n");
 
+const led = new Digital({ pin: 23, mode: Digital.Output });
+led.write(1); // on
 bus.on("*", (payload, topic) => {
   //if(topic.endsWith("/measure") || topic.endsWith("/measured")) return;
   if (topic.startsWith("mqtt")) return;
@@ -65,13 +71,13 @@ function* startSequence() {
   //bus.emit("start", "modem");
   //bus.emit("start", "gui");
   //bus.emit("start", "ble");
-  bus.emit("start", "virtmodem"); //{name: "virtmodem", mod:"serial"});
   bus.emit("start", "serial");
-  let startModem = 0;
-  let startWifi = 1;
+  if (!hasModem) bus.emit("start", "virtmodem"); //{name: "virtmodem", mod:"serial"});
+  let startModem = hasModem;
+  let startWifi = !hasModem;
   if (startModem) {
-    //bus.emit("start", "modem");
-    yield* start("wifiap");
+    bus.emit("start", "modem");
+    //yield* start("wifiap");
     //yield* start("httpserver");
     //yield* start("telnet");
   } else if (startWifi) {
@@ -206,7 +212,10 @@ bus.on("mqtt/started", () => {
     // bus.emit("mqtt/sub", "$jobs/notify-next");
   }, 50);
   Timer.set(() => {
-    bus.emit("mqtt/pub", [`hello`, JSON.stringify({ who: "world" })]);
+    bus.emit("mqtt/pub", [
+      `hello`,
+      JSON.stringify({ ip: Net.get("IP"), hasModem }),
+    ]);
     //bus.emit("mqtt/pub", ["$jobs/$next/get", "{}"]);
   }, 100);
 
@@ -224,6 +233,11 @@ bus.on("mqtt/message", ([topic, payload]) => {
 });
 
 bus.on("serial/read", (buf) => {
+  let arr = new Uint8Array(buf);
+  if (arr[0] != 58) {
+    trace("BROKEN first byte ", arr[0], "\n");
+    arr[0] = 58;
+  }
   bus.emit("mqtt/pub", ["mb<<", buf]);
 });
 
