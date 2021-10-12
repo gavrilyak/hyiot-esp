@@ -3,6 +3,7 @@ import Client from "mqtt";
 import SecureSocket from "securesocket";
 import getCertSubject from "getCertSubject";
 import getDefaultDeviceId from "getDefaultDeviceId";
+import Timer from "timer";
 
 const specialPrefixes = {
   $rules: "$aws/rules", ///${ruleName}",
@@ -59,7 +60,9 @@ export default function (config = {}) {
   };
 
   function onReady() {
-    bus.emit("started", { protocol, host });
+    Timer.set(() => {
+      bus.emit("started", { protocol, host });
+    }, 20);
   }
 
   function onClose() {

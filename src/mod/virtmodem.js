@@ -55,7 +55,7 @@ let cache = RequestsCache([
   ":010300006D00018E\r\n",
 ]);
 
-let remote = getDefaultDeviceId();
+let remote = null; //getDefaultDeviceId();
 
 const OK_RESPONSE = ArrayBuffer.fromString("OK\r\n");
 const CONNECT_RESPONSE = ArrayBuffer.fromString("CONNECT\r\n");
@@ -135,6 +135,10 @@ bus.on("remote/write", (buf) => {
     }
   }
   //}, 70);
+});
+
+bus.on("mqtt/started", () => {
+  bus.emit("virtmodem/connected", { num: "SIMULATOR" });
 });
 
 bus.on("mqtt/message", ([topic, payload]) => {

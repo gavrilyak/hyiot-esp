@@ -26,14 +26,14 @@ trace("IS_SIMULATOR:", IS_SIMULATOR, "\n");
 //import WiFi from "wifi";
 //WiFi.mode = 0;
 //
-const hasModem = true; //!new Digital({ pin: 27, mode: Digital.InputPullUp }).read();
+const hasModem = !new Digital({ pin: 27, mode: Digital.InputPullUp }).read();
 trace("Has modem:", hasModem, "\n");
 
 const led = new Digital({ pin: 23, mode: Digital.Output });
 led.write(1); // on
 bus.on("*", (payload, topic) => {
   //if(topic.endsWith("/measure") || topic.endsWith("/measured")) return;
-  //if (topic.startsWith("mqtt")) return;
+  if (topic.startsWith("mqtt")) return;
   if (topic.endsWith("/read") || topic.endsWith("/write")) return;
   trace(
     `MAIN BUS ${new Date().toISOString()} ${topic} ${

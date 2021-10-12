@@ -27,7 +27,10 @@ sim:
 clean:
 	mcconfig -d -m -p $(PLATFORM) -t clean
 
-
+cleanall:
+	mcconfig -d -m -p $(PLATFORM) -t clean
+	mcconfig -i -m -p $(PLATFORM) -t clean
+	mcconfig  -m -p $(PLATFORM) -t clean
 
 .PHONY: build deploy host all sim clean
 
