@@ -51,6 +51,8 @@ let cache = RequestsCache([
   //write 0E or 0F to command reg, seems redundant
   ":011000006C00020E0073\r\n",
   ":011000006C00020F0072\r\n",
+  //looks like just query status
+  ":010300006D00018E\r\n",
 ]);
 
 let remote = getDefaultDeviceId();
