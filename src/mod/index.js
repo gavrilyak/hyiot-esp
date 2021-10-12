@@ -4,11 +4,12 @@ import Net from "net";
 import Timer from "timer";
 import { measure } from "profiler";
 import getDefaultDeviceId from "getDefaultDeviceId";
-
 import Worker from "worker";
 import sleep from "sleep";
 //this is for side effect
 import { loadAndInstantiate } from "modLoader";
+
+if (Modules.has("rc-local")) Modules.importNow("rc-local");
 
 measure("start");
 
@@ -26,7 +27,7 @@ trace("IS_SIMULATOR:", IS_SIMULATOR, "\n");
 
 bus.on("*", (payload, topic) => {
   //if(topic.endsWith("/measure") || topic.endsWith("/measured")) return;
-  if (topic.startsWith("mqtt")) return;
+  //if (topic.startsWith("mqtt")) return;
   if (topic.endsWith("/read") || topic.endsWith("/write")) return;
   trace(
     `MAIN BUS ${new Date().toISOString()} ${topic} ${
