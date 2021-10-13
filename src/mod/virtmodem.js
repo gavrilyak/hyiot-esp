@@ -1,6 +1,17 @@
 import bus from "bus";
 import getDefaultDeviceId from "getDefaultDeviceId";
 
+import {
+  setDataBits,
+  //setStopBits,
+  setParity,
+  PARITY_EVEN,
+  PARITY_DISABLE,
+  DATA_7_BITS,
+  DATA_8_BITS,
+} from "native/uart";
+const port = 2;
+
 function RequestsCache(cache) {
   cache = cache.map((k) => [new Uint8Array(ArrayBuffer.fromString(k)), null]);
   let cacheWaitsIndex = null;
@@ -43,7 +54,7 @@ function RequestsCache(cache) {
   };
 }
 
-let cache = RequestsCache([
+const CACHE_PARAMS = [
   //read eeprom - constant
   ":0103000066004056\r\n",
   ":0103000066404016\r\n",
@@ -51,14 +62,14 @@ let cache = RequestsCache([
   //write 0E or 0F to command reg, seems redundant
   ":011000006C00020E0073\r\n",
   ":011000006C00020F0072\r\n",
-  //looks like just query status
-  ":010300006D00018E\r\n",
-]);
+];
+
+let cache = RequestsCache(CACHE_PARAMS);
 
 let remote = null; //getDefaultDeviceId();
 
-const OK_RESPONSE = ArrayBuffer.fromString("OK\r\n");
-const CONNECT_RESPONSE = ArrayBuffer.fromString("CONNECT\r\n");
+const OK_RESPONSE = "OK\r";
+const CONNECT_RESPONSE = "CONNECT\r";
 
 const ENABLE_TRAFIC = 0;
 const traffic = (() => {
@@ -89,7 +100,7 @@ function handleVirtualModem(buf) {
     } else if (arr[2] == 72) {
       // ATH
       emits.push("write", OK_RESPONSE);
-      emits.push("virtmodem/disconnected", null);
+      emits.push("disconnected", null);
     } else {
       emits.push("write", OK_RESPONSE);
     }
@@ -102,6 +113,7 @@ function handleVirtualModem(buf) {
 bus.on("virtmodem/read", (buf) => {
   let emits = handleVirtualModem(buf);
   if (emits) {
+    trace("virtmodem:", new Uint8Array(buf), "=>", JSON.stringify(emits), "\n");
     for (let i = 0; i < emits.length; i += 2) {
       let topic = emits[i];
       let payload = emits[i + 1];
@@ -117,10 +129,15 @@ bus.on("virtmodem/read", (buf) => {
 bus.on("virtmodem/connected", ({ num }) => {
   remote = num;
   bus.emit("mqtt/sub", `$direct/${remote}/mb<<`);
+  cache = RequestsCache(CACHE_PARAMS);
+  setParity(port, PARITY_EVEN);
+  setDataBits(port, DATA_7_BITS);
 });
 
 bus.on("virtmodem/disconnected", () => {
   bus.emit("mqtt/unsub", `$direct/${remote}/mb<<`);
+  setParity(port, PARITY_DISABLE);
+  setDataBits(port, DATA_8_BITS);
   remote = getDefaultDeviceId();
 });
 
@@ -138,7 +155,7 @@ bus.on("remote/write", (buf) => {
 });
 
 bus.on("mqtt/started", () => {
-  bus.emit("virtmodem/connected", { num: "SIMULATOR" });
+  //bus.emit("virtmodem/connected", { num: "SIMULATOR" });
 });
 
 bus.on("mqtt/message", ([topic, payload]) => {

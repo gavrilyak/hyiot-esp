@@ -2,6 +2,10 @@
 #include "xsmc.h"
 #include "xsHost.h"
 #include "driver/uart.h"
+#include "hal/uart_hal.h"
+#include "hal/uart_types.h"
+//#include "soc/uart_caps.h"
+#include "soc/uart_struct.h"
 
 void xs_uart_set_data_bits(xsMachine *the) {
   xsIntegerValue uart_num = xsmcToInteger(xsArg(0));
@@ -29,6 +33,21 @@ void xs_uart_set_parity(xsMachine *the) {
     xsUnknownError("Failed to set parity");
   }
 }
+
+void xs_uart_set_rx_full_threshold(xsMachine *the) {
+  xsIntegerValue uart_num = xsmcToInteger(xsArg(0));
+  xsIntegerValue threshold = xsmcToInteger(xsArg(1));
+  uart_dev_t *uart_reg = uart_num == 2 ? &UART2 : uart_num == 1 ? &UART1 : &UART0;
+  uart_ll_set_rxfifo_full_thr(uart_reg, threshold);
+}
+
+void xs_uart_set_tx_empty_threshold(xsMachine *the) {
+  xsIntegerValue uart_num = xsmcToInteger(xsArg(0));
+  xsIntegerValue threshold = xsmcToInteger(xsArg(1));
+  uart_dev_t *uart_reg = uart_num == 2 ? &UART2 : uart_num == 1 ? &UART1 : &UART0;
+  uart_ll_set_txfifo_empty_thr(uart_reg, threshold);
+}
+
 
 /*
     uart_ll_get_rxfifo_len

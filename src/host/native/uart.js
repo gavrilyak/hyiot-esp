@@ -1,6 +1,8 @@
 export function setDataBits(uartnum, databits) @ "xs_uart_set_data_bits";
 export function setParity(uartnum, databits) @ "xs_uart_set_parity";
 export function setStopBits(uartnum, stopBits) @ "xs_uart_set_stop_bits";
+export function setRxFullThreshold(uartnum, threshold) @ "xs_uart_set_rx_full_threshold";
+export function setTxEmptyThreshold(uartnum, threshold) @ "xs_uart_set_tx_empty_threshold";
 
 export const DATA_5_BITS   = 0x0;    /*!< word length: 5bits*/
 export const DATA_6_BITS   = 0x1;    /*!< word length: 6bits*/
