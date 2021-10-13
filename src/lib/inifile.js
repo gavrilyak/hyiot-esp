@@ -37,10 +37,12 @@ function findKey(bin, pos, name) {
   }
 }
 
-export function get(bin, section, key) {
+export function get(ab, section, key) {
+  let bin = new Uint8Array(ab);
   let pos = findSection(bin, section);
   if (!pos) return null;
   pos = findKey(bin, pos, key);
   if (!pos) return null;
-  return String.fromArrayBuffer(bin.slice(pos, bin.indexOf(CR, pos)).buffer);
+  let part = bin.slice(pos, bin.indexOf(CR, pos));
+  return String.fromArrayBuffer(part.buffer);
 }

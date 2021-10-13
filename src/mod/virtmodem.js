@@ -71,7 +71,6 @@ let remote = null; //getDefaultDeviceId();
 const OK_RESPONSE = "OK\r";
 const CONNECT_RESPONSE = "CONNECT\r";
 
-const ENABLE_TRAFIC = 0;
 const traffic = (() => {
   let _arr = new Uint8Array(new ArrayBuffer(512));
   return (what, buf) => {
@@ -104,8 +103,6 @@ function handleVirtualModem(buf) {
     } else {
       emits.push("write", OK_RESPONSE);
     }
-  } else if (arr[0] == 0x3a && arr[1] == 0x30 && (arr[2] & 0x7f) == 0x32) {
-    emits.push("write", OK_RESPONSE);
   }
   return emits.length ? emits : null;
 }
@@ -117,13 +114,11 @@ bus.on("virtmodem/read", (buf) => {
     for (let i = 0; i < emits.length; i += 2) {
       let topic = emits[i];
       let payload = emits[i + 1];
-      if (ENABLE_TRAFIC && topic == "write") traffic("<-", payload);
       bus.emit(`virtmodem/${topic}`, payload);
     }
   } else {
     bus.emit("remote/write", buf);
   }
-  if (ENABLE_TRAFIC) traffic(">>", buf);
 });
 
 bus.on("virtmodem/connected", ({ num }) => {
@@ -152,10 +147,6 @@ bus.on("remote/write", (buf) => {
     }
   }
   //}, 70);
-});
-
-bus.on("mqtt/started", () => {
-  //bus.emit("virtmodem/connected", { num: "SIMULATOR" });
 });
 
 bus.on("mqtt/message", ([topic, payload]) => {

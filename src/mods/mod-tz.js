@@ -13,9 +13,7 @@ export default function ({ bus, tz }) {
       bus.emit("error", "Empty timezone");
       return;
     }
-    let zonesDb = new Resource("zones.ini");
-    let b = new Uint8Array(zonesDb);
-    let posix = findTZ(b, tz);
+    let posix = findTZ(new Resource("zones.ini"), tz);
     if (!posix) {
       bus.emit("error", "Unsupported timezone");
       return;
