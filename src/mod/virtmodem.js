@@ -1,4 +1,7 @@
 import bus from "bus";
+
+import { parse } from "mblike";
+
 import getDefaultDeviceId from "getDefaultDeviceId";
 
 import {
@@ -136,14 +139,16 @@ bus.on("virtmodem/disconnected", () => {
   remote = getDefaultDeviceId();
 });
 
-bus.on("remote/write", (buf) => {
+bus.on("remote/write", (payload) => {
   //Timer.set(() => {
   if (remote) {
-    let cached = cache.read(buf);
+    let cached = cache.read(payload);
     if (cached) {
       bus.emit("virtmodem/write", cached);
     } else {
-      bus.emit("mqtt/pub", [`$direct/${remote}/mb>>`, buf]);
+      let packet = parse(payload, true);
+      //trace(packet.toString(), "\n");
+      bus.emit("mqtt/pub", [`$direct/${remote}/mb>>`, packet.toBinary()]);
     }
   }
   //}, 70);
@@ -151,6 +156,10 @@ bus.on("remote/write", (buf) => {
 
 bus.on("mqtt/message", ([topic, payload]) => {
   if (!topic.endsWith("/mb<<")) return;
-  cache.write(payload);
-  bus.emit("virtmodem/write", payload);
+  let packet = parse(payload, false);
+  //trace(packet.toString(), "\n");
+  let packetAscii = packet.toAscii();
+  cache.write(packetAscii);
+  //trace(new Uint8Array(packet.toAscii()), "==", new Uint8Array(payload), "\n");
+  bus.emit("virtmodem/write", packetAscii); //packet.toAscii());
 });

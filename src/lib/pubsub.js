@@ -4,8 +4,9 @@ import Timer from "timer";
  * @param {any} payload
  */
 class PubSub {
-  constructor() {
+  constructor(useTimer = true) {
     this.channels = new Map();
+    this.useTimer = useTimer;
   }
   /**
    * @param {string} topic
@@ -45,23 +46,25 @@ class PubSub {
   emit(topic, payload) {
     {
       let listeners = this.channels.get(topic);
-      if (listeners)
-        for (let listener of listeners) {
-          //listener(...payload);
-          Timer.set(() => {
-            try {
-              listener(payload, topic);
-            } catch (e) {
-              trace(`ERR in topic ${topic}: ${e}\n`);
-            }
-          });
+      if (listeners) {
+        if (this.useTimer) {
+          for (let listener of listeners)
+            Timer.set(() => listener(payload, topic));
+        } else {
+          for (let listener of listeners) listener(payload, topic);
         }
+      }
     }
     {
       let listeners = this.channels.get("*");
-      if (listeners)
-        for (let listener of listeners)
-          Timer.set(() => listener(payload, topic));
+      if (listeners) {
+        if (this.useTimer) {
+          for (let listener of listeners)
+            Timer.set(() => listener(payload, topic));
+        } else {
+          for (let listener of listeners) listener(payload, topic);
+        }
+      }
     }
   }
 

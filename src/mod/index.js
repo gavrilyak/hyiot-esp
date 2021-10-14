@@ -31,18 +31,6 @@ trace("Has modem:", hasModem, "\n");
 
 const led = new Digital({ pin: 23, mode: Digital.Output });
 led.write(1); // on
-bus.on("*", (payload, topic) => {
-  //if(topic.endsWith("/measure") || topic.endsWith("/measured")) return;
-  if (topic.startsWith("mqtt")) return;
-  if (topic.endsWith("/read") || topic.endsWith("/write")) return;
-  trace(
-    `MAIN BUS ${new Date().toISOString()} ${topic} ${
-      payload != null ? JSON.stringify(payload) : ""
-    }\n`
-  );
-  //measure(topic);
-});
-
 function startHw() {
   if (!IS_SIMULATOR) {
     trace("DEFAULT DEVICE ID:", getDefaultDeviceId(), "\n");
@@ -202,59 +190,17 @@ bus.on("sntp/started", () => {
 });
 
 bus.on("mqtt/started", () => {
-  Timer.set(() => {
-    bus.emit("mqtt/sub", "mb>>");
-    bus.emit("mqtt/sub", "ping");
-    // bus.emit("mqtt/sub", "hello");
-    // bus.emit("mqtt/sub", `led`);
-    // bus.emit("mqtt/sub", `kb`);
-    // bus.emit("mqtt/sub", `button`);
-    // bus.emit("mqtt/sub", "$jobs/$next/get/accepted");
-    // bus.emit("mqtt/sub", "$jobs/notify-next");
-  }, 50);
-  Timer.set(() => {
-    bus.emit("mqtt/pub", [
-      `hello`,
-      JSON.stringify({ ip: Net.get("IP"), hasModem }),
-    ]);
-    //bus.emit("mqtt/pub", ["$jobs/$next/get", "{}"]);
-  }, 100);
-
-  bus.on("ble/nason", (payload) => {
-    bus.emit("mqtt/pub", ["nason", JSON.stringify(payload)]);
-  });
+  bus.emit("mqtt/sub", "ping");
+  bus.emit("mqtt/pub", [
+    `hello`,
+    JSON.stringify({ ip: Net.get("IP"), hasModem }),
+  ]);
 });
 
 bus.on("mqtt/message", ([topic, payload]) => {
-  if (topic.endsWith("/mb>>")) {
-    bus.emit("serial/write", payload);
-  } else if (topic.endsWith("/ping")) {
+  if (topic.endsWith("/ping")) {
     bus.emit("mqtt/pub", ["pong", payload]);
   }
-});
-
-bus.on("serial/read", (buf) => {
-  let arr = new Uint8Array(buf);
-  if (arr[0] != 58 || arr[1] != 0x30 || arr[2] != 0x31) {
-    bus.emit("mqtt/pub", ["mbERROR", buf]);
-    trace("BROKEN first byte ", arr[0], " len ", arr.length, "\n");
-    //arr[0] = 58;
-  }
-  bus.emit("mqtt/pub", ["mb<<", buf]);
-});
-
-let testPacket = new Uint8Array([
-  0x3a, 0x30, 0x31, 0x30, 0x33, 0x30, 0x30, 0x30, 0x30, 0x33, 0x31, 0x34, 0x30,
-  0x34, 0x30, 0x34, 0x42, 0x0d, 0x0a,
-]).buffer;
-
-testPacket = ArrayBuffer.fromString(":01030000030040B9\r\n");
-testPacket = ArrayBuffer.fromString(":010300003A404042\r\n");
-
-bus.on("#serial/started", () => {
-  Timer.repeat(() => {
-    bus.emit("serial/write", testPacket);
-  }, 20);
 });
 
 function startAsync() {

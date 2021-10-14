@@ -1,12 +1,13 @@
 import globalBus from "bus";
 import Telnet from "telnet";
 import CLI from "cli";
+import Timer from "timer";
 
 function parseObject(strs) {
-  let res = {}
-  for(let str of strs) {
+  let res = {};
+  for (let str of strs) {
     const [k, v] = str.split("=");
-    res[k]=v;
+    res[k] = v;
   }
   return res;
 }
@@ -59,7 +60,9 @@ export default function ({ name = "telnet", bus, port = 8023 } = {}) {
       return;
     }
     server = new Telnet({ port });
-    bus.emit("started", { port });
+    Timer.set(() => {
+      bus.emit("started", { port });
+    });
   }
 
   function stop() {
@@ -67,7 +70,9 @@ export default function ({ name = "telnet", bus, port = 8023 } = {}) {
       server.close();
       server = null;
     }
-    bus.emit("stopped");
+    Timer.set(() => {
+      bus.emit("stopped");
+    });
   }
 
   return Object.freeze({

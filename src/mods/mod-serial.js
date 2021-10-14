@@ -29,35 +29,50 @@ export default function ({
   let writebleCount = 0;
   let chunksRead = [];
 
-  function onReadable() {
-    for (;;) {
-      let buf = serial.read();
-      if (!buf || buf.byteLength == 0) break;
-      if (!readLines) {
-        bus.emit("read", buf);
-      } else {
-        chunksRead.push(buf);
-      }
-    }
-    if (!readLines) return;
-    // ends with \r \n or startsWith +++
-    let chunksCount = chunksRead.length;
-    if (chunksCount == 0) return;
-    let arr = new Uint8Array(chunksRead[chunksCount - 1]);
+  function emitChunks() {
+    let chunkLength = chunksRead.length;
+    if (chunkLength == 0) return;
+    let firstChunk = chunksRead[0];
+    let res =
+      chunkLength == 1 ? firstChunk : firstChunk.concat(...chunksRead.slice(1));
+    chunksRead.length = 0;
+    trace("=", res.byteLength, "\n");
+    bus.emit("read", res);
+  }
+
+  function checkPacket() {
+    let chunkLength = chunksRead.length;
+    if (chunkLength == 0) return;
+
+    let arr = new Uint8Array(chunksRead[chunkLength - 1]);
     let last = arr[arr.length - 1];
-    if (
-      last == 0x0a ||
-      last == extraEOL ||
-      (arr[0] == 43 && arr[1] == 43 && arr[2] == 43)
-    ) {
-      let firstChunk = chunksRead[0];
-      let res =
-        chunksCount == 1
-          ? firstChunk
-          : firstChunk.concat(...chunksRead.slice(1));
-      chunksRead.length = 0;
-      bus.emit("read", res);
+    // ends with \r \n or startsWith +++
+    if (last == 0x0a || last == extraEOL) emitChunks();
+  }
+
+  function onReadable(cnt = 0) {
+    trace(cnt > 0 ? "!" : ">");
+    let buf = serial.read();
+    if (!buf) {
+      checkPacket();
+      return;
     }
+    //trace("serial", port, " read:", buf.byteLength, "\n");
+    trace(buf.byteLength);
+    if (!readLines) {
+      bus.emit("read", buf);
+      return;
+    }
+
+    let arr = new Uint8Array(buf);
+    if (arr[0] == 43 && arr[1] == 43 && arr[2] == 43) {
+      emitChunks();
+      bus.emit("read", buf);
+      return;
+    }
+
+    chunksRead.push(buf);
+    Timer.set(onReadable, 0);
   }
 
   function onWritable(count) {
@@ -96,7 +111,7 @@ export default function ({
 
     if (parity == "e") setParity(port, PARITY_EVEN);
     if (dataBits == 7) setDataBits(port, DATA_7_BITS);
-    setRxFullThreshold(port, 64);
+    setRxFullThreshold(port, 80);
     setTxEmptyThreshold(port, 4);
 
     bus.emit("started"); // ??? , {rx, tx, port, mode: `${baud}-${dataBits}-${parity}-${stopBits}`});

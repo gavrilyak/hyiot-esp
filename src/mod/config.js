@@ -26,8 +26,8 @@ export default Object.freeze(
       hosts: "0.pool.ntp.org,1.pool.ntp.org,2.pool.ntp.org,3.pool.ntp.org",
     },
     mqtt: {
-      host: "10.1.10.207",
-      port: 1883,
+      //host: "10.1.10.207",
+      //port: 1883,
       //clientId: "",
       //host: "a23tqp4io1iber-ats.iot.us-east-2.amazonaws.com",
       //protocol: "mqtts",

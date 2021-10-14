@@ -82,11 +82,13 @@ export default function (config = {}) {
 
   function start() {
     stop();
+    trace("MQTT:", [protocol, host, port], "\n");
     try {
       client = new Client({
         host,
         id,
         port,
+        timeout: 0x7fff,
         ...(protocol === "mqtts"
           ? {
               Socket: SecureSocket,

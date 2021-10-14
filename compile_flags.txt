@@ -126,10 +126,14 @@
 -I/home/gvv/esp/esp-idf/components/unity/unity/src
 -I/home/gvv/esp/esp-idf/components/wifi_provisioning/include
 -I/home/gvv/esp/esp-idf/components/hal/include
+-I/home/gvv/esp/esp-idf/components/hal/esp32/include
+-I/home/gvv/esp/esp-idf/components/soc/include
+-I/home/gvv/esp/esp-idf/components/soc/esp32/include
 -I/home/gvv/code/moddable/xs/platforms/esp
 -I/home/gvv/code/moddable/xs/includes
 -I/home/gvv/code/moddable/xs/sources/
 -I/home/gvv/code/moddable/modules/base/instrumentation
+-I/home/gvv/code/moddable/modules/io/common
 -I/home/gvv/.espressif/tools/xtensa-esp32s2-elf/esp-2021r1-8.4.0/xtensa-esp32s2-elf/xtensa-esp32s2-elf/include
 -I/home/gvv/code/moddable/build/tmp/esp32/nodemcu/debug/hydrolec-host
 
