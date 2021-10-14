@@ -186,7 +186,7 @@ bus.on("modem/connected", () => {
 
 bus.on("sntp/started", () => {
   //bus.emit("mqtt/start");
-  //bus.emit("start", "mqtt");
+  bus.emit("start", "mqtt");
 });
 
 bus.on("mqtt/started", () => {
@@ -212,4 +212,26 @@ function startAsync() {
   });
 }
 
-startAsync();
+bus.on("wifista/started", () => {
+  bus.emit("network/online");
+});
+
+bus.on("network/online", () => {
+  bus.emit("start", "sntp");
+  bus.emit("start", "telnet");
+});
+
+function simpleStart() {
+  startHw();
+  bus.emit("start", "pref");
+  bus.emit("start", "tz");
+  //bus.emit("start", "modem");
+  //bus.emit("start", "gui");
+  //bus.emit("start", "ble");
+  bus.emit("start", "serial");
+  if (!hasModem) bus.emit("start", "virtmodem"); //{name: "virtmodem", mod:"serial"});
+  bus.emit("start", "wifista");
+}
+
+//startAsync();
+simpleStart();
