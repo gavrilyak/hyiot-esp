@@ -144,7 +144,7 @@
         "WeakSet",
         "RegExp"
       ],
-      "defines": {
+      "#defines": {
         "serial": {
           "interface": { "UART": 2 },
           "baud": 115200,
