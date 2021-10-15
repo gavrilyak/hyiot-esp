@@ -47,7 +47,8 @@ export default function ({
     let arr = new Uint8Array(chunksRead[chunkLength - 1]);
     let last = arr[arr.length - 1];
     // ends with \r \n or startsWith +++
-    if (last == 0x0a || last == extraEOL) emitChunks();
+    if (last == 0x0a || last == extraEOL || (last & 0x7f) == extraEOL)
+      emitChunks();
   }
 
   function onReadable(cnt = 0) {
@@ -111,7 +112,7 @@ export default function ({
 
     if (parity == "e") setParity(port, PARITY_EVEN);
     if (dataBits == 7) setDataBits(port, DATA_7_BITS);
-    setRxFullThreshold(port, 80);
+    setRxFullThreshold(port, 40);
     setTxEmptyThreshold(port, 4);
 
     bus.emit("started"); // ??? , {rx, tx, port, mode: `${baud}-${dataBits}-${parity}-${stopBits}`});

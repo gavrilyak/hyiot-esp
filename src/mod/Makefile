@@ -13,4 +13,3 @@ xsbug:
 clean:
 	mcconfig -d -m -p $(PLATFORM) -t clean
 
-

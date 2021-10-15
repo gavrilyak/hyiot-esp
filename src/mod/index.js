@@ -36,6 +36,7 @@ function startHw() {
     trace("DEFAULT DEVICE ID:", getDefaultDeviceId(), "\n");
     Modules.importNow("hardware");
     Modules.importNow("virtmodem");
+    Modules.importNow("relay");
   }
 }
 

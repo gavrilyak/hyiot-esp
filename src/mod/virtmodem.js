@@ -15,6 +15,8 @@ import {
 } from "native/uart";
 const port = 2;
 
+const useBinary = true;
+
 function RequestsCache(cache) {
   cache = cache.map((k) => [new Uint8Array(ArrayBuffer.fromString(k)), null]);
   let cacheWaitsIndex = null;
@@ -90,6 +92,7 @@ function handleVirtualModem(buf) {
   if (arr[0] == 43 && arr[1] == 43 && arr[2] == 43) {
     // "+++"
     emits.push("write", OK_RESPONSE);
+    //emits.push("disconnected", null);
   } else if (arr[0] == 65 && (arr[1] == 84 || arr[1] == 212)) {
     // AT or AT&0x80 parity bit
     for (let i = 0, l = arr.length; i < l; i++) arr[i] &= 0x7f; // clear parity bits
@@ -145,10 +148,17 @@ bus.on("remote/write", (payload) => {
     let cached = cache.read(payload);
     if (cached) {
       bus.emit("virtmodem/write", cached);
+    } else if (!useBinary) {
+      bus.emit("mqtt/pub", [`$direct/${remote}/mb>>`, payload]);
     } else {
-      let packet = parse(payload, true);
-      //trace(packet.toString(), "\n");
-      bus.emit("mqtt/pub", [`$direct/${remote}/mb>>`, packet.toBinary()]);
+      try {
+        let packet = parse(payload, true);
+        //trace(packet.toString(), "\n");
+        bus.emit("mqtt/pub", [`$direct/${remote}/mb>>`, packet.toBinary()]);
+      } catch (e) {
+        trace("UNABLE TO parse:", e.message, "\n");
+        trace("PACKET:", new Uint8Array(payload), "\n");
+      }
     }
   }
   //}, 70);
@@ -156,10 +166,14 @@ bus.on("remote/write", (payload) => {
 
 bus.on("mqtt/message", ([topic, payload]) => {
   if (!topic.endsWith("/mb<<")) return;
-  let packet = parse(payload, false);
-  //trace(packet.toString(), "\n");
-  let packetAscii = packet.toAscii();
-  cache.write(packetAscii);
-  //trace(new Uint8Array(packet.toAscii()), "==", new Uint8Array(payload), "\n");
-  bus.emit("virtmodem/write", packetAscii); //packet.toAscii());
+  if (!useBinary) {
+    bus.emit("virtmodem/write", payload); //packet.toAscii());
+  } else {
+    let packet = parse(payload, false);
+    //trace(packet.toString(), "\n");
+    let packetAscii = packet.toAscii();
+    cache.write(packetAscii);
+    //trace(new Uint8Array(packet.toAscii()), "==", new Uint8Array(payload), "\n");
+    bus.emit("virtmodem/write", packetAscii); //packet.toAscii());
+  }
 });
