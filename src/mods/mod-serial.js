@@ -44,7 +44,6 @@ export default function ({
   }
 
   function checkPacket() {
-    trace("^");
     let chunkLength = chunksRead.length;
     if (chunkLength == 0) return;
 
@@ -84,12 +83,12 @@ export default function ({
 
   function doWrite() {
     if (writebleCount === 0) {
-      //trace("serial", port, " cannot write, full\n");
+      //trace(port, "WF!\n");
       return;
     }
     let chunk = buffer.read(writebleCount);
     if (chunk) {
-      //trace( "serial", port, " writing:", chunk.byteLength, "avail:", writebleCount, "\n");
+      //trace(port, "W:", chunk.byteLength, "A:", writebleCount, "\n");
       writebleCount -= chunk.byteLength;
       serial.write(chunk);
     }

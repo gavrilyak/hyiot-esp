@@ -92,6 +92,7 @@ function handleVirtualModem(buf) {
   if (arr[0] == 43 && arr[1] == 43 && arr[2] == 43) {
     // "+++"
     emits.push("write", OK_RESPONSE);
+    emits.push("config", { extraEOL: 0x0d });
     //emits.push("disconnected", null);
   } else if (arr[0] == 65 && (arr[1] == 84 || arr[1] == 212)) {
     // AT or AT&0x80 parity bit
@@ -150,6 +151,7 @@ bus.on("remote/write", (payload) => {
   if (remote) {
     let cached = cache.read(payload);
     if (cached) {
+      trace("C");
       bus.emit("virtmodem/write", cached);
     } else if (!useBinary) {
       bus.emit("mqtt/pub", [`$direct/${remote}/mb>>`, payload]);
