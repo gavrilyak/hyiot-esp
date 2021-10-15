@@ -1,6 +1,6 @@
 import bus from "bus";
 
-import { parse } from "mblike";
+import { parse, SlaveReadPacket, SlaveWritePacket } from "mblike";
 
 import getDefaultDeviceId from "getDefaultDeviceId";
 
@@ -73,8 +73,8 @@ let cache = RequestsCache(CACHE_PARAMS);
 
 let remote = null; //getDefaultDeviceId();
 
-const OK_RESPONSE = "OK\r";
-const CONNECT_RESPONSE = "CONNECT\r";
+const OK_RESPONSE = "OK\r\n";
+const CONNECT_RESPONSE = "CONNECT\r\n";
 
 const traffic = (() => {
   let _arr = new Uint8Array(new ArrayBuffer(512));
@@ -112,6 +112,21 @@ function handleVirtualModem(buf) {
     }
   }
   return emits.length ? emits : null;
+}
+
+function processOther(packet) {
+  if (packet.cmd == 0x10) {
+    let resp = new SlaveWritePacket(packet.register);
+    resp.address = packet.address;
+    return resp;
+  } else if ((packet.cmd = 0x03)) {
+    let resp = new SlaveReadPacket(
+      packet.register,
+      new Uint8Array(packet.dataLength)
+    );
+    resp.address = packet.address;
+    return resp;
+  }
 }
 
 bus.on("virtmodem/read", (buf) => {
@@ -158,6 +173,10 @@ bus.on("remote/write", (payload) => {
     } else {
       try {
         let packet = parse(payload, true);
+        if (packet.address != 1) {
+          trace("O", packet.toString(), "\n");
+          bus.emit("virtmodem/write", processOther(packet).toAscii());
+        }
         //trace(packet.toString(), "\n");
         bus.emit("mqtt/pub", [`$direct/${remote}/mb>>`, packet.toBinary()]);
       } catch (e) {
