@@ -131,14 +131,17 @@ bus.on("virtmodem/connected", ({ num }) => {
   remote = num;
   bus.emit("mqtt/sub", `$direct/${remote}/mb<<`);
   cache = RequestsCache(CACHE_PARAMS);
-  setParity(port, PARITY_EVEN);
-  setDataBits(port, DATA_7_BITS);
+  //setParity(port, PARITY_EVEN);
+  //setDataBits(port, DATA_7_BITS);
+  bus.emit("virtmodem/config", { parity: "e", dataBits: 7, extraEOL: 0x0a });
+  //bus.emit("virtmodem/setExtraEOL", 0x0d);
 });
 
 bus.on("virtmodem/disconnected", () => {
   bus.emit("mqtt/unsub", `$direct/${remote}/mb<<`);
-  setParity(port, PARITY_DISABLE);
-  setDataBits(port, DATA_8_BITS);
+  bus.emit("virtmodem/config", { parity: "n", dataBits: 8, extraEOL: 0x0d });
+  //setDataBits(port, DATA_8_BITS);
+  //setParity(port, PARITY_DISABLE);
   remote = getDefaultDeviceId();
 });
 

@@ -6,8 +6,10 @@ import {
   setParity,
   PARITY_EVEN,
   DATA_7_BITS,
+  DATA_8_BITS,
   setRxFullThreshold,
   setTxEmptyThreshold,
+  PARITY_DISABLE,
 } from "native/uart";
 
 export default function ({
@@ -21,6 +23,7 @@ export default function ({
   stopBits = 1,
   readLines = true,
   extraEOL = 0x0a,
+  rxThreshold = 70,
 }) {
   //let trace = () => {};
 
@@ -41,6 +44,7 @@ export default function ({
   }
 
   function checkPacket() {
+    trace("^");
     let chunkLength = chunksRead.length;
     if (chunkLength == 0) return;
 
@@ -52,14 +56,9 @@ export default function ({
   }
 
   function onReadable(cnt = 0) {
-    trace(cnt > 0 ? "!" : ">");
-    let buf = serial.read();
-    if (!buf) {
-      checkPacket();
-      return;
-    }
-    //trace("serial", port, " read:", buf.byteLength, "\n");
-    trace(buf.byteLength);
+    let more = cnt < rxThreshold ? 0 : 1;
+    let buf = serial.read(cnt - more);
+    trace(buf.byteLength, ",");
     if (!readLines) {
       bus.emit("read", buf);
       return;
@@ -73,7 +72,8 @@ export default function ({
     }
 
     chunksRead.push(buf);
-    Timer.set(onReadable, 0);
+    //Timer.set(onReadable, 0);
+    checkPacket();
   }
 
   function onWritable(count) {
@@ -108,13 +108,14 @@ export default function ({
       onWritable,
     });
     //empty out rx buff
-    serial.read();
 
-    if (parity == "e") setParity(port, PARITY_EVEN);
-    if (dataBits == 7) setDataBits(port, DATA_7_BITS);
-    setRxFullThreshold(port, 40);
+    config({ parity, dataBits });
+    setRxFullThreshold(port, rxThreshold);
     setTxEmptyThreshold(port, 4);
+    //if (parity == "e") setParity(port, PARITY_EVEN);
+    //if (dataBits == 7) setDataBits(port, DATA_7_BITS);
 
+    serial.read();
     bus.emit("started"); // ??? , {rx, tx, port, mode: `${baud}-${dataBits}-${parity}-${stopBits}`});
     return;
   }
@@ -135,9 +136,27 @@ export default function ({
     }
   }
 
+  function config(cfg = {}) {
+    if ("parity" in cfg) {
+      trace("PARITY", cfg.parity, "\n");
+      if (cfg.parity == "e") setParity(port, PARITY_EVEN);
+      else if (cfg.parity == "n") setParity(port, PARITY_DISABLE);
+    }
+    if ("dataBits" in cfg) {
+      trace("DATabits", cfg.dataBits, "\n");
+      if (cfg.dataBits == 7) setDataBits(port, DATA_7_BITS);
+      else if (cfg.dataBits == 8) setDataBits(port, DATA_8_BITS);
+    }
+    if ("extraEOL" in cfg) {
+      trace("extraEOL", cfg.extraEOL, "\n");
+      extraEOL = cfg.extraEOL;
+    }
+  }
+
   return {
     start,
     stop,
     write,
+    config,
   };
 }

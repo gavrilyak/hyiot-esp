@@ -1,40 +1,40 @@
 import CircularBuffer from "./CircularBuffer";
 class BinaryBuffer {
-  #queue;
-  #current;
-  #pos;
+  _queue;
+  _buffered;
+  _pos;
 
   constructor(capacity = 10) {
-    this.#queue = new CircularBuffer(capacity);
+    this._queue = new CircularBuffer(capacity);
   }
 
   write(item) {
-    if (this.#queue.length >= this.#queue.capacity()) {
+    if (this._queue.length >= this._queue.capacity()) {
       throw Error("Buffer Overflow");
     }
-    this.#queue.push(item);
+    this._queue.push(item);
   }
 
   read(count) {
-    if (!this.#current) {
-      if (this.#queue.length == 0) return null;
-      this.#current = this.#queue.shift();
-      this.#pos = 0;
+    if (!this._buffered) {
+      if (this._queue.length == 0) return null;
+      this._buffered = this._queue.shift();
+      this._pos = 0;
     }
-    if (this.#current.byteLength <= count && this.#pos === 0) {
+    if (this._buffered.byteLength <= count && this._pos === 0) {
       //we can return whole buffer;
-      let res = this.#current;
-      this.#current = null;
+      let res = this._buffered;
+      this._buffered = null;
       return res;
     }
-    let start = this.#pos;
+    let start = this._pos;
     let end = start + count;
-    let res = this.#current.slice(start, end);
-    if (end >= this.#current.byteLength) {
-      this.#pos = 0;
-      this.#current = null;
+    let res = this._buffered.slice(start, end);
+    if (end >= this._buffered.byteLength) {
+      this._pos = 0;
+      this._buffered = null;
     } else {
-      this.#pos = end;
+      this._pos = end;
     }
     return res;
   }
