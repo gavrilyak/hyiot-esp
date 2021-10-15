@@ -88,7 +88,7 @@ export default function (config = {}) {
         host,
         id,
         port,
-        timeout: 0x7fff,
+        ...("timeout" in config ? { timeout: Number(config.timeout) } : {}),
         ...(protocol === "mqtts"
           ? {
               Socket: SecureSocket,
