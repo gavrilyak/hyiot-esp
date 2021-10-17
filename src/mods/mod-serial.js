@@ -82,15 +82,14 @@ export default function ({
   }
 
   function doWrite() {
-    if (writebleCount === 0) {
-      //trace(port, "WF!\n");
-      return;
-    }
-    let chunk = buffer.read(writebleCount);
-    if (chunk) {
+    if (writebleCount === 0) return;
+    let next = buffer.read(writebleCount);
+    if (next) {
+      let [chunk, packet] = next;
       //trace(port, "W:", chunk.byteLength, "A:", writebleCount, "\n");
       writebleCount -= chunk.byteLength;
       serial.write(chunk);
+      if (packet != null) bus.emit("written", packet);
     }
   }
 
@@ -107,15 +106,20 @@ export default function ({
       onWritable,
     });
     //empty out rx buff
-
-    config({ parity, dataBits });
     setRxFullThreshold(port, rxThreshold);
     setTxEmptyThreshold(port, 4);
+
+    config({ parity, dataBits, extraEOL });
     //if (parity == "e") setParity(port, PARITY_EVEN);
     //if (dataBits == 7) setDataBits(port, DATA_7_BITS);
 
     serial.read();
-    bus.emit("started"); // ??? , {rx, tx, port, mode: `${baud}-${dataBits}-${parity}-${stopBits}`});
+    bus.emit("started", {
+      rx,
+      tx,
+      port,
+      mode: `${baud}-${dataBits}-${parity}-${stopBits}`,
+    });
     return;
   }
 

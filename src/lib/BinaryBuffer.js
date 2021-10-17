@@ -21,12 +21,14 @@ class BinaryBuffer {
       this._buffered = this._queue.shift();
       this._pos = 0;
     }
-    if (this._buffered.byteLength <= count && this._pos === 0) {
-      trace(count, "=", this._buffered.byteLength, "!\n");
+
+    let buffered = this._buffered;
+
+    if (buffered.byteLength <= count && this._pos === 0) {
+      trace(count, "=", buffered.byteLength, "!\n");
       //we can return whole buffer;
-      let res = this._buffered;
       this._buffered = null;
-      return res;
+      return [buffered, buffered];
     }
     let start = this._pos;
     let end = start + count;
@@ -35,11 +37,12 @@ class BinaryBuffer {
       trace(count, "=", this._buffered.byteLength, ".\n");
       this._pos = 0;
       this._buffered = null;
+      return [res, buffered];
     } else {
       this._pos = end;
       trace(count, ",");
+      return [res, null];
     }
-    return res;
   }
 }
 export default BinaryBuffer;

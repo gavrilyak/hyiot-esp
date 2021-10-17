@@ -1,21 +1,8 @@
 import bus from "bus";
 
-import { parse, SlaveReadPacket, SlaveWritePacket } from "mblike";
+import { parse, SlaveReadPacket, SlaveWritePacket, toAscii } from "mblike";
 
 import getDefaultDeviceId from "getDefaultDeviceId";
-
-import {
-  setDataBits,
-  //setStopBits,
-  setParity,
-  PARITY_EVEN,
-  PARITY_DISABLE,
-  DATA_7_BITS,
-  DATA_8_BITS,
-} from "native/uart";
-const port = 2;
-
-const useBinary = true;
 
 function RequestsCache(cache) {
   cache = cache.map((k) => [new Uint8Array(ArrayBuffer.fromString(k)), null]);
@@ -24,7 +11,6 @@ function RequestsCache(cache) {
   function read(buf) {
     cacheWaitsIndex = null;
     let bytes = new Uint8Array(buf);
-    let matchedIndex = null;
     let cacheIndex, k, v;
     //for (let i = 0, l = bytes.length; i < l; i++) bytes[i] &= 0x7f;
     for (cacheIndex = 0; cacheIndex < cache.length; cacheIndex++) {
@@ -72,19 +58,10 @@ const CACHE_PARAMS = [
 let cache = RequestsCache(CACHE_PARAMS);
 
 let remote = null; //getDefaultDeviceId();
+let useBinary = false;
 
 const OK_RESPONSE = "OK\r\n";
 const CONNECT_RESPONSE = "CONNECT\r\n";
-
-const traffic = (() => {
-  let _arr = new Uint8Array(new ArrayBuffer(512));
-  return (what, buf) => {
-    let src = new Uint8Array(buf);
-    for (let i = 0, l = src.length; i < l; i++) _arr[i] = src[i] & 0x7f;
-    _arr[src.length] = 0;
-    trace(what, " ", String.fromArrayBuffer(_arr.buffer));
-  };
-})();
 
 function handleVirtualModem(buf) {
   let arr = new Uint8Array(buf);
@@ -115,89 +92,91 @@ function handleVirtualModem(buf) {
 }
 
 function processOther(packet) {
-  if (packet.cmd == 0x10) {
-    let resp = new SlaveWritePacket(packet.register);
-    resp.address = packet.address;
-    return resp;
-  } else if ((packet.cmd = 0x03)) {
-    let resp = new SlaveReadPacket(
-      packet.register,
-      new Uint8Array(packet.dataLength)
-    );
-    resp.address = packet.address;
-    return resp;
-  }
+  return packet.cmd == 0x03
+    ? new SlaveReadPacket(
+        packet.register,
+        new Uint8Array(packet.dataLength),
+        packet.address
+      )
+    : new SlaveWritePacket(packet.register, packet.address);
 }
 
-bus.on("virtmodem/read", (buf) => {
-  let emits = handleVirtualModem(buf);
+bus.on("virtmodem/connected", ({ num }) => {
+  remote = num;
+  bus.emit("mqtt/sub", `$direct/${remote}/mb<<`);
+  cache = RequestsCache(CACHE_PARAMS);
+  bus.emit("virtmodem/config", { parity: "e", dataBits: 7, extraEOL: 0x0a });
+});
+
+bus.on("virtmodem/disconnected", () => {
+  bus.emit("mqtt/unsub", `$direct/${remote}/mb<<`);
+  bus.emit("virtmodem/config", { parity: "n", dataBits: 8, extraEOL: 0x0d });
+  remote = getDefaultDeviceId();
+});
+
+bus.on("virtmodem/read", (payload) => {
+  let emits = handleVirtualModem(payload);
   if (emits) {
-    trace("virtmodem:", new Uint8Array(buf), "=>", JSON.stringify(emits), "\n");
+    trace(
+      "virtmodem:",
+      new Uint8Array(payload),
+      "=>",
+      JSON.stringify(emits),
+      "\n"
+    );
     for (let i = 0; i < emits.length; i += 2) {
       let topic = emits[i];
       let payload = emits[i + 1];
       bus.emit(`virtmodem/${topic}`, payload);
     }
   } else {
-    bus.emit("remote/write", buf);
+    bus.emit("remote/write", payload);
   }
-});
-
-bus.on("virtmodem/connected", ({ num }) => {
-  remote = num;
-  bus.emit("mqtt/sub", `$direct/${remote}/mb<<`);
-  cache = RequestsCache(CACHE_PARAMS);
-  //setParity(port, PARITY_EVEN);
-  //setDataBits(port, DATA_7_BITS);
-  bus.emit("virtmodem/config", { parity: "e", dataBits: 7, extraEOL: 0x0a });
-  //bus.emit("virtmodem/setExtraEOL", 0x0d);
-});
-
-bus.on("virtmodem/disconnected", () => {
-  bus.emit("mqtt/unsub", `$direct/${remote}/mb<<`);
-  bus.emit("virtmodem/config", { parity: "n", dataBits: 8, extraEOL: 0x0d });
-  //setDataBits(port, DATA_8_BITS);
-  //setParity(port, PARITY_DISABLE);
-  remote = getDefaultDeviceId();
 });
 
 bus.on("remote/write", (payload) => {
-  //Timer.set(() => {
-  if (remote) {
-    let cached = cache.read(payload);
-    if (cached) {
-      trace("C");
-      bus.emit("virtmodem/write", cached);
-    } else if (!useBinary) {
-      bus.emit("mqtt/pub", [`$direct/${remote}/mb>>`, payload]);
-    } else {
-      try {
-        let packet = parse(payload, true);
-        if (packet.address != 1) {
-          trace("O", packet.toString(), "\n");
-          bus.emit("virtmodem/write", processOther(packet).toAscii());
-        }
-        //trace(packet.toString(), "\n");
-        bus.emit("mqtt/pub", [`$direct/${remote}/mb>>`, packet.toBinary()]);
-      } catch (e) {
-        trace("UNABLE TO parse:", e.message, "\n");
-        trace("PACKET:", new Uint8Array(payload), "\n");
-      }
-    }
+  if (!remote) {
+    trace("NO REMOTE WHEN WRITING PACKET!\n");
+    return;
   }
-  //}, 70);
+
+  let cached = cache.read(payload);
+  if (cached) {
+    trace("C");
+    bus.emit("virtmodem/write", cached);
+    return;
+  }
+
+  let packet = null;
+  try {
+    packet = parse(payload, true);
+  } catch (e) {
+    trace("UNABLE TO PARSE:", e.message, "\n");
+    trace("PACKET:", new Uint8Array(payload), "\n");
+    return;
+  }
+
+  if (packet.address != 1) {
+    trace("O", packet.toString(), "\n");
+    bus.emit("virtmodem/write", processOther(packet).toAscii());
+    return;
+  }
+
+  bus.emit("mqtt/pub", [
+    `$direct/${remote}/mb>>`,
+    useBinary ? packet.toBinary() : payload,
+  ]);
 });
 
 bus.on("mqtt/message", ([topic, payload]) => {
   if (!topic.endsWith("/mb<<")) return;
-  if (!useBinary) {
-    bus.emit("virtmodem/write", payload); //packet.toAscii());
-  } else {
-    let packet = parse(payload, false);
-    //trace(packet.toString(), "\n");
-    let packetAscii = packet.toAscii();
-    cache.write(packetAscii);
-    //trace(new Uint8Array(packet.toAscii()), "==", new Uint8Array(payload), "\n");
-    bus.emit("virtmodem/write", packetAscii); //packet.toAscii());
+  let packetAscii = toAscii(payload);
+
+  if (!useBinary && packetAscii !== payload) {
+    trace("Switching to binary\n");
+    useBinary = true;
   }
+
+  cache.write(packetAscii);
+  bus.emit("virtmodem/write", packetAscii);
 });

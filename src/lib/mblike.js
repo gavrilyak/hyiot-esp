@@ -341,8 +341,8 @@ export function parseSlavePacket(packet) {
   return new Ctor(v);
 }
 
-export function parse(rx, isMaster) {
-  let arr = new Uint8Array(rx);
+export function parse(buf, isMaster) {
+  let arr = new Uint8Array(buf);
   switch (arr[0]) {
     case SEMI: {
       let binPacket = asciiPacketToBin(arr, isMaster);
@@ -353,9 +353,23 @@ export function parse(rx, isMaster) {
       return packet;
     }
     case MASTER_BYTE:
-      return parseMasterPacket(rx);
+      return parseMasterPacket(buf);
     case SLAVE_BYTE:
-      return parseSlavePacket(rx);
+      return parseSlavePacket(buf);
+    default:
+      throw Error("Unsupported packet signature: 0x" + arr[0].toString(16));
+  }
+}
+
+export function toAscii(buf) {
+  let arr = new Uint8Array(buf);
+  switch (arr[0]) {
+    case SEMI:
+      return buf;
+    case MASTER_BYTE:
+      return parseMasterPacket(buf).toAscii();
+    case SLAVE_BYTE:
+      return parseSlavePacket(buf).toAscii();
     default:
       throw Error("Unsupported packet signature: 0x" + arr[0].toString(16));
   }

@@ -1,7 +1,5 @@
 import bus from "bus";
-import { parse } from "mblike";
-
-const useBinary = true;
+import { parse, toAscii } from "mblike";
 
 bus.on("mqtt/started", () => {
   bus.emit("mqtt/sub", "mb>>");
@@ -9,32 +7,53 @@ bus.on("mqtt/started", () => {
 
 bus.on("mqtt/message", ([topic, payload]) => {
   if (topic.endsWith("/mb>>")) {
-    if (!useBinary) {
-      bus.emit("serial/write", payload);
-    } else {
+    let packetAscii = toAscii(payload);
+    let isAscii = packetAscii == payload;
+    let onResponse = (response) => {
       try {
-        let packet = parse(payload, true);
-        //trace(packet.toString(), "\n");
-        bus.emit("serial/write", packet.toAscii());
+        if (!isAscii) response = parse(response).toBinary();
       } catch (e) {
-        trace("UNABLE TO parse mqtt incoming packet:", e.message, "\n");
-        trace("PACKET:", new Uint8Array(payload), "\n");
+        trace("UNABLE TO parse packet from relay:", e.message, "\n");
+        trace("PACKET:", new Uint8Array(response), "\n");
       }
-    }
+      bus.emit(["mqtt/pub", ["mb<<", response]]);
+    };
+    bus.emit("relay/write", [packetAscii, onResponse]);
+  }
+});
+
+let inFlight = new Map();
+let currentDestination = null;
+
+bus.on("relay/write", ([payload, destination]) => {
+  try {
+    inFlight.set(payload, destination);
+    bus.emit("serial/write", payload);
+  } catch (e) {
+    trace("UNABLE TO parse mqtt incoming packet:", e.message, "\n");
+    trace("PACKET:", new Uint8Array(payload), "\n");
+  }
+});
+
+bus.on("serial/written", (buf) => {
+  if (inFlight.has(buf)) {
+    let destination = inFlight.get(buf);
+    currentDestination = destination;
+    inFlight.delete(buf);
+  } else {
+    trace("UNEXPECTED, inFlight doesn't have this buf\n");
   }
 });
 
 bus.on("serial/read", (payload) => {
-  if (!useBinary) {
-    bus.emit("mqtt/pub", ["mb<<", payload]);
+  if (currentDestination == null) {
+    trace("NO DESTINATION!\n");
+    return;
+  }
+
+  if (typeof currentDestination == "function") {
+    currentDestination(payload);
   } else {
-    try {
-      let packet = parse(payload, false);
-      //trace(packet.toString(), "\n");
-      bus.emit("mqtt/pub", ["mb<<", packet.toBinary()]);
-    } catch (e) {
-      trace("UNABLE TO parse packet from relay:", e.message, "\n");
-      trace("PACKET:", new Uint8Array(payload), "\n");
-    }
+    bus.emit(currentDestination, payload);
   }
 });
