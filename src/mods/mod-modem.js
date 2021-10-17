@@ -8,7 +8,7 @@ export default function ({ bus }) {
   let serial = null;
   let cli;
   const pwrKey = new device.io.Digital({
-    pin: 14,
+    pin: 27,
     mode: device.io.Digital.Output,
   });
 
@@ -127,13 +127,13 @@ export default function ({ bus }) {
       );
 
       //for (;;) {
-        trace("CPIN", JSON.stringify(yield* send("AT+CPIN?")), "\n");
-        trace("CSQ", JSON.stringify(yield* send("AT+CSQ")), "\n");
-        trace("COPS", JSON.stringify(yield* send("AT+COPS?")), "\n");
-        trace("CPSI", JSON.stringify(yield* send("AT+CPSI?")), "\n");
-        trace("CREG", JSON.stringify(yield* send("AT+CREG?")), "\n");
-        trace("CBANDCFG", JSON.stringify(yield* send("AT+CBANDCFG?")), "\n");
-        yield* sleep(2000);
+      trace("CPIN", JSON.stringify(yield* send("AT+CPIN?")), "\n");
+      trace("CSQ", JSON.stringify(yield* send("AT+CSQ")), "\n");
+      trace("COPS", JSON.stringify(yield* send("AT+COPS?")), "\n");
+      trace("CPSI", JSON.stringify(yield* send("AT+CPSI?")), "\n");
+      trace("CREG", JSON.stringify(yield* send("AT+CREG?")), "\n");
+      trace("CBANDCFG", JSON.stringify(yield* send("AT+CBANDCFG?")), "\n");
+      yield* sleep(2000);
       //}
       //return;
       trace(
