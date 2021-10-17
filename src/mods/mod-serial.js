@@ -141,17 +141,14 @@ export default function ({
 
   function config(cfg = {}) {
     if ("parity" in cfg) {
-      trace("PARITY", cfg.parity, "\n");
       if (cfg.parity == "e") setParity(port, PARITY_EVEN);
       else if (cfg.parity == "n") setParity(port, PARITY_DISABLE);
     }
     if ("dataBits" in cfg) {
-      trace("DATabits", cfg.dataBits, "\n");
       if (cfg.dataBits == 7) setDataBits(port, DATA_7_BITS);
       else if (cfg.dataBits == 8) setDataBits(port, DATA_8_BITS);
     }
     if ("extraEOL" in cfg) {
-      trace("extraEOL", cfg.extraEOL, "\n");
       extraEOL = cfg.extraEOL;
     }
   }
