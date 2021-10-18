@@ -142,7 +142,7 @@ bus.on("remote/write", (payload) => {
 
   let cached = cache.read(payload);
   if (cached) {
-    trace("C");
+    //trace("C");
     bus.emit("virtmodem/write", cached);
     return;
   }
@@ -180,3 +180,5 @@ bus.on("mqtt/message", ([topic, payload]) => {
   cache.write(packetAscii);
   bus.emit("virtmodem/write", packetAscii);
 });
+
+bus.emit("start", "virtmodem");

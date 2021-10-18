@@ -1,4 +1,5 @@
 import CircularBuffer from "./CircularBuffer";
+const DEBUG = false;
 class BinaryBuffer {
   _queue;
   _buffered;
@@ -25,7 +26,7 @@ class BinaryBuffer {
     let buffered = this._buffered;
 
     if (buffered.byteLength <= count && this._pos === 0) {
-      trace(count, "=", buffered.byteLength, "!\n");
+      DEBUG && trace(count, "=", buffered.byteLength, "!\n");
       //we can return whole buffer;
       this._buffered = null;
       return [buffered, buffered];
@@ -34,13 +35,13 @@ class BinaryBuffer {
     let end = start + count;
     let res = this._buffered.slice(start, end);
     if (end >= this._buffered.byteLength) {
-      trace(count, "=", this._buffered.byteLength, ".\n");
+      DEBUG && trace(count, "=", this._buffered.byteLength, ".\n");
       this._pos = 0;
       this._buffered = null;
       return [res, buffered];
     } else {
       this._pos = end;
-      trace(count, ",");
+      DEBUG && trace(count, ",");
       return [res, null];
     }
   }

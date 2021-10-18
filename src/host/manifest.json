@@ -15,6 +15,7 @@
     "$(MODDABLE)/modules/base/instrumentation/manifest.json",
     "$(MODDABLE)/modules/base/worker/manifest.json",
     "$(MODDABLE)/modules/network/ble/manifest_client.json",
+    "$(MODDABLE)/modules/network/ble/manifest_server.json",
     "./native/manifest.json"
   ],
   "defines": {
@@ -51,6 +52,9 @@
   "data": {
     "*": ["../../assets/zones"]
   },
+  "ble": {
+    "*": ["./bleservices/*"]
+  },
   "preload": [
     "http",
     "sntp",
@@ -75,7 +79,7 @@
         "stack": 1900,
         "static": 531072,
         "keys": {
-          "available": 1700
+          "available": 1900
         }
       },
       "config": {
@@ -101,7 +105,7 @@
         "stack": 400,
         "#stack": 512,
         "keys": {
-          "available": 600,
+          "available": 700,
           "#available": 256,
           "#name": 127,
           "#symbol": 127

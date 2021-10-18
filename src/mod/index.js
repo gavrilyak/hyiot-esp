@@ -4,7 +4,8 @@ import Net from "net";
 import Timer from "timer";
 import { measure } from "profiler";
 import getDefaultDeviceId from "getDefaultDeviceId";
-import Worker from "worker";
+import pref from "preference";
+import BleWiFiServer from "blewifiserver";
 import sleep from "sleep";
 //this is for side effect
 import { loadAndInstantiate } from "modLoader";
@@ -15,10 +16,6 @@ if (Modules.has("rc-local")) Modules.importNow("rc-local");
 measure("start");
 
 const IS_SIMULATOR = !Modules.has("flash"); //!("device" in globalThis);
-//trace("BOOTING, build: ", getBuildString(), "\n");
-//trace("FW_VERSION:", globalThis.FW_VERSION, "\n");
-//trace("HOST MODULES:", Modules.host, "\n");
-//trace("ARCHIVE MODULES:", Modules.archive, "\n");
 const hasModem = !new Digital({ pin: 32, mode: Digital.InputPullUp }).read();
 trace("Has modem:", hasModem, "\n");
 const led = new Digital({ pin: 23, mode: Digital.Output });
@@ -44,14 +41,20 @@ bus.on("mqtt/started", () => {
   ]);
 });
 
+bus.on("wifista/error", (e) => {
+  trace("Wifi STA ERROR:", e, "\n");
+  throw e;
+});
+
+bus.on("mqtt/closed", () => {
+  trace("MQTT CLOSED\n");
+  throw Error("MQTT closed");
+});
+
 bus.on("mqtt/message", ([topic, payload]) => {
   if (topic.endsWith("/ping")) {
     bus.emit("mqtt/pub", ["pong", payload]);
   }
-});
-
-bus.on("wifista/started", () => {
-  bus.emit("network/online", { source: "wifista" });
 });
 
 bus.on("modem/connected", () => {
@@ -60,7 +63,7 @@ bus.on("modem/connected", () => {
   bus.emit("network/online", { source: "modem" });
 });
 
-bus.on("network/online", () => {
+bus.on("network/online", ({ source }) => {
   bus.emit("start", "telnet");
   Net.resolve("pool.ntp.org", (name, host) => {
     if (!host) {
@@ -73,6 +76,35 @@ bus.on("network/online", () => {
   });
 });
 
+let bleWiFiServer = null;
+
+function startBleServer() {
+  trace("Starting BLE WIFi PROV\n");
+  bleWiFiServer = new BleWiFiServer(getDefaultDeviceId(), (ssid, password) => {
+    trace("Got Wifi config", ssid, password, "\n");
+    bus.emit("stop", "wifista");
+    pref.set("wifista", "ssid", ssid);
+    pref.set("wifista", "password", password);
+    bus.emit("start", "wifista");
+  });
+}
+
+function stopBleServer() {
+  if (!bleWiFiServer) return;
+  trace("Stopping BLE");
+  bleWiFiServer.disconnect();
+  bleWiFiServer.close();
+  bleWiFiServer = null;
+}
+
+bus.on("wifista/started", () => {
+  Timer.set(stopBleServer, 500);
+  bus.emit("network/online", { source: "wifista" });
+});
+
+bus.on("wifista/unfconfigured", startBleServer);
+bus.on("wifista/disconnected", startBleServer);
+
 function simpleStart() {
   startHw();
   bus.emit("start", "pref");
@@ -82,13 +114,12 @@ function simpleStart() {
   //bus.emit("start", "gui");
   //bus.emit("start", "ble");
   if (!hasModem) {
-    bus.emit("start", "wifista");
     Modules.importNow("virtmodem");
+    bus.emit("start", "wifista");
   } else {
     //bus.emit("start", "wifista");
     bus.emit("start", "modem");
   }
 }
 
-//startAsync();
 simpleStart();

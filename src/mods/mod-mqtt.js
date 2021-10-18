@@ -66,7 +66,7 @@ export default function (config = {}) {
   }
 
   function onClose() {
-    if (client) bus.emit("stopped");
+    if (client) bus.emit("closed");
     client = null;
   }
 
@@ -77,7 +77,6 @@ export default function (config = {}) {
 
   const stop = () => {
     client?.close();
-    onClose();
   };
 
   function start() {

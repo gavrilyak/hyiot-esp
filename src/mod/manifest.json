@@ -9,10 +9,6 @@
     "*": ["../../web/*"]
   },
   "config": {
-    "mods": {
-      "wifista": {
-        "#ssid": "home"
-      }
-    }
+    "mods": {}
   }
 }
