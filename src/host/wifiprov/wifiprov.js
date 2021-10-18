@@ -22,6 +22,4 @@
 	net
 */
 
-export default class {
-	static start(host, callback) @ "xs_wifi_prov";
-}
+export default function start(host, callback) @ "xs_wifi_prov";
