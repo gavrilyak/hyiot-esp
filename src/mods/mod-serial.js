@@ -43,7 +43,7 @@ export default function ({
     let res =
       chunkLength == 1 ? firstChunk : firstChunk.concat(...chunksRead.slice(1));
     chunksRead.length = 0;
-    DEBUG_RD && trace("=", res.byteLength, "\n");
+    DEBUG_RD && trace("=", res.byteLength, ":", port, "\n");
     bus.emit("read", res);
   }
 
@@ -93,7 +93,7 @@ export default function ({
       writebleCount -= chunk.byteLength;
       serial.write(chunk);
       if (packet != null) {
-        DEBUG_RD && trace("=", packet.byteLength, "\n");
+        DEBUG_RD && trace("=", packet.byteLength, ":", port, "\n");
         bus.emit("written", packet);
       }
     }

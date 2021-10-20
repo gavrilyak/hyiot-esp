@@ -91,25 +91,37 @@ function handleVirtualModem(buf) {
   return emits.length ? emits : null;
 }
 
+const OtherEEPROM = new Uint8Array([
+  83, 82, 50, 67, 79, 77, 48, 49, 32, 32, 32, 32, 56, 56, 57, 54, 48, 49, 49,
+  55, 1, 0, 2, 0, 0, 0, 0, 4, 0, 1, 0, 0, 50, 52, 54, 50, 48, 48, 54, 54, 57,
+  50, 49, 49, 49, 52, 48, 50, 48, 52, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+]);
+
 function processOther(packet) {
-  return packet.cmd == 0x03
-    ? new SlaveReadPacket(
-        packet.register,
-        new Uint8Array(packet.dataLength),
-        packet.address
-      )
-    : new SlaveWritePacket(packet.register, packet.address);
+  if (packet.cmd == 0x03) {
+    if (packet.register == 0xf000) {
+      trace("EERPROM\n");
+      return new SlaveReadPacket(packet.register, OtherEEPROM, packet.address);
+    }
+    return new SlaveReadPacket(
+      packet.register,
+      new Uint8Array(packet.dataLength),
+      packet.address
+    );
+  } else {
+    return new SlaveWritePacket(packet.register, packet.address);
+  }
 }
 
 bus.on("virtmodem/connected", ({ num }) => {
   remote = num;
-  bus.emit("mqtt/sub", `$direct/${remote}/mb<<`);
+  bus.emit("mqtt/sub", `$direct/${remote}/mb/r`);
   cache = RequestsCache(CACHE_PARAMS);
   bus.emit("virtmodem/config", { parity: "e", dataBits: 7, extraEOL: 0x0a });
 });
 
 bus.on("virtmodem/disconnected", () => {
-  bus.emit("mqtt/unsub", `$direct/${remote}/mb<<`);
+  bus.emit("mqtt/unsub", `$direct/${remote}/mb/r`);
   bus.emit("virtmodem/config", { parity: "n", dataBits: 8, extraEOL: 0x0d });
   remote = getDefaultDeviceId();
 });
@@ -151,7 +163,7 @@ bus.on("remote/write", (payload) => {
   try {
     packet = parse(payload, true);
   } catch (e) {
-    trace("UNABLE TO PARSE:", e.message, "\n");
+    trace("UNABLE TO PARSE packet from Soft:", e.message, "\n");
     trace("PACKET:", new Uint8Array(payload), "\n");
     return;
   }
@@ -163,13 +175,13 @@ bus.on("remote/write", (payload) => {
   }
 
   bus.emit("mqtt/pub", [
-    `$direct/${remote}/mb>>`,
+    `$direct/${remote}/mb/w`,
     useBinary ? packet.toBinary() : payload,
   ]);
 });
 
 bus.on("mqtt/message", ([topic, payload]) => {
-  if (!topic.endsWith("/mb<<")) return;
+  if (!topic.endsWith("/mb/r")) return;
   let packetAscii = toAscii(payload);
 
   if (!useBinary && packetAscii !== payload) {

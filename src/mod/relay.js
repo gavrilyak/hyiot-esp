@@ -1,59 +1,35 @@
 import bus from "bus";
+import Timer from "timer";
 import { parse, toAscii } from "mblike";
 
 bus.on("mqtt/started", () => {
-  bus.emit("mqtt/sub", "mb>>");
+  bus.emit("mqtt/sub", "mb/w");
 });
 
 bus.on("mqtt/message", ([topic, payload]) => {
-  if (topic.endsWith("/mb>>")) {
-    let packetAscii = toAscii(payload);
-    let isAscii = packetAscii == payload;
-    let onResponse = (response) => {
-      try {
-        if (!isAscii) response = parse(response).toBinary();
-      } catch (e) {
-        trace("UNABLE TO parse packet from relay:", e.message, "\n");
-        trace("PACKET:", new Uint8Array(response), "\n");
-      }
-      bus.emit(["mqtt/pub", ["mb<<", response]]);
-    };
-    bus.emit("relay/write", [packetAscii, onResponse]);
+  if (topic.endsWith("/mb/w")) {
+    let packet = parse(payload, true);
+    if (packet.isAscii) bus.emit("engineer/connected");
+    bus.emit("engineer/write", packet);
   }
 });
 
-let inFlight = new Map();
-let currentDestination = null;
-
-bus.on("relay/write", ([payload, destination]) => {
-  try {
-    inFlight.set(payload, destination);
-    bus.emit("serial/write", payload);
-  } catch (e) {
-    trace("UNABLE TO parse mqtt incoming packet:", e.message, "\n");
-    trace("PACKET:", new Uint8Array(payload), "\n");
-  }
-});
-
-bus.on("serial/written", (buf) => {
-  if (inFlight.has(buf)) {
-    let destination = inFlight.get(buf);
-    currentDestination = destination;
-    inFlight.delete(buf);
-  } else {
-    trace("UNEXPECTED, inFlight doesn't have this buf\n");
-  }
-});
+bus.on("engineer/write", (packet) => bus.emit("relay/write", packet));
+bus.on("relay/write", (packet) => bus.emit("serial/write", packet.toAscii()));
 
 bus.on("serial/read", (payload) => {
-  if (currentDestination == null) {
-    trace("NO DESTINATION!\n");
-    return;
+  try {
+    let packet = parse(payload, false);
+    bus.emit("relay/read", packet);
+  } catch (e) {
+    trace("UNABLE TO parse packet from relay:", e.message, "\n");
+    trace("PACKET:", new Uint8Array(payload), "\n");
+    bus.emit("relay/packetError", e);
   }
+});
 
-  if (typeof currentDestination == "function") {
-    currentDestination(payload);
-  } else {
-    bus.emit(currentDestination, payload);
-  }
+bus.on("engineer/connected", () => {
+  bus.on("relay/read", (packet) => {
+    bus.emit("mqtt/pub", ["mb/r", packet.toBinary()]);
+  });
 });

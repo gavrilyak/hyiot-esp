@@ -45,9 +45,9 @@ export default function (config = {}) {
     return true;
   };
 
-  const pub = ([topic, payload, directTopic]) => {
+  const pub = ([topic, payload, retain]) => {
     if (isConnected(client)) {
-      client.publish(directTopic || translateTopic(topic), payload);
+      client.publish(translateTopic(topic), payload, retain);
     }
   };
 

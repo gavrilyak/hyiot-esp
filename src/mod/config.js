@@ -55,7 +55,7 @@ export default Object.freeze(
       //stopBits: 1,
       dataBits: 7,
       parity: "e",
-      readLines: true,
+      //readLines: true,
       //stopBits: 1,
     },
     virtmodem: {

@@ -13,6 +13,9 @@ import Digital from "embedded:io/digital";
 
 if (Modules.has("rc-local")) Modules.importNow("rc-local");
 
+Modules.importNow("kbd");
+Modules.importNow("screen");
+
 measure("start");
 
 const IS_SIMULATOR = !Modules.has("flash"); //!("device" in globalThis);
