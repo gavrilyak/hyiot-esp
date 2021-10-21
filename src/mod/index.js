@@ -48,6 +48,10 @@ bus.on("wifista/error", (e) => {
   trace("Wifi STA ERROR:", e, "\n");
   throw e;
 });
+bus.on("sntp/error", (e) => {
+  trace("SNTP ERROR:", e, "\n");
+  throw e;
+});
 
 bus.on("mqtt/closed", () => {
   trace("MQTT CLOSED\n");
