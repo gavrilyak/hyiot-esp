@@ -36,6 +36,7 @@ export default Object.freeze(
       clientKey: "fctry://l/device.pk8",
       clientCertificates: ["fctry://l/device.der"], //, "fctry://l/signer.der"],
       applicationLayerProtocolNegotiation: ["x-amzn-mqtt-ca"],
+      timeout: 60_000,
       //traceSSL: true,
     },
     ota: {

@@ -10,6 +10,7 @@ import sleep from "sleep";
 //this is for side effect
 import { loadAndInstantiate } from "modLoader";
 import Digital from "embedded:io/digital";
+import * as mod_pref from "mod-pref";
 import * as mod_mqtt from "mod-mqtt";
 
 if (Modules.has("rc-local")) Modules.importNow("rc-local");
@@ -27,7 +28,7 @@ const hasModem = !new Digital({ pin: 27, mode: Digital.InputPullUp }).read();
 
 trace("Has modem:", hasModem, "\n");
 const led = new Digital({ pin: 23, mode: Digital.Output });
-led.write(1); // on
+led.write(0); // on
 
 function startHw() {
   if (!IS_SIMULATOR) {
@@ -72,10 +73,15 @@ bus.on("mqtt/message", ([topic, payload]) => {
 bus.on("modem/connected", () => {
   trace("IP", Net.get("IP"), "\n");
   trace("DNS", Net.get("DNS"), "\n");
-  //bus.emit("network/online", { source: "modem" });
+  bus.emit("network/online", { source: "modem" });
+});
+bus.on("modem/error", (error) => {
+  trace("MODEM FAIL\n");
+  throw error;
 });
 
 bus.on("network/online", ({ source }) => {
+  led.write(1);
   bus.emit("start", "telnet");
   Net.resolve("pool.ntp.org", (name, host) => {
     if (!host) {
