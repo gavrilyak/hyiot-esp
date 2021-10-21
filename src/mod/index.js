@@ -10,11 +10,15 @@ import sleep from "sleep";
 //this is for side effect
 import { loadAndInstantiate } from "modLoader";
 import Digital from "embedded:io/digital";
+import * as mod_mqtt from "mod-mqtt";
 
 if (Modules.has("rc-local")) Modules.importNow("rc-local");
 
-Modules.importNow("kbd");
-Modules.importNow("screen");
+import * as kbd from "kbd";
+import * as screen from "screen";
+
+//Modules.importNow("kbd");
+//Modules.importNow("screen");
 
 measure("start");
 
@@ -68,7 +72,7 @@ bus.on("mqtt/message", ([topic, payload]) => {
 bus.on("modem/connected", () => {
   trace("IP", Net.get("IP"), "\n");
   trace("DNS", Net.get("DNS"), "\n");
-  bus.emit("network/online", { source: "modem" });
+  //bus.emit("network/online", { source: "modem" });
 });
 
 bus.on("network/online", ({ source }) => {

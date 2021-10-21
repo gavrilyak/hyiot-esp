@@ -129,7 +129,19 @@ export default function ({ bus }) {
       //for (;;) {
       trace("CPIN", JSON.stringify(yield* send("AT+CPIN?")), "\n");
       trace("CCID", JSON.stringify(yield* send("AT+CCID")), "\n");
-      trace("CSQ", JSON.stringify(yield* send("AT+CSQ")), "\n");
+      for (let i = 0; ; i++) {
+        let csqResp = yield* send("AT+CSQ");
+        trace("CSQ", JSON.stringify(csqResp), "\n");
+        if (csqResp.includes("99,99")) {
+          trace("NO SIGNAL, sleeping...\n");
+          yield* sleep(5000);
+        } else {
+          trace("We've got a SIGNAL!!!\n");
+          yield* sleep(i > 5 ? 5000 : 1000);
+          break;
+        }
+      }
+
       trace("COPS", JSON.stringify(yield* send("AT+COPS?")), "\n");
       trace("CPSI", JSON.stringify(yield* send("AT+CPSI?")), "\n");
       trace("CREG", JSON.stringify(yield* send("AT+CREG?")), "\n");
