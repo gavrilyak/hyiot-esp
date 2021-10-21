@@ -8,7 +8,7 @@ export default function ({ bus }) {
   let serial = null;
   let cli;
   const pwrKey = new device.io.Digital({
-    pin: 27,
+    pin: 32,
     mode: device.io.Digital.Output,
   });
 
@@ -105,7 +105,7 @@ export default function ({ bus }) {
         continue;
       }
       trace("Modem found\n");
-      trace("SMNB", JSON.stringify(yield* send("AT+CMNB=3")), "\n");
+      trace("CMNB", JSON.stringify(yield* send("AT+CMNB=1")), "\n");
       trace(
         "CBANDCFG",
         JSON.stringify(
@@ -128,6 +128,7 @@ export default function ({ bus }) {
 
       //for (;;) {
       trace("CPIN", JSON.stringify(yield* send("AT+CPIN?")), "\n");
+      trace("CCID", JSON.stringify(yield* send("AT+CCID")), "\n");
       trace("CSQ", JSON.stringify(yield* send("AT+CSQ")), "\n");
       trace("COPS", JSON.stringify(yield* send("AT+COPS?")), "\n");
       trace("CPSI", JSON.stringify(yield* send("AT+CPSI?")), "\n");

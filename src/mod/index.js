@@ -19,7 +19,8 @@ Modules.importNow("screen");
 measure("start");
 
 const IS_SIMULATOR = !Modules.has("flash"); //!("device" in globalThis);
-const hasModem = !new Digital({ pin: 32, mode: Digital.InputPullUp }).read();
+const hasModem = !new Digital({ pin: 27, mode: Digital.InputPullUp }).read();
+
 trace("Has modem:", hasModem, "\n");
 const led = new Digital({ pin: 23, mode: Digital.Output });
 led.write(1); // on
