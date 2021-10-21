@@ -14,9 +14,9 @@ const specialPrefixes = {
 
 const GET_DELTA = "/update/delta";
 
-export default function (config = {}) {
+export default function (config) {
   //trace(Object.entries(config) + "\n");
-  const { protocol, host, port, bus } = config;
+  const { protocol, host, port, timeout = 1200_000, bus } = config;
   const clientCertificates = config.clientCertificates?.map(getBlob);
   let client = null;
   let id;
@@ -32,11 +32,13 @@ export default function (config = {}) {
       const [first, ...other] = topic.split("/");
       let special = specialPrefixes[first];
       if (special == null) throw Error(`Unsupported special topic ${first}`);
-      return special
+      let result = special
         ? special.replace("{id}", id) + "/" + other.join("/")
         : other.join("/");
+      trace("translated ", topic, " to ", result, "\n");
+      return result;
     } else {
-      return `${id}/${topic}`;
+      return `dev/${id}/${topic}`;
     }
   }
   const isConnected = (client) => {
@@ -81,13 +83,13 @@ export default function (config = {}) {
 
   function start() {
     stop();
-    trace("MQTT:", [protocol, host, port], "\n");
+    trace("MQTT:", [protocol, host, port, timeout].join("-"), "\n");
     try {
       client = new Client({
         host,
         id,
         port,
-        ...("timeout" in config ? { timeout: Number(config.timeout) } : {}),
+        timeout: Number(timeout),
         ...(protocol === "mqtts"
           ? {
               Socket: SecureSocket,

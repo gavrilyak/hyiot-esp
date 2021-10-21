@@ -115,13 +115,13 @@ function processOther(packet) {
 
 bus.on("virtmodem/connected", ({ num }) => {
   remote = num;
-  bus.emit("mqtt/sub", `$direct/${remote}/mb/r`);
+  bus.emit("mqtt/sub", `$direct/dev/${remote}/mb/r`);
   cache = RequestsCache(CACHE_PARAMS);
   bus.emit("virtmodem/config", { parity: "e", dataBits: 7, extraEOL: 0x0a });
 });
 
 bus.on("virtmodem/disconnected", () => {
-  bus.emit("mqtt/unsub", `$direct/${remote}/mb/r`);
+  bus.emit("mqtt/unsub", `$direct/dev/${remote}/mb/r`);
   bus.emit("virtmodem/config", { parity: "n", dataBits: 8, extraEOL: 0x0d });
   remote = getDefaultDeviceId();
 });
@@ -175,7 +175,7 @@ bus.on("remote/write", (payload) => {
   }
 
   bus.emit("mqtt/pub", [
-    `$direct/${remote}/mb/w`,
+    `$direct/dev/${remote}/mb/w`,
     useBinary ? packet.toBinary() : payload,
   ]);
 });

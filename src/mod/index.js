@@ -117,7 +117,6 @@ function simpleStart() {
   //bus.emit("start", "gui");
   //bus.emit("start", "ble");
   if (!hasModem) {
-    Modules.importNow("virtmodem");
     bus.emit("start", "wifista");
   } else {
     //bus.emit("start", "wifista");
