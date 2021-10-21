@@ -2,14 +2,18 @@ import bus from "bus";
 import Timer from "timer";
 import { parse, toAscii } from "mblike";
 
+let engineerConnected = false;
+
 bus.on("mqtt/started", () => {
   bus.emit("mqtt/sub", "mb/w");
 });
-
 bus.on("mqtt/message", ([topic, payload]) => {
   if (topic.endsWith("/mb/w")) {
     let packet = parse(payload, true);
-    if (packet.isAscii) bus.emit("engineer/connected");
+    if (!engineerConnected) {
+      engineerConnected = true;
+      bus.emit("engineer/connected");
+    }
     bus.emit("engineer/write", packet);
   }
 });
