@@ -35,7 +35,7 @@ export default function (config) {
       let result = special
         ? special.replace("{id}", id) + "/" + other.join("/")
         : other.join("/");
-      trace("translated ", topic, " to ", result, "\n");
+      //trace("translated ", topic, " to ", result, "\n");
       return result;
     } else {
       return `dev/${id}/${topic}`;
@@ -84,6 +84,7 @@ export default function (config) {
   function start() {
     stop();
     trace("MQTT:", [protocol, host, port, timeout].join("-"), "\n");
+    trace("certificate:", getBlob(config.certificate).byteLength, "\n");
     try {
       client = new Client({
         host,

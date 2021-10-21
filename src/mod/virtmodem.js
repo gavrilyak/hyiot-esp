@@ -147,11 +147,6 @@ bus.on("virtmodem/read", (payload) => {
 });
 
 bus.on("remote/write", (payload) => {
-  if (!remote) {
-    trace("NO REMOTE WHEN WRITING PACKET!\n");
-    return;
-  }
-
   let cached = cache.read(payload);
   if (cached) {
     //trace("C");
@@ -171,6 +166,11 @@ bus.on("remote/write", (payload) => {
   if (packet.address != 1) {
     trace("O", packet.toString(), "\n");
     bus.emit("virtmodem/write", processOther(packet).toAscii());
+    return;
+  }
+
+  if (!remote) {
+    trace("NO REMOTE WHEN WRITING PACKET!", packet.toString(), "\n");
     return;
   }
 
