@@ -37,7 +37,7 @@ bus.on("relay/read", (packet) => {
   if (!packet || packet.cmd != 0x03 || packet.dataLength != 0x4e) return;
   if (!isScreenChanged(prevScreen, packet.data)) return;
   prevScreen = packet.data;
-  bus.emit("mqtt/pub", ["screen", packet.data.slice(0, 72).buffer, true]);
+  bus.emit("screen/changed", packet.data.slice(0, 72).buffer);
 });
 
 //screen
@@ -69,8 +69,3 @@ function enablePoll() {
 bus.on("screen/poll", poll);
 bus.on("screen/stop", disablePoll);
 bus.on("screen/start", enablePoll);
-
-bus.on("mqtt/started", () => bus.emit("screen/start"));
-
-//poll after immediately after kdb was pressed, user is interested in result
-bus.on("kbd/write", () => Timer.set(() => bus.emit("screen/poll"), 50));

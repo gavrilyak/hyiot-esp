@@ -124,6 +124,14 @@ bus.on("wifista/started", () => {
 bus.on("wifista/unfconfigured", startBleServer);
 bus.on("wifista/disconnected", startBleServer);
 
+//screen
+bus.on("mqtt/started", () => bus.emit("screen/start"));
+//poll after immediately after kdb was pressed, user is interested in result
+bus.on("kbd/write", () => Timer.set(() => bus.emit("screen/poll"), 50));
+bus.on("screen/changed", (payload) =>
+  bus.emit("mqtt/pub", ["screen", payload, true])
+);
+
 function simpleStart() {
   startHw();
   bus.emit("start", "pref");
