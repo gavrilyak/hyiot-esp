@@ -4,6 +4,7 @@ import Net from "net";
 import Timer from "timer";
 import { measure } from "profiler";
 import getDefaultDeviceId from "getDefaultDeviceId";
+import { getMAC } from "native/esp32";
 import pref from "preference";
 import BleWiFiServer from "blewifiserver";
 import sleep from "sleep";
@@ -32,7 +33,8 @@ led.write(0); // on
 
 function startHw() {
   if (!IS_SIMULATOR) {
-    trace("DEFAULT DEVICE ID:", getDefaultDeviceId(), "\n");
+    trace("MAC:", getMAC(), "\n");
+    trace("DEVICE ID:", getDefaultDeviceId(), "\n");
     Modules.importNow("hardware");
     Modules.importNow("relay");
   }
