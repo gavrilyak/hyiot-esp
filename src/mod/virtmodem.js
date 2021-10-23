@@ -2,8 +2,6 @@ import bus from "bus";
 
 import { parse, SlaveReadPacket, SlaveWritePacket, toAscii } from "mblike";
 
-import getDefaultDeviceId from "getDefaultDeviceId";
-
 function RequestsCache(cache) {
   cache = cache.map((k) => [new Uint8Array(ArrayBuffer.fromString(k)), null]);
   let cacheWaitsIndex = null;
@@ -33,7 +31,6 @@ function RequestsCache(cache) {
 
   function write(payload) {
     if (cacheWaitsIndex == null || payload == null) return;
-    trace("Cache store ", cacheWaitsIndex, "\n");
     //store response in cache
     cache[cacheWaitsIndex][1] = payload;
     cacheWaitsIndex == null;
@@ -57,7 +54,7 @@ const CACHE_PARAMS = [
 
 let cache = RequestsCache(CACHE_PARAMS);
 
-let remote = null; //getDefaultDeviceId();
+let remote = null;
 let useBinary = false;
 
 const OK_RESPONSE = "OK\r\n";
@@ -99,10 +96,8 @@ const OtherEEPROM = new Uint8Array([
 
 function processOther(packet) {
   if (packet.cmd == 0x03) {
-    if (packet.register == 0xf000) {
-      trace("EERPROM\n");
+    if (packet.register == 0xf000)
       return new SlaveReadPacket(packet.register, OtherEEPROM, packet.address);
-    }
     return new SlaveReadPacket(
       packet.register,
       new Uint8Array(packet.dataLength),
@@ -123,7 +118,7 @@ bus.on("virtmodem/connected", ({ num }) => {
 bus.on("virtmodem/disconnected", () => {
   bus.emit("mqtt/unsub", `$direct/dev/${remote}/mb/r`);
   bus.emit("virtmodem/config", { parity: "n", dataBits: 8, extraEOL: 0x0d });
-  remote = getDefaultDeviceId();
+  remote = null;
 });
 
 bus.on("virtmodem/read", (payload) => {
@@ -192,5 +187,3 @@ bus.on("mqtt/message", ([topic, payload]) => {
   cache.write(packetAscii);
   bus.emit("virtmodem/write", packetAscii);
 });
-
-bus.emit("start", "virtmodem");
