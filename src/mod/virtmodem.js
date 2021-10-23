@@ -112,18 +112,18 @@ bus.on("virtmodem/connected", ({ num }) => {
   remote = num;
   bus.emit("mqtt/sub", `$direct/dev/${remote}/mb/r`);
   cache = RequestsCache(CACHE_PARAMS);
-  bus.emit("virtserial/config", { parity: "e", dataBits: 7, extraEOL: 0x0a });
+  bus.emit("vserial2/config", { parity: "e", dataBits: 7, extraEOL: 0x0a });
 });
 
 bus.on("virtmodem/disconnected", () => {
   bus.emit("mqtt/unsub", `$direct/dev/${remote}/mb/r`);
-  bus.emit("virtserial/config", { parity: "n", dataBits: 8, extraEOL: 0x0d });
+  bus.emit("vserial2/config", { parity: "n", dataBits: 8, extraEOL: 0x0d });
   remote = null;
 });
 
-bus.on("virtmodem/write", (p) => bus.emit("virtserial/write", p));
+bus.on("virtmodem/write", (p) => bus.emit("vserial2/write", p));
 
-bus.on("virtserial/read", (payload) => {
+bus.on("vserial2/read", (payload) => {
   let emits = handleVirtualModem(payload);
   if (emits) {
     trace(
@@ -147,7 +147,7 @@ bus.on("remote/write", (payload) => {
   let cached = cache.read(payload);
   if (cached) {
     //trace("C");
-    bus.emit("virtserial/write", cached);
+    bus.emit("vserial2/write", cached);
     return;
   }
 
@@ -162,7 +162,7 @@ bus.on("remote/write", (payload) => {
 
   if (packet.address != 1) {
     trace("O", packet.toString(), "\n");
-    bus.emit("virtserial/write", processOther(packet).toAscii());
+    bus.emit("vserial2/write", processOther(packet).toAscii());
     return;
   }
 
@@ -187,5 +187,5 @@ bus.on("mqtt/message", ([topic, payload]) => {
   }
 
   cache.write(packetAscii);
-  bus.emit("virtserial/write", packetAscii);
+  bus.emit("vserial2/write", packetAscii);
 });

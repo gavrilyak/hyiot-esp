@@ -59,7 +59,7 @@ export default Object.freeze(
       //readLines: true,
       //stopBits: 1,
     },
-    virtserial: {
+    vserial2: {
       mod: "mod-serial",
       port: 2,
       rx: 16,
