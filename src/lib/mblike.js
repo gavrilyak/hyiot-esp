@@ -178,6 +178,9 @@ class MBLikePacket {
   toBinary() {
     return this.v.buffer;
   }
+  toJSON() {
+    return this.toString();
+  }
 }
 
 export class MasterReadPacket extends MBLikePacket {

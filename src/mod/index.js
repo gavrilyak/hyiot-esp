@@ -18,6 +18,7 @@ if (Modules.has("rc-local")) Modules.importNow("rc-local");
 import * as relay from "relay";
 import * as kbd from "kbd";
 import * as screen from "screen";
+import * as engineer from "engineer";
 
 //Modules.importNow("kbd");
 //Modules.importNow("screen");

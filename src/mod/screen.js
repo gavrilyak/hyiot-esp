@@ -2,7 +2,7 @@ import bus from "bus";
 import Timer from "timer";
 import { MasterReadPacket } from "mblike";
 
-const POLL_INTERVAL = 1000;
+const POLL_INTERVAL = 10000;
 
 //clock on green screen - 3rd line, symbols 11,12 14,15
 //      on blue  screen - last 5 symbols on last line
