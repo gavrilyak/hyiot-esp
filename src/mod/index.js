@@ -15,7 +15,7 @@ import * as mod_pref from "mod-pref";
 import * as mod_mqtt from "mod-mqtt";
 
 if (Modules.has("rc-local")) Modules.importNow("rc-local");
-
+import * as relay from "relay";
 import * as kbd from "kbd";
 import * as screen from "screen";
 
@@ -35,8 +35,6 @@ function startHw() {
   if (!IS_SIMULATOR) {
     trace("MAC:", getMAC(), "\n");
     trace("DEVICE ID:", getDefaultDeviceId(), "\n");
-    Modules.importNow("hardware");
-    Modules.importNow("relay");
   }
 }
 

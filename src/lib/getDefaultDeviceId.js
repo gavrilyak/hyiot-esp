@@ -1,25 +1,25 @@
 import { getMacBin } from "native/esp32";
 
-var ALPHABET = "0123456789abcdefghjkmnpqrstvwxyz"; //crock
-function int30toBase32(n, abet = ALPHABET) {
-  let result =
-    abet[(n >> 25) & 0x1f] +
-    abet[(n >> 20) & 0x1f] +
-    abet[(n >> 15) & 0x1f] +
-    abet[(n >> 10) & 0x1f] +
-    abet[(n >> 5) & 0x1f] +
-    abet[(n >> 0) & 0x1f];
+function toBase(base, alphabet, n) {
+  let result = "";
+  while (n) {
+    result = alphabet[n % base] + result;
+    n = Math.floor(n / base);
+  }
   return result;
 }
 
+const ALPHABET = "0123456789abcdefghjkmnpqrstvwxyz"; //crock
+const toBase32 = (n) => toBase(32, ALPHABET, n);
+
 function calcDefaultDeviceId(mac) {
-  const mac32 = new DataView(mac.buffer).getUint32(mac.length - 4);
-  const mac30 = mac32 >>> 2; // two last bits are alway zero in esp32, it has 4 MACS
-  const id = ALPHABET[mac[1] & 0x1f] + int30toBase32(mac30);
-  return id;
+  const v = new DataView(mac);
+  const mac5bits = v.getUint8(1) & 0b11111;
+  const mac30 = v.getUint32(2) >> 2;
+  return toBase32(mac5bits * (1 << 30) + mac30);
 }
 
-const calculatedId = calcDefaultDeviceId(new Uint8Array(getMacBin()));
+const calculatedId = calcDefaultDeviceId(getMacBin());
 export default function getDefaultDeviceId() {
   return calculatedId;
 }
