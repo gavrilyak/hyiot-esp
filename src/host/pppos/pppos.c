@@ -2,6 +2,7 @@
 #include "xs.h"
 #include "xsmc.h"
 #include "xsHost.h"
+#include "modInstrumentation.h"
 
 
 #include "netif/ppp/ppp.h"
@@ -79,6 +80,7 @@ static void ppp_status_cb(ppp_pcb *pcb, int err_code, void *ctx) {
 
 static u32_t ppp_output_callback(ppp_pcb *pcb, u8_t *data, u32_t len, void *ctx) {
   gModem->bytes_written+=len;
+  modInstrumentationSet(PiuCommandListUsed, +len);
   return uart_write_bytes(UART_NUM, (const char *)data, len);
 }
 
@@ -89,6 +91,7 @@ static void pppos_client_task(void *self_in) {
     int len = uart_read_bytes(UART_NUM, (uint8_t *)buf, sizeof(buf), 20 / portTICK_RATE_MS);
     if (len > 0) {
       gModem->bytes_read+=len;
+      modInstrumentationSet(PocoDisplayListUsed, +len);
       pppos_input_tcpip(pcb, (u8_t *)buf, len);
     }
   }
@@ -154,6 +157,9 @@ void xs_modem_start(xsMachine *the) {
 
   gModem->the = the;
   gModem->bytes_read = gModem->bytes_written = 0;
+  modInstrumentationSet(PocoDisplayListUsed, 0);
+  modInstrumentationSet(PiuCommandListUsed, 0);
+
   gModem->pcb = pppapi_pppos_create(&gModem->pppif, ppp_output_callback, ppp_status_cb, gModem);
 
   if (gModem->pcb == NULL) goto bail1;
