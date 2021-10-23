@@ -1,3 +1,4 @@
+#include "sys/types.h"
 #include "xs.h"
 #include "xsmc.h"
 #include "xsHost.h"
@@ -34,6 +35,8 @@ typedef struct xsModemRecord {
   struct netif pppif;
   int          ppp_status_code;
   volatile     TaskHandle_t task;
+  u_int32_t    bytes_read;
+  u_int32_t    bytes_written;
 } xsModemRec;
 
 static xsModemRec* gModem;
@@ -75,7 +78,7 @@ static void ppp_status_cb(ppp_pcb *pcb, int err_code, void *ctx) {
 
 
 static u32_t ppp_output_callback(ppp_pcb *pcb, u8_t *data, u32_t len, void *ctx) {
-  printf("ppp_output_callback %d\n", len);
+  gModem->bytes_written+=len;
   return uart_write_bytes(UART_NUM, (const char *)data, len);
 }
 
@@ -85,7 +88,7 @@ static void pppos_client_task(void *self_in) {
   for(;;){
     int len = uart_read_bytes(UART_NUM, (uint8_t *)buf, sizeof(buf), 20 / portTICK_RATE_MS);
     if (len > 0) {
-      printf("LEN IS %d\n", len);
+      gModem->bytes_read+=len;
       pppos_input_tcpip(pcb, (u8_t *)buf, len);
     }
   }
@@ -105,6 +108,14 @@ void xs_modem_write(xsMachine *the) {
   unsigned char* buffer = xsmcToArrayBuffer(xsArg(0));
   int requested = xsmcGetArrayBufferLength(xsArg(0));
   pppos_input_tcpip(gModem->pcb, buffer, requested);
+}
+
+void xs_modem_bytes_read(xsMachine *the) {
+  xsmcSetInteger(xsResult, gModem->bytes_read);
+}
+
+void xs_modem_bytes_written(xsMachine *the) {
+  xsmcSetInteger(xsResult, gModem->bytes_written);
 }
 
 
@@ -142,7 +153,7 @@ void xs_modem_start(xsMachine *the) {
   if (err != ESP_OK) goto bail1;
 
   gModem->the = the;
-
+  gModem->bytes_read = gModem->bytes_written = 0;
   gModem->pcb = pppapi_pppos_create(&gModem->pppif, ppp_output_callback, ppp_status_cb, gModem);
 
   if (gModem->pcb == NULL) goto bail1;
