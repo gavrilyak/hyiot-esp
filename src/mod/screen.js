@@ -2,7 +2,7 @@ import bus from "bus";
 import Timer from "timer";
 import { MasterReadPacket } from "mblike";
 
-const POLL_INTERVAL = 10000;
+const POLL_INTERVAL = 1000;
 
 //clock on green screen - 3rd line, symbols 11,12 14,15
 //      on blue  screen - last 5 symbols on last line
@@ -71,7 +71,6 @@ bus.on("screen/stop", disablePoll);
 bus.on("screen/start", enablePoll);
 
 bus.on("mqtt/started", () => bus.emit("screen/start"));
-bus.on("engineer/connected", () => bus.emit("screen/stop"));
 
 //poll after immediately after kdb was pressed, user is interested in result
 bus.on("kbd/write", () => Timer.set(() => bus.emit("screen/poll"), 50));

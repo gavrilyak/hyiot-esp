@@ -20,6 +20,7 @@ bus.on("mqtt/message", ([topic, payload]) => {
 bus.on("engineer/write", (packet) => bus.emit("relay/write", packet));
 
 bus.on("engineer/connected", () => {
+  bus.emit("screen/stop");
   bus.on("relay/read", (packet) => {
     bus.emit("mqtt/pub", ["mb/r", packet.toBinary()]);
   });
