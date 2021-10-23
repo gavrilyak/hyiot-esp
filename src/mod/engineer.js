@@ -13,11 +13,9 @@ bus.on("mqtt/message", ([topic, payload]) => {
       engineerConnected = true;
       bus.emit("engineer/connected");
     }
-    bus.emit("engineer/write", packet);
+    bus.emit("relay/write", packet);
   }
 });
-
-bus.on("engineer/write", (packet) => bus.emit("relay/write", packet));
 
 bus.on("engineer/connected", () => {
   bus.emit("screen/stop");

@@ -139,43 +139,41 @@ bus.on("vserial2/read", (payload) => {
       bus.emit(`virtmodem/${topic}`, payload);
     }
   } else {
-    bus.emit("remote/write", payload);
+    let cached = cache.read(payload);
+    if (cached) {
+      //trace("C");
+      bus.emit("vserial2/write", cached);
+      return;
+    }
+
+    let packet = null;
+    try {
+      packet = parse(payload, true);
+    } catch (e) {
+      trace("UNABLE TO PARSE packet from Soft:", e.message, "\n");
+      trace("PACKET:", new Uint8Array(payload), "\n");
+      return;
+    }
+
+    if (packet.address != 1) {
+      trace("O", packet.toString(), "\n");
+      bus.emit("vserial2/write", processOther(packet).toAscii());
+      return;
+    }
+
+    if (!remote) {
+      trace("NO REMOTE WHEN WRITING PACKET!", packet.toString(), "\n");
+      return;
+    }
+
+    bus.emit("mqtt/pub", [
+      `$direct/dev/${remote}/mb/w`,
+      useBinary ? packet.toBinary() : payload,
+    ]);
   }
 });
 
-bus.on("remote/write", (payload) => {
-  let cached = cache.read(payload);
-  if (cached) {
-    //trace("C");
-    bus.emit("vserial2/write", cached);
-    return;
-  }
-
-  let packet = null;
-  try {
-    packet = parse(payload, true);
-  } catch (e) {
-    trace("UNABLE TO PARSE packet from Soft:", e.message, "\n");
-    trace("PACKET:", new Uint8Array(payload), "\n");
-    return;
-  }
-
-  if (packet.address != 1) {
-    trace("O", packet.toString(), "\n");
-    bus.emit("vserial2/write", processOther(packet).toAscii());
-    return;
-  }
-
-  if (!remote) {
-    trace("NO REMOTE WHEN WRITING PACKET!", packet.toString(), "\n");
-    return;
-  }
-
-  bus.emit("mqtt/pub", [
-    `$direct/dev/${remote}/mb/w`,
-    useBinary ? packet.toBinary() : payload,
-  ]);
-});
+function writeToRemote(payload) {}
 
 bus.on("mqtt/message", ([topic, payload]) => {
   if (!topic.endsWith("/mb/r")) return;
