@@ -122,6 +122,7 @@ bus.on("virtmodem/disconnected", () => {
 });
 
 bus.on("virtmodem/write", (p) => bus.emit("vserial2/write", p));
+bus.on("virtmodem/config", (p) => bus.emit("vserial2/config", p));
 
 bus.on("vserial2/read", (payload) => {
   let emits = handleVirtualModem(payload);
