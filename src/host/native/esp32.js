@@ -1,5 +1,5 @@
 export function restart() @ "xs_do_restart";
-function getMacBin() @ "xs_getmac";
+export function getMacBin() @ "xs_getmac";
 
 export function getMAC(staOrApString = "sta") {
   const isAp  = staOrApString === "ap";

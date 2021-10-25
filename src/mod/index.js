@@ -4,6 +4,7 @@ import Net from "net";
 import Timer from "timer";
 import { measure } from "profiler";
 import getDefaultDeviceId from "getDefaultDeviceId";
+import { getMAC } from "native/esp32";
 import pref from "preference";
 import BleWiFiServer from "blewifiserver";
 import sleep from "sleep";
@@ -14,9 +15,10 @@ import * as mod_pref from "mod-pref";
 import * as mod_mqtt from "mod-mqtt";
 
 if (Modules.has("rc-local")) Modules.importNow("rc-local");
-
+import * as relay from "relay";
 import * as kbd from "kbd";
 import * as screen from "screen";
+import * as engineer from "engineer";
 
 //Modules.importNow("kbd");
 //Modules.importNow("screen");
@@ -32,9 +34,8 @@ led.write(0); // on
 
 function startHw() {
   if (!IS_SIMULATOR) {
-    trace("DEFAULT DEVICE ID:", getDefaultDeviceId(), "\n");
-    Modules.importNow("hardware");
-    Modules.importNow("relay");
+    trace("MAC:", getMAC(), "\n");
+    trace("DEVICE ID:", getDefaultDeviceId(), "\n");
   }
 }
 
@@ -123,6 +124,14 @@ bus.on("wifista/started", () => {
 bus.on("wifista/unfconfigured", startBleServer);
 bus.on("wifista/disconnected", startBleServer);
 
+//screen
+bus.on("mqtt/started", () => bus.emit("screen/start"));
+//poll after immediately after kdb was pressed, user is interested in result
+bus.on("kbd/write", () => Timer.set(() => bus.emit("screen/poll"), 50));
+bus.on("screen/changed", (payload) =>
+  bus.emit("mqtt/pub", ["screen", payload, true])
+);
+
 function simpleStart() {
   startHw();
   bus.emit("start", "pref");
@@ -133,6 +142,8 @@ function simpleStart() {
   //bus.emit("start", "ble");
   if (!hasModem) {
     bus.emit("start", "wifista");
+    bus.emit("start", "vserial2");
+    Modules.importNow("virtmodem");
   } else {
     //bus.emit("start", "wifista");
     bus.emit("start", "modem");

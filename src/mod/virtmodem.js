@@ -2,8 +2,6 @@ import bus from "bus";
 
 import { parse, SlaveReadPacket, SlaveWritePacket, toAscii } from "mblike";
 
-import getDefaultDeviceId from "getDefaultDeviceId";
-
 function RequestsCache(cache) {
   cache = cache.map((k) => [new Uint8Array(ArrayBuffer.fromString(k)), null]);
   let cacheWaitsIndex = null;
@@ -33,7 +31,6 @@ function RequestsCache(cache) {
 
   function write(payload) {
     if (cacheWaitsIndex == null || payload == null) return;
-    trace("Cache store ", cacheWaitsIndex, "\n");
     //store response in cache
     cache[cacheWaitsIndex][1] = payload;
     cacheWaitsIndex == null;
@@ -57,7 +54,7 @@ const CACHE_PARAMS = [
 
 let cache = RequestsCache(CACHE_PARAMS);
 
-let remote = null; //getDefaultDeviceId();
+let remote = null;
 let useBinary = false;
 
 const OK_RESPONSE = "OK\r\n";
@@ -99,10 +96,8 @@ const OtherEEPROM = new Uint8Array([
 
 function processOther(packet) {
   if (packet.cmd == 0x03) {
-    if (packet.register == 0xf000) {
-      trace("EERPROM\n");
+    if (packet.register == 0xf000)
       return new SlaveReadPacket(packet.register, OtherEEPROM, packet.address);
-    }
     return new SlaveReadPacket(
       packet.register,
       new Uint8Array(packet.dataLength),
@@ -117,16 +112,18 @@ bus.on("virtmodem/connected", ({ num }) => {
   remote = num;
   bus.emit("mqtt/sub", `$direct/dev/${remote}/mb/r`);
   cache = RequestsCache(CACHE_PARAMS);
-  bus.emit("virtmodem/config", { parity: "e", dataBits: 7, extraEOL: 0x0a });
+  bus.emit("vserial2/config", { parity: "e", dataBits: 7, extraEOL: 0x0a });
 });
 
 bus.on("virtmodem/disconnected", () => {
   bus.emit("mqtt/unsub", `$direct/dev/${remote}/mb/r`);
-  bus.emit("virtmodem/config", { parity: "n", dataBits: 8, extraEOL: 0x0d });
-  remote = getDefaultDeviceId();
+  bus.emit("vserial2/config", { parity: "n", dataBits: 8, extraEOL: 0x0d });
+  remote = null;
 });
 
-bus.on("virtmodem/read", (payload) => {
+bus.on("virtmodem/write", (p) => bus.emit("vserial2/write", p));
+
+bus.on("vserial2/read", (payload) => {
   let emits = handleVirtualModem(payload);
   if (emits) {
     trace(
@@ -142,43 +139,41 @@ bus.on("virtmodem/read", (payload) => {
       bus.emit(`virtmodem/${topic}`, payload);
     }
   } else {
-    bus.emit("remote/write", payload);
+    let cached = cache.read(payload);
+    if (cached) {
+      //trace("C");
+      bus.emit("vserial2/write", cached);
+      return;
+    }
+
+    let packet = null;
+    try {
+      packet = parse(payload, true);
+    } catch (e) {
+      trace("UNABLE TO PARSE packet from Soft:", e.message, "\n");
+      trace("PACKET:", new Uint8Array(payload), "\n");
+      return;
+    }
+
+    if (packet.address != 1) {
+      trace("O", packet.toString(), "\n");
+      bus.emit("vserial2/write", processOther(packet).toAscii());
+      return;
+    }
+
+    if (!remote) {
+      trace("NO REMOTE WHEN WRITING PACKET!", packet.toString(), "\n");
+      return;
+    }
+
+    bus.emit("mqtt/pub", [
+      `$direct/dev/${remote}/mb/w`,
+      useBinary ? packet.toBinary() : payload,
+    ]);
   }
 });
 
-bus.on("remote/write", (payload) => {
-  let cached = cache.read(payload);
-  if (cached) {
-    //trace("C");
-    bus.emit("virtmodem/write", cached);
-    return;
-  }
-
-  let packet = null;
-  try {
-    packet = parse(payload, true);
-  } catch (e) {
-    trace("UNABLE TO PARSE packet from Soft:", e.message, "\n");
-    trace("PACKET:", new Uint8Array(payload), "\n");
-    return;
-  }
-
-  if (packet.address != 1) {
-    trace("O", packet.toString(), "\n");
-    bus.emit("virtmodem/write", processOther(packet).toAscii());
-    return;
-  }
-
-  if (!remote) {
-    trace("NO REMOTE WHEN WRITING PACKET!", packet.toString(), "\n");
-    return;
-  }
-
-  bus.emit("mqtt/pub", [
-    `$direct/dev/${remote}/mb/w`,
-    useBinary ? packet.toBinary() : payload,
-  ]);
-});
+function writeToRemote(payload) {}
 
 bus.on("mqtt/message", ([topic, payload]) => {
   if (!topic.endsWith("/mb/r")) return;
@@ -190,7 +185,5 @@ bus.on("mqtt/message", ([topic, payload]) => {
   }
 
   cache.write(packetAscii);
-  bus.emit("virtmodem/write", packetAscii);
+  bus.emit("vserial2/write", packetAscii);
 });
-
-bus.emit("start", "virtmodem");

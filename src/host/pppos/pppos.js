@@ -1,5 +1,10 @@
 export function start(callback) @ "xs_modem_start"; 
 export function stop() @ "xs_modem_stop"; 
+export function write(bytes) @ "xs_modem_write"; 
+export function bytesRead() @ "xs_modem_bytes_read"; 
+export function bytesWritten() @ "xs_modem_bytes_written"; 
+
+
 export const PPPERR_NONE       =  0 ; /* No error. */
 export const PPPERR_PARAM      =  1 ; /* Invalid parameter. */
 export const PPPERR_OPEN       =  2 ; /* Unable to open PPP session. */

@@ -129,6 +129,7 @@
 -I/home/gvv/esp/esp-idf/components/hal/esp32/include
 -I/home/gvv/esp/esp-idf/components/soc/include
 -I/home/gvv/esp/esp-idf/components/soc/esp32/include
+-I/home/gvv/esp/esp-idf/components/mqtt/esp-mqtt/include
 -I/home/gvv/code/moddable/xs/platforms/esp
 -I/home/gvv/code/moddable/xs/includes
 -I/home/gvv/code/moddable/xs/sources/

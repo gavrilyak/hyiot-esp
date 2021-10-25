@@ -31,7 +31,7 @@ export default function modWiFi({ name, bus, ...opts }) {
           const ip = Net.get("IP");
           //const mac = Net.get("MAC");
           bus.emit("started", { ip }); //, mac });
-          Timer.set(() => set_wifi_ps(0), 1000);
+          //Timer.set(() => set_wifi_ps(0), 1000);
         }
         break;
     }
@@ -61,7 +61,7 @@ export default function modWiFi({ name, bus, ...opts }) {
 
   function stop() {
     if (wifi) {
-      set_wifi_ps(1);
+      //set_wifi_ps(1);
       wifi.close();
       wifi = null;
     }

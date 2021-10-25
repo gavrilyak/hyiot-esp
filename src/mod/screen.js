@@ -10,8 +10,11 @@ const POLL_INTERVAL = 1000;
 const PER_LINE = 18;
 const LINES = 4;
 const SCAN_LEN = LINES * PER_LINE; // - 2; /*clock ignore minutes*/
-const MINUTES_POS_1 = 3 * PER_LINE - 3;
-const MINUTES_POS_2 = 4 * PER_LINE - 1;
+
+const CLOCK_END_POS_1 = 3 * PER_LINE - 3;
+const CLOCK_START_POS_1 = CLOCK_END_POS_1 - 4;
+const CLOCK_END_POS_2 = 4 * PER_LINE - 1;
+const CLOCK_START_POS_2 = CLOCK_END_POS_2 - 4;
 
 function isScreenChanged(prev, curr) {
   let empty = true;
@@ -22,8 +25,8 @@ function isScreenChanged(prev, curr) {
     if (val == 0x1f) continue; //ignore menu cursor
     if (val == 0xda) continue; //ignore cursor
     if (val == 0x20) continue; //ignore space
-    if (i == MINUTES_POS_1) continue;
-    if (i == MINUTES_POS_2) continue;
+    if (CLOCK_START_POS_1 <= i && i <= CLOCK_END_POS_1) continue;
+    if (CLOCK_START_POS_2 <= i && i == CLOCK_END_POS_2) continue;
     if (curr[i] != prev[i]) changed = true;
   }
   //console.log({ empty, changed });
@@ -37,17 +40,16 @@ bus.on("relay/read", (packet) => {
   if (!packet || packet.cmd != 0x03 || packet.dataLength != 0x4e) return;
   if (!isScreenChanged(prevScreen, packet.data)) return;
   prevScreen = packet.data;
-  bus.emit("mqtt/pub", ["screen", packet.data.slice(0, 72).buffer, true]);
+  bus.emit("screen/changed", packet.data.slice(0, 72).buffer);
 });
 
 //screen
-const READ_SCREEN = new MasterReadPacket(0x6f00, 0x4e).toAscii();
 let screenPoller = null;
 let pollingDisabled = false;
 
 function poll() {
   if (pollingDisabled) return;
-  bus.emit("serial/write", READ_SCREEN);
+  bus.emit("relay/write", new MasterReadPacket(0x6f00, 0x4e));
 }
 
 function disablePoll() {
@@ -69,9 +71,3 @@ function enablePoll() {
 bus.on("screen/poll", poll);
 bus.on("screen/stop", disablePoll);
 bus.on("screen/start", enablePoll);
-
-bus.on("mqtt/started", () => bus.emit("screen/start"));
-bus.on("engineer/connected", () => bus.emit("screen/stop"));
-
-//poll after immediately after kdb was pressed, user is interested in result
-bus.on("kbd/write", () => Timer.set(() => bus.emit("screen/poll"), 50));
