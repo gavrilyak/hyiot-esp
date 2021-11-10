@@ -78,7 +78,7 @@ export default function ({ bus }) {
     return null;
   }
 
-  function* send(cmd, timeout = 30) {
+  function* send(cmd, timeout = 60) {
     writeln(cmd);
     const res = yield* readString(timeout);
     return res;
